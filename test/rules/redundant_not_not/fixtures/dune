@@ -1,0 +1,22 @@
+(library
+ (name fix_rnn)
+ (modules fix_rnn))
+
+; The clippy theorem's compile leg, as a plain dune rule: the committed
+; .fixed golden's bytes, copied to a module name of their own, build as a
+; library; the suite depends on the resulting cmt, so `dune runtest`
+; exercises the golden's compilation.
+
+(rule
+ (copy fix_rnn.fixed.ml fix_rnn_fixed.ml))
+
+(library
+ (name fix_rnn_fixed)
+ (modules fix_rnn_fixed))
+
+; The quadruple-negation fixture: nested findings whose fixes' spans
+; nest, so it is exercised for markers only, in a module of its own.
+
+(library
+ (name quad_rnn)
+ (modules quad_rnn))

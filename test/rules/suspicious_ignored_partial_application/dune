@@ -1,0 +1,5 @@
+(test
+ (name test_suspicious_ignored_partial_application)
+ (modules test_suspicious_ignored_partial_application)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_sipa.ml fixtures/.fix_sipa.objs/byte/fix_sipa.cmt))

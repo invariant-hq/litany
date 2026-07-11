@@ -1,0 +1,13 @@
+; litany's own workspace config. The default set is the gate (runtest);
+; the full catalog is the audit spelling, run deliberately:
+;   litany check --select all,restriction,nursery
+;
+; The fixture trees under test/ hold
+; deliberately bad code (FIRE-marked rule provocations) and compiled
+; goldens; findings there are the suites' subject, never defects.
+(per-path
+ (paths test/rules/**/fixtures/** test/rules/fixture/** test/rules/fixture_allow/**
+        test/unit/fixtures/**
+        bench/**/fixtures/** _build/**/fixtures/**)
+ (ignore all)
+ (reason "rule fixtures are deliberate provocations; the suites own them"))

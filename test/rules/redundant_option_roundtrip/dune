@@ -1,0 +1,5 @@
+(test
+ (name test_redundant_option_roundtrip)
+ (modules test_redundant_option_roundtrip)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_ror.ml fixtures/.fix_ror.objs/byte/fix_ror.cmt))

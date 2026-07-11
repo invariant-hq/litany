@@ -1,0 +1,5 @@
+(test
+ (name test_unsafe_obj_magic)
+ (modules test_unsafe_obj_magic)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_uom.ml fixtures/.fix_uom.objs/byte/fix_uom.cmt))

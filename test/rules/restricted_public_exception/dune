@@ -1,0 +1,16 @@
+(test
+ (name test_restricted_public_exception)
+ (modules test_restricted_public_exception)
+ (libraries
+  windtrap
+  rules_test_support
+  compiler-libs.common
+  litany
+  litany_rules)
+ (deps
+  fixtures/fix_rpe.ml
+  fixtures/fix_rpe.mli
+  fixtures/.fix_rpe.objs/byte/fix_rpe.cmt
+  fixtures/.fix_rpe.objs/byte/fix_rpe.cmti
+  fixtures/fix_rpe_bare.ml
+  fixtures/.fix_rpe_bare.objs/byte/fix_rpe_bare.cmt))

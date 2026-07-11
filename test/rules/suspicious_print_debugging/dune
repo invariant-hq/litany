@@ -1,0 +1,10 @@
+(test
+ (name test_suspicious_print_debugging)
+ (modules test_suspicious_print_debugging)
+ (libraries
+  windtrap
+  rules_test_support
+  compiler-libs.common
+  litany
+  litany_rules)
+ (deps fixtures/fix_spd.ml fixtures/.fix_spd.objs/byte/fix_spd.cmt))

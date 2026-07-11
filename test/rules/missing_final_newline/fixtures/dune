@@ -1,0 +1,38 @@
+(library
+ (name fix_mfn_bad)
+ (modules fix_mfn_bad))
+
+(library
+ (name fix_mfn_clean)
+ (modules fix_mfn_clean))
+
+(library
+ (name fix_mfn_crlf)
+ (modules fix_mfn_crlf))
+
+(library
+ (name fix_mfn_empty)
+ (modules fix_mfn_empty))
+
+; The clippy theorem's compile leg, as a plain dune rule: the committed
+; .fixed golden's bytes, copied to a module name of their own, build as a
+; library; the suite depends on the resulting cmt, so `dune runtest`
+; exercises the golden's compilation.
+
+(rule
+ (copy fix_mfn_bad.fixed.ml fix_mfn_bad_fixed.ml))
+
+(library
+ (name fix_mfn_bad_fixed)
+ (modules fix_mfn_bad_fixed))
+
+(library
+ (name fix_mfn_crlf_bad)
+ (modules fix_mfn_crlf_bad))
+
+(rule
+ (copy fix_mfn_crlf_bad.fixed.ml fix_mfn_crlf_bad_fixed.ml))
+
+(library
+ (name fix_mfn_crlf_bad_fixed)
+ (modules fix_mfn_crlf_bad_fixed))

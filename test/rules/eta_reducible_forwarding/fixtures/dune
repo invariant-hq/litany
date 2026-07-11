@@ -1,0 +1,10 @@
+; Warning 39 (unused rec) is what the rec-with-distinct-callee positive
+; exhibits, and warning 6 (omitted labels in a total application) is the
+; omitted-label adversarial's whole subject; the fixture opts out of
+; exactly those two.
+
+(library
+ (name fix_erf)
+ (modules fix_erf)
+ (flags
+  (:standard -w -6-39)))

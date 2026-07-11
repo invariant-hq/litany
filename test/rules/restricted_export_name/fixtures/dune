@@ -1,0 +1,10 @@
+; Two single-module libraries: the mli-backed unit (the interface is
+; the export surface) and the ml-only unit (the derived signature is).
+
+(library
+ (name fix_ren)
+ (modules fix_ren))
+
+(library
+ (name fix_ren_bare)
+ (modules fix_ren_bare))

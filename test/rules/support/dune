@@ -1,0 +1,4 @@
+(library
+ (name rules_test_support)
+ (modules rules_test_support)
+ (libraries windtrap compiler-libs.common litany))

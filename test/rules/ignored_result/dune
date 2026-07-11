@@ -1,0 +1,5 @@
+(test
+ (name test_ignored_result)
+ (modules test_ignored_result)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_ir.ml fixtures/.fix_ir.objs/byte/fix_ir.cmt))

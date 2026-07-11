@@ -1,0 +1,5 @@
+(test
+ (name test_needless_list_map_before_concat)
+ (modules test_needless_list_map_before_concat)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_mbc.ml fixtures/.fix_mbc.objs/byte/fix_mbc.cmt))

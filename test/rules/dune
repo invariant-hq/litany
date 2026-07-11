@@ -1,0 +1,143 @@
+; Keep the result cache inside each cram sandbox: the result cache defaults on
+; (XDG/HOME fallback), and a test suite must never write into the user's
+; real cache. Relative, so it lands under the command's own cwd; dune and
+; the walk adapter both ignore dot-directories.
+
+(env
+ (_
+  (env-vars
+   (LITANY_CACHE_DIR .litany-cache))))
+
+; The launch-catalog cram test: the fixture library's artifacts and sources
+; are its deps, so dune builds them before the test runs and they land in
+; the sandbox at their tree-relative paths (../fixture from inside check.t).
+
+(cram
+ (applies_to check)
+ (deps
+  %{bin:litany}
+  fixture/funcmp.ml
+  fixture/length.ml
+  fixture/phys.ml
+  fixture/warnattr.ml
+  fixture/ws.ml
+  fixture/fix_rules_cli.ml-gen
+  fixture/.fix_rules_cli.objs/byte/fix_rules_cli.cmt
+  fixture/.fix_rules_cli.objs/byte/fix_rules_cli__Funcmp.cmt
+  fixture/.fix_rules_cli.objs/byte/fix_rules_cli__Length.cmt
+  fixture/.fix_rules_cli.objs/byte/fix_rules_cli__Phys.cmt
+  fixture/.fix_rules_cli.objs/byte/fix_rules_cli__Warnattr.cmt
+  fixture/.fix_rules_cli.objs/byte/fix_rules_cli__Ws.cmt))
+
+; The selection/suppression cram test: both fixture libraries' artifacts
+; and sources are its deps.
+
+(cram
+ (applies_to select)
+ (deps
+  %{bin:litany}
+  fixture/funcmp.ml
+  fixture/length.ml
+  fixture/phys.ml
+  fixture/warnattr.ml
+  fixture/ws.ml
+  fixture/fix_rules_cli.ml-gen
+  fixture/.fix_rules_cli.objs/byte/fix_rules_cli.cmt
+  fixture/.fix_rules_cli.objs/byte/fix_rules_cli__Funcmp.cmt
+  fixture/.fix_rules_cli.objs/byte/fix_rules_cli__Length.cmt
+  fixture/.fix_rules_cli.objs/byte/fix_rules_cli__Phys.cmt
+  fixture/.fix_rules_cli.objs/byte/fix_rules_cli__Warnattr.cmt
+  fixture/.fix_rules_cli.objs/byte/fix_rules_cli__Ws.cmt
+  fixture_allow/allowed.ml
+  fixture_allow/fix_rules_allow.ml-gen
+  fixture_allow/.fix_rules_allow.objs/byte/fix_rules_allow.cmt
+  fixture_allow/.fix_rules_allow.objs/byte/fix_rules_allow__Allowed.cmt))
+
+; The --fix cram: same fixture deps as select — the fix pass rewrites copies
+; of both fixture workspaces.
+
+(cram
+ (applies_to fix)
+ (deps
+  %{bin:litany}
+  fixture/funcmp.ml
+  fixture/length.ml
+  fixture/phys.ml
+  fixture/warnattr.ml
+  fixture/ws.ml
+  fixture/fix_rules_cli.ml-gen
+  fixture/.fix_rules_cli.objs/byte/fix_rules_cli.cmt
+  fixture/.fix_rules_cli.objs/byte/fix_rules_cli__Funcmp.cmt
+  fixture/.fix_rules_cli.objs/byte/fix_rules_cli__Length.cmt
+  fixture/.fix_rules_cli.objs/byte/fix_rules_cli__Phys.cmt
+  fixture/.fix_rules_cli.objs/byte/fix_rules_cli__Warnattr.cmt
+  fixture/.fix_rules_cli.objs/byte/fix_rules_cli__Ws.cmt
+  fixture_allow/allowed.ml
+  fixture_allow/fix_rules_allow.ml-gen
+  fixture_allow/.fix_rules_allow.objs/byte/fix_rules_allow.cmt
+  fixture_allow/.fix_rules_allow.objs/byte/fix_rules_allow__Allowed.cmt))
+
+; The interface text-lane cram: a paired mli
+; carrying text findings, walked from its unit's artifacts.
+
+(cram
+ (applies_to mli)
+ (deps
+  %{bin:litany}
+  fixture_mli/iface.ml
+  fixture_mli/iface.mli
+  fixture_mli/fix_rules_mli.ml-gen
+  fixture_mli/.fix_rules_mli.objs/byte/fix_rules_mli.cmt
+  fixture_mli/.fix_rules_mli.objs/byte/fix_rules_mli__Iface.cmt
+  fixture_mli/.fix_rules_mli.objs/byte/fix_rules_mli__Iface.cmti))
+
+; The restricted-dependency cram: the configured deny-list end to end —
+; a nested dune project built for real inside the sandbox.
+
+(cram
+ (applies_to restricted_dependency)
+ (deps %{bin:litany}))
+
+; The restricted-export-name cram: the configured naming policy end to
+; end — a nested dune project built for real inside the sandbox.
+
+(cram
+ (applies_to restricted_export_name)
+ (deps %{bin:litany}))
+
+; The restricted-global-mutable-state cram: the kind gate end to end —
+; a library and an executable built for real inside the sandbox.
+
+(cram
+ (applies_to restricted_global_mutable_state)
+ (deps %{bin:litany}))
+
+; The restricted-public-exception cram: the kind and visibility gates
+; end to end — a public library, a private library, and an executable
+; built for real inside the sandbox.
+
+(cram
+ (applies_to restricted_public_exception)
+ (deps %{bin:litany}))
+
+; The suspicious-file-exists-race cram: check-then-act on the filesystem
+; end to end — a nested dune project built for real inside the sandbox.
+
+(cram
+ (applies_to suspicious_file_exists_race)
+ (deps %{bin:litany}))
+
+; The namespace-discipline freeze: the one-library layout
+; weakened the engine-unreachable invariant to namespace discipline, so
+; runtest asserts that no catalog implementation names a Litany_* module —
+; the catalog reaches the SDK through [open Litany] alone. Interface doc
+; comments are out of scope: odoc cross-references spell full names.
+
+(rule
+ (aliases runtest namespace-discipline)
+ (deps
+  (:script namespace_discipline.sh)
+  (:srcs
+   (glob_files ../../lib/rules/*.ml)))
+ (action
+  (run sh %{script} %{srcs})))

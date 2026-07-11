@@ -1,0 +1,5 @@
+(test
+ (name test_suspicious_ambiguous_constructors)
+ (modules test_suspicious_ambiguous_constructors)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_sac.ml fixtures/.fix_sac.objs/byte/fix_sac.cmt))

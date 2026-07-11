@@ -1,0 +1,5 @@
+(test
+ (name test_suspicious_literal_condition)
+ (modules test_suspicious_literal_condition)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_slc.ml fixtures/.fix_slc.objs/byte/fix_slc.cmt))

@@ -1,0 +1,9 @@
+(test
+ (name test_redundant_guard_true)
+ (modules test_redundant_guard_true)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps
+  fixtures/fix_rgt.ml
+  fixtures/.fix_rgt.objs/byte/fix_rgt.cmt
+  fixtures/fix_rgt.fixed.ml
+  fixtures/.fix_rgt_fixed.objs/byte/fix_rgt_fixed.cmt))

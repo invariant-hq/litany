@@ -1,0 +1,15 @@
+(library
+ (name fix_mov)
+ (modules fix_mov))
+
+; The clippy theorem's compile leg, as a plain dune rule: the committed
+; .fixed golden's bytes, copied to a module name of their own, build as a
+; library; the suite depends on the resulting cmt, so `dune runtest`
+; exercises the golden's compilation.
+
+(rule
+ (copy fix_mov.fixed.ml fix_mov_fixed.ml))
+
+(library
+ (name fix_mov_fixed)
+ (modules fix_mov_fixed))

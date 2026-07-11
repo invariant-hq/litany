@@ -1,0 +1,5 @@
+(test
+ (name test_suspicious_lost_backtrace)
+ (modules test_suspicious_lost_backtrace)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_slb.ml fixtures/.fix_slb.objs/byte/fix_slb.cmt))

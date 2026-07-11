@@ -1,0 +1,5 @@
+(test
+ (name test_suspicious_duplicate_condition)
+ (modules test_suspicious_duplicate_condition)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_sdc.ml fixtures/.fix_sdc.objs/byte/fix_sdc.cmt))

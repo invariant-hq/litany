@@ -1,0 +1,5 @@
+(test
+ (name test_manual_list_fold)
+ (modules test_manual_list_fold)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_mlf.ml fixtures/.fix_mlf.objs/byte/fix_mlf.cmt))

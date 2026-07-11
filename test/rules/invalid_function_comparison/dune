@@ -1,0 +1,5 @@
+(test
+ (name test_invalid_function_comparison)
+ (modules test_invalid_function_comparison)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_ifc.ml fixtures/.fix_ifc.objs/byte/fix_ifc.cmt))

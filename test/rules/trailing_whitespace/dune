@@ -1,0 +1,14 @@
+(test
+ (name test_trailing_whitespace)
+ (modules test_trailing_whitespace)
+ (libraries
+  windtrap
+  rules_test_support
+  litany
+  litany_rules
+  compiler-libs.common)
+ (deps
+  fixtures/fix_tws.ml
+  fixtures/.fix_tws.objs/byte/fix_tws.cmt
+  fixtures/fix_tws.fixed.ml
+  fixtures/.fix_tws_fixed.objs/byte/fix_tws_fixed.cmt))

@@ -1,0 +1,9 @@
+(test
+ (name test_manual_format_quoting)
+ (modules test_manual_format_quoting)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps
+  fixtures/fix_mfq.ml
+  fixtures/.fix_mfq.objs/byte/fix_mfq.cmt
+  fixtures/fix_mfq.fixed.ml
+  fixtures/.fix_mfq_fixed.objs/byte/fix_mfq_fixed.cmt))

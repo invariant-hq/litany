@@ -1,0 +1,11 @@
+# opam switch
+_opam/
+
+# Build output directory
+_build/
+dune.lock/
+
+# Catch all for _*/ directories
+_*/
+.claude/
+.litany-cache/

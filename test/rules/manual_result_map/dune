@@ -1,0 +1,9 @@
+(test
+ (name test_manual_result_map)
+ (modules test_manual_result_map)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps
+  fixtures/fix_mrm.ml
+  fixtures/.fix_mrm.objs/byte/fix_mrm.cmt
+  fixtures/fix_mrm.fixed.ml
+  fixtures/.fix_mrm_fixed.objs/byte/fix_mrm_fixed.cmt))

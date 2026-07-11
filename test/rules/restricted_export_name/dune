@@ -1,0 +1,16 @@
+(test
+ (name test_restricted_export_name)
+ (modules test_restricted_export_name)
+ (libraries
+  windtrap
+  rules_test_support
+  compiler-libs.common
+  litany
+  litany_rules)
+ (deps
+  fixtures/fix_ren.ml
+  fixtures/fix_ren.mli
+  fixtures/.fix_ren.objs/byte/fix_ren.cmt
+  fixtures/.fix_ren.objs/byte/fix_ren.cmti
+  fixtures/fix_ren_bare.ml
+  fixtures/.fix_ren_bare.objs/byte/fix_ren_bare.cmt))

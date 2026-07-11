@@ -1,0 +1,5 @@
+(test
+ (name test_unsafe_partial_stdlib)
+ (modules test_unsafe_partial_stdlib)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_ups.ml fixtures/.fix_ups.objs/byte/fix_ups.cmt))

@@ -1,0 +1,5 @@
+(test
+ (name test_suspicious_file_exists_race)
+ (modules test_suspicious_file_exists_race)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_sfer.ml fixtures/.fix_sfer.objs/byte/fix_sfer.cmt))

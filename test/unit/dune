@@ -1,0 +1,600 @@
+; The unit suites, one directory. Every domain's suite is a test stanza here
+; and the fixture libraries live under fixtures/<suite>/, so a suite reaches
+; another's fixtures by naming them, never by climbing out of the tree. The
+; cram suites stay where their sandboxes are (test/cli, test/rules).
+
+; The suite loads the fixture libraries' real build artifacts: the deps below
+; name the cmt/cmti files and the sources the witness digests, including the
+; built preprocessed file of the fix_pp fixture.
+
+(test
+ (name test_unit)
+ (modules test_unit)
+ (libraries windtrap litany compiler-libs.common)
+ (deps
+  fixtures/unit/plain/wit_direct.ml
+  fixtures/unit/plain/wit_mli.ml
+  fixtures/unit/plain/wit_mli.mli
+  fixtures/unit/plain/wit_incl.ml
+  fixtures/unit/plain/wit_asc.ml
+  fixtures/unit/plain/.fix_wit.objs/byte/fix_wit.cmi
+  fixtures/unit/plain/.fix_wit.objs/byte/fix_wit__Wit_direct.cmt
+  fixtures/unit/plain/.fix_wit.objs/byte/fix_wit__Wit_mli.cmi
+  fixtures/unit/plain/.fix_wit.objs/byte/fix_wit__Wit_mli.cmt
+  fixtures/unit/plain/.fix_wit.objs/byte/fix_wit__Wit_mli.cmti
+  fixtures/unit/plain/.fix_wit.objs/byte/fix_wit__Wit_incl.cmi
+  fixtures/unit/plain/.fix_wit.objs/byte/fix_wit__Wit_incl.cmt
+  fixtures/unit/plain/.fix_wit.objs/byte/fix_wit__Wit_sigs.cmi
+  fixtures/unit/plain/.fix_wit.objs/byte/fix_wit__Wit_asc.cmi
+  fixtures/unit/plain/.fix_wit.objs/byte/fix_wit__Wit_asc.cmt
+  fixtures/unit/plain/wit_uses.ml
+  fixtures/unit/plain/.fix_wit.objs/byte/fix_wit__Wit_uses.cmt
+  fixtures/unit/plain/.fix_wit.objs/byte/fix_wit__Wit_incl.cmti
+  fixtures/unit/plain/wit_export.ml
+  fixtures/unit/plain/wit_export.mli
+  fixtures/unit/plain/.fix_wit.objs/byte/fix_wit__Wit_export.cmi
+  fixtures/unit/plain/.fix_wit.objs/byte/fix_wit__Wit_export.cmt
+  fixtures/unit/plain/.fix_wit.objs/byte/fix_wit__Wit_export.cmti
+  fixtures/unit/plain/wit_user.ml
+  fixtures/unit/plain/.fix_wit.objs/byte/fix_wit__Wit_user.cmt
+  fixtures/unit/pp/wit_pp.ml
+  fixtures/unit/pp/wit_pp.pp.ml
+  fixtures/unit/pp/.fix_pp.objs/byte/fix_pp__Wit_pp.cmt
+  fixtures/unit/pp/wit_ppflag.ml
+  fixtures/unit/pp/.fix_ppflag.objs/byte/fix_ppflag__Wit_ppflag.cmt
+  fixtures/unit/lex/wit_lex.ml
+  fixtures/unit/lex/.wit_lex.objs/byte/wit_lex.cmt
+  fixtures/unit/plain/wit_trap.ml
+  fixtures/unit/plain/.fix_wit.objs/byte/fix_wit__Wit_trap.cmt
+  fixtures/unit/plain/wit_ctrl.ml
+  fixtures/unit/plain/.fix_wit.objs/byte/fix_wit__Wit_ctrl.cmt
+  fixtures/unit/plain/wit_muses.ml
+  fixtures/unit/plain/.fix_wit.objs/byte/fix_wit__Wit_muses.cmt
+  fixtures/unit/plain/wit_paren.ml
+  fixtures/unit/plain/.fix_wit.objs/byte/fix_wit__Wit_paren.cmt))
+
+(test
+ (name test_source)
+ (modules test_source)
+ (libraries windtrap litany compiler-libs.common))
+
+(test
+ (name test_span)
+ (modules test_span)
+ (libraries windtrap litany compiler-libs.common))
+
+(test
+ (name test_finding)
+ (modules test_finding)
+ (libraries windtrap litany compiler-libs.common))
+
+(test
+ (name test_fix)
+ (modules test_fix)
+ (libraries windtrap litany compiler-libs.common))
+
+(test
+ (name test_apply)
+ (modules test_apply)
+ (libraries windtrap litany compiler-libs.common unix))
+
+(test
+ (name test_rule)
+ (modules test_rule)
+ (libraries windtrap litany compiler-libs.common))
+
+(test
+ (name test_roster)
+ (modules test_roster)
+ (libraries windtrap litany))
+
+(test
+ (name test_config)
+ (modules test_config)
+ (libraries windtrap litany))
+
+(test
+ (name test_suggest)
+ (modules test_suggest)
+ (libraries windtrap litany))
+
+(test
+ (name test_suppress)
+ (modules test_suppress)
+ (libraries windtrap litany compiler-libs.common))
+
+(test
+ (name test_write)
+ (modules test_write)
+ (libraries windtrap litany unix))
+
+(test
+ (name test_cache)
+ (modules test_cache)
+ (libraries windtrap litany unix))
+
+(test
+ (name test_driver)
+ (modules test_driver)
+ (libraries windtrap litany compiler-libs.common unix))
+
+; The dep-kind type moved between compiler minors (Cmt_format.dependency_kind
+; in 5.3/5.4, Shape.Uid.Deps.kind in 5.5); ppx_optcomp is not in the lock, so
+; the seam is a version-selected copy of one of two hand-written legs.
+
+(rule
+ (action
+  (copy dep_kind_54.ml dep_kind.ml))
+ (enabled_if
+  (< %{ocaml_version} 5.5.0)))
+
+(rule
+ (action
+  (copy dep_kind_55.ml dep_kind.ml))
+ (enabled_if
+  (>= %{ocaml_version} 5.5.0)))
+
+; The test resolves against the fixture libraries' own build artifacts: dune
+; compiles them normally and the deps below name the cmi/cmt files the
+; resolver and the harvest read. LITANY_TEST_STDLIB carries the toolchain's
+; stdlib directory, which the driver would append to the roster's cmi dirs.
+
+(test
+ (name test_ident)
+ (modules test_ident dep_kind)
+ (libraries windtrap litany compiler-libs.common)
+ (deps
+  fixtures/ident/probe/.fix_probe.objs/byte/fix_probe.cmi
+  fixtures/ident/probe/.fix_probe.objs/byte/fix_probe.cmt
+  fixtures/ident/probe2/.fix_probe2.objs/byte/fix_probe2.cmi
+  fixtures/ident/probe2/.fix_probe2.objs/byte/fix_probe2__Withmli.cmi
+  fixtures/ident/probe2/.fix_probe2.objs/byte/fix_probe2__Withmli.cmt
+  fixtures/ident/probe2/.fix_probe2.objs/byte/fix_probe2__Nomli.cmi
+  fixtures/ident/probe2/.fix_probe2.objs/byte/fix_probe2__Cases2.cmi
+  fixtures/ident/probe2/.fix_probe2.objs/byte/fix_probe2__Cases2.cmt
+  fixtures/ident/probe3/.fix_probe3.objs/byte/fix_probe3.cmt
+  fixtures/ident/foreign/.fix_foreign.objs/byte/base.cmi)
+ (action
+  (setenv
+   LITANY_TEST_STDLIB
+   %{ocaml_where}
+   (run %{test}))))
+
+(test
+ (name test_pat)
+ (modules test_pat)
+ (libraries windtrap compiler-libs.common litany)
+ (deps fixtures/pat/fix_pat.ml fixtures/pat/.fix_pat.objs/byte/fix_pat.cmt))
+
+; The engine suite runs the engine over the fixture libraries' real build
+; artifacts; the deps below name the cmts, the sources the witnesses digest,
+; and the built preprocessed file of the fix_nope fixture.
+
+(test
+ (name test_engine)
+ (modules test_engine)
+ (libraries windtrap litany compiler-libs.common)
+ (deps
+  fixtures/engine/plain/emit_a.ml
+  fixtures/engine/plain/emit_b.ml
+  fixtures/engine/plain/attr.ml
+  fixtures/engine/plain/.fix_engine.objs/byte/fix_engine__Emit_a.cmt
+  fixtures/engine/plain/.fix_engine.objs/byte/fix_engine__Emit_b.cmt
+  fixtures/engine/plain/.fix_engine.objs/byte/fix_engine__Attr.cmt
+  fixtures/engine/plain/kinds.ml
+  fixtures/engine/plain/.fix_engine.objs/byte/fix_engine__Kinds.cmt
+  fixtures/engine/nope/wit_nope.ml
+  fixtures/engine/nope/wit_nope.pp.ml
+  fixtures/engine/nope/.fix_nope.objs/byte/fix_nope__Wit_nope.cmt
+  fixtures/engine/allow/alw.ml
+  fixtures/engine/allow/own.ml
+  fixtures/engine/allow/flo.ml
+  fixtures/engine/allow/nst.ml
+  fixtures/engine/allow/ali.ml
+  fixtures/engine/allow/srx.ml
+  fixtures/engine/allow/.fix_allow.objs/byte/fix_allow__Alw.cmt
+  fixtures/engine/allow/.fix_allow.objs/byte/fix_allow__Own.cmt
+  fixtures/engine/allow/.fix_allow.objs/byte/fix_allow__Flo.cmt
+  fixtures/engine/allow/.fix_allow.objs/byte/fix_allow__Nst.cmt
+  fixtures/engine/allow/.fix_allow.objs/byte/fix_allow__Ali.cmt
+  fixtures/engine/allow/.fix_allow.objs/byte/fix_allow__Srx.cmt))
+
+; The engine IO-purity freeze (the namespace-discipline pattern): runtest
+; asserts by grep that no engine-side module in lib/ performs ambient IO —
+; the driver and its named edges own every effect, and only the two
+; demand-gated substrate readers (the unit loader, identifier resolution)
+; read the filesystem, read-only. The catalog under lib/rules/ has its own
+; discipline check beside its own suite.
+
+(rule
+ (aliases runtest io-purity)
+ (deps
+  (:script io_purity.sh)
+  (:srcs
+   (glob_files ../../lib/*.ml)))
+ (action
+  (run sh %{script} %{srcs})))
+
+; Goldens over reports from real engine runs, against the engine suite's
+; compiled fixture libraries.
+
+(test
+ (name test_render)
+ (modules test_render)
+ (libraries windtrap litany compiler-libs.common)
+ (deps
+  fixtures/engine/plain/emit_a.ml
+  fixtures/engine/plain/.fix_engine.objs/byte/fix_engine__Emit_a.cmt
+  fixtures/engine/nope/wit_nope.ml
+  fixtures/engine/nope/wit_nope.pp.ml
+  fixtures/engine/nope/.fix_nope.objs/byte/fix_nope__Wit_nope.cmt
+  fixtures/engine/allow/ali.ml
+  fixtures/engine/allow/.fix_allow.objs/byte/fix_allow__Ali.cmt))
+
+; The machine formats (json, github): byte-exact goldens over engine runs,
+; including the lossy+hex byte-string convention driven through fix text.
+
+(test
+ (name test_formats)
+ (modules test_formats)
+ (libraries windtrap litany compiler-libs.common)
+ (deps
+  fixtures/engine/plain/emit_a.ml
+  fixtures/engine/plain/.fix_engine.objs/byte/fix_engine__Emit_a.cmt))
+
+; The compiler renderer's goldens round-trip every rendered report through
+; dune's vendored ocamlc-loc parser (test/vendor_ocamlc_loc, spike B).
+
+(test
+ (name test_compiler)
+ (modules test_compiler)
+ (libraries windtrap litany vendor_ocamlc_loc compiler-libs.common)
+ (deps
+  fixtures/engine/plain/emit_a.ml
+  fixtures/engine/plain/.fix_engine.objs/byte/fix_engine__Emit_a.cmt))
+
+; The describe fixture is real captured bytes (see test_adapter.ml); the walk
+; tests reuse the compiled witness fixtures of the unit suite.
+
+(test
+ (name test_adapter)
+ (modules test_adapter)
+ (libraries windtrap litany unix)
+ (deps
+  describe_workspace.csexp
+  fixtures/unit/plain/wit_direct.ml
+  fixtures/unit/plain/wit_mli.ml
+  fixtures/unit/plain/wit_mli.mli
+  fixtures/unit/plain/.fix_wit.objs/byte/fix_wit__Wit_direct.cmt
+  fixtures/unit/plain/.fix_wit.objs/byte/fix_wit__Wit_mli.cmt
+  fixtures/unit/plain/.fix_wit.objs/byte/fix_wit__Wit_mli.cmti))
+
+; The unit-file goldens are hand-crafted bytes: length prefixes computed
+; independently of the encoder, so encode is pinned to the format, not to
+; itself.
+
+(test
+ (name test_unit_file)
+ (modules test_unit_file)
+ (libraries windtrap litany)
+ (deps
+  golden_minimal.units
+  golden_full.units
+  golden_partial.units
+  golden_bytes.units))
+
+; Admission (windtrap SKILL.md §6): each rule re-runs one unit
+; executable with WINDTRAP_MUTATE=admit, which arms only the faults its
+; tests reach and rules every test by name — can each one fail at all?
+; One rule per (test) stanza above, one @admit alias over the lot; a
+; test stanza added above without a rule here is simply not judged, so
+; the two lists are kept in step by eye. The cram suites (test/cli,
+; test/rules) observe litany through the binary they spawn, so an
+; arming never reaches the code under test and they have nothing to
+; admit.
+;
+;   dune build @admit --instrument-with ppx_windtrap.mutate
+;
+; The flag is required: this workspace declares no instrumentation, so
+; without it every catalogue is empty and the admission seam declines
+; by name instead of ruling. The rules live here rather than in
+; ../dune, and (alias runtest) replaces the blueprint's per-rule dep
+; lists, because the suites read compiled fixture artifacts by
+; cwd-relative path and their dep lists live in the stanzas above:
+; running the suite first materializes every stanza's fixture closure
+; in the build tree — where (sandbox none) lets the admission run see
+; it — and admission needs the green suite anyway, since a red dry run
+; cannot be judged against. (universe) re-runs the admissions on every
+; build, for @cover's and @mutate's reason (../dune).
+
+(rule
+ (alias admit)
+ (deps
+  (universe)
+  (sandbox none)
+  (alias runtest)
+  test_unit.exe)
+ (action
+  (setenv
+   WINDTRAP_MUTATE
+   admit
+   (run %{exe:test_unit.exe}))))
+
+(rule
+ (alias admit)
+ (deps
+  (universe)
+  (sandbox none)
+  (alias runtest)
+  test_source.exe)
+ (action
+  (setenv
+   WINDTRAP_MUTATE
+   admit
+   (run %{exe:test_source.exe}))))
+
+(rule
+ (alias admit)
+ (deps
+  (universe)
+  (sandbox none)
+  (alias runtest)
+  test_span.exe)
+ (action
+  (setenv
+   WINDTRAP_MUTATE
+   admit
+   (run %{exe:test_span.exe}))))
+
+(rule
+ (alias admit)
+ (deps
+  (universe)
+  (sandbox none)
+  (alias runtest)
+  test_finding.exe)
+ (action
+  (setenv
+   WINDTRAP_MUTATE
+   admit
+   (run %{exe:test_finding.exe}))))
+
+(rule
+ (alias admit)
+ (deps
+  (universe)
+  (sandbox none)
+  (alias runtest)
+  test_fix.exe)
+ (action
+  (setenv
+   WINDTRAP_MUTATE
+   admit
+   (run %{exe:test_fix.exe}))))
+
+(rule
+ (alias admit)
+ (deps
+  (universe)
+  (sandbox none)
+  (alias runtest)
+  test_apply.exe)
+ (action
+  (setenv
+   WINDTRAP_MUTATE
+   admit
+   (run %{exe:test_apply.exe}))))
+
+(rule
+ (alias admit)
+ (deps
+  (universe)
+  (sandbox none)
+  (alias runtest)
+  test_rule.exe)
+ (action
+  (setenv
+   WINDTRAP_MUTATE
+   admit
+   (run %{exe:test_rule.exe}))))
+
+(rule
+ (alias admit)
+ (deps
+  (universe)
+  (sandbox none)
+  (alias runtest)
+  test_roster.exe)
+ (action
+  (setenv
+   WINDTRAP_MUTATE
+   admit
+   (run %{exe:test_roster.exe}))))
+
+(rule
+ (alias admit)
+ (deps
+  (universe)
+  (sandbox none)
+  (alias runtest)
+  test_config.exe)
+ (action
+  (setenv
+   WINDTRAP_MUTATE
+   admit
+   (run %{exe:test_config.exe}))))
+
+(rule
+ (alias admit)
+ (deps
+  (universe)
+  (sandbox none)
+  (alias runtest)
+  test_suggest.exe)
+ (action
+  (setenv
+   WINDTRAP_MUTATE
+   admit
+   (run %{exe:test_suggest.exe}))))
+
+(rule
+ (alias admit)
+ (deps
+  (universe)
+  (sandbox none)
+  (alias runtest)
+  test_suppress.exe)
+ (action
+  (setenv
+   WINDTRAP_MUTATE
+   admit
+   (run %{exe:test_suppress.exe}))))
+
+(rule
+ (alias admit)
+ (deps
+  (universe)
+  (sandbox none)
+  (alias runtest)
+  test_write.exe)
+ (action
+  (setenv
+   WINDTRAP_MUTATE
+   admit
+   (run %{exe:test_write.exe}))))
+
+(rule
+ (alias admit)
+ (deps
+  (universe)
+  (sandbox none)
+  (alias runtest)
+  test_cache.exe)
+ (action
+  (setenv
+   WINDTRAP_MUTATE
+   admit
+   (run %{exe:test_cache.exe}))))
+
+(rule
+ (alias admit)
+ (deps
+  (universe)
+  (sandbox none)
+  (alias runtest)
+  test_driver.exe)
+ (action
+  (setenv
+   WINDTRAP_MUTATE
+   admit
+   (run %{exe:test_driver.exe}))))
+
+; test_ident's stanza wraps its run in LITANY_TEST_STDLIB; the
+; admission run needs the same environment.
+
+(rule
+ (alias admit)
+ (deps
+  (universe)
+  (sandbox none)
+  (alias runtest)
+  test_ident.exe)
+ (action
+  (setenv
+   LITANY_TEST_STDLIB
+   %{ocaml_where}
+   (setenv
+    WINDTRAP_MUTATE
+    admit
+    (run %{exe:test_ident.exe})))))
+
+(rule
+ (alias admit)
+ (deps
+  (universe)
+  (sandbox none)
+  (alias runtest)
+  test_pat.exe)
+ (action
+  (setenv
+   WINDTRAP_MUTATE
+   admit
+   (run %{exe:test_pat.exe}))))
+
+(rule
+ (alias admit)
+ (deps
+  (universe)
+  (sandbox none)
+  (alias runtest)
+  test_engine.exe)
+ (action
+  (setenv
+   WINDTRAP_MUTATE
+   admit
+   (run %{exe:test_engine.exe}))))
+
+(rule
+ (alias admit)
+ (deps
+  (universe)
+  (sandbox none)
+  (alias runtest)
+  test_render.exe)
+ (action
+  (setenv
+   WINDTRAP_MUTATE
+   admit
+   (run %{exe:test_render.exe}))))
+
+(rule
+ (alias admit)
+ (deps
+  (universe)
+  (sandbox none)
+  (alias runtest)
+  test_formats.exe)
+ (action
+  (setenv
+   WINDTRAP_MUTATE
+   admit
+   (run %{exe:test_formats.exe}))))
+
+(rule
+ (alias admit)
+ (deps
+  (universe)
+  (sandbox none)
+  (alias runtest)
+  test_compiler.exe)
+ (action
+  (setenv
+   WINDTRAP_MUTATE
+   admit
+   (run %{exe:test_compiler.exe}))))
+
+(rule
+ (alias admit)
+ (deps
+  (universe)
+  (sandbox none)
+  (alias runtest)
+  test_adapter.exe)
+ (action
+  (setenv
+   WINDTRAP_MUTATE
+   admit
+   (run %{exe:test_adapter.exe}))))
+
+(rule
+ (alias admit)
+ (deps
+  (universe)
+  (sandbox none)
+  (alias runtest)
+  test_unit_file.exe)
+ (action
+  (setenv
+   WINDTRAP_MUTATE
+   admit
+   (run %{exe:test_unit_file.exe}))))

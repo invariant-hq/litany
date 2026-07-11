@@ -1,0 +1,5 @@
+(test
+ (name test_needless_fun_match)
+ (modules test_needless_fun_match)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_nfm.ml fixtures/.fix_nfm.objs/byte/fix_nfm.cmt))

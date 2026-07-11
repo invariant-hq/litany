@@ -1,0 +1,5 @@
+(12:litany-units1:1)
+(8:cmi-dirs31:_build/default/lib/.a.objs/byte19:/opt/my libs/stdlib)
+(4:unit(6:source8:lib/a.ml)(3:cmt37:_build/default/lib/.a.objs/byte/a.cmt)(4:cmti38:_build/default/lib/.a.objs/byte/a.cmti)(9:pp-source26:_build/default/lib/a.pp.ml)(11:intf-source9:lib/a.mli)(7:library1:a)(6:public4:true)(4:kind3:lib))
+(4:unit(6:source8:bin/m.ml)(3:cmt38:_build/default/bin/.m.eobjs/byte/m.cmt)(7:library1:m)(6:public5:false)(4:kind3:exe))
+(4:unit(6:source9:test/t.ml)(3:cmt38:_build/default/test/.t.objs/byte/t.cmt)(7:library1:t)(4:kind4:test))

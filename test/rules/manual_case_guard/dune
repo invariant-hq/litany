@@ -1,0 +1,5 @@
+(test
+ (name test_manual_case_guard)
+ (modules test_manual_case_guard)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_mcg.ml fixtures/.fix_mcg.objs/byte/fix_mcg.cmt))

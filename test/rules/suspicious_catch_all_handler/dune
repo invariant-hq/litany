@@ -1,0 +1,5 @@
+(test
+ (name test_suspicious_catch_all_handler)
+ (modules test_suspicious_catch_all_handler)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_scah.ml fixtures/.fix_scah.objs/byte/fix_scah.cmt))

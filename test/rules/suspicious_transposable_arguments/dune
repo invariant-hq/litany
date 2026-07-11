@@ -1,0 +1,11 @@
+(test
+ (name test_suspicious_transposable_arguments)
+ (modules test_suspicious_transposable_arguments)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps
+  fixtures/fix_sta.ml
+  fixtures/.fix_sta.objs/byte/fix_sta.cmt
+  fixtures/fix_sta_pub.ml
+  fixtures/fix_sta_pub.mli
+  fixtures/.fix_sta_pub.objs/byte/fix_sta_pub.cmt
+  fixtures/.fix_sta_pub.objs/byte/fix_sta_pub.cmti))

@@ -1,0 +1,31 @@
+(test
+ (name test_unused_export)
+ (modules test_unused_export)
+ (libraries
+  windtrap
+  compiler-libs.common
+  rules_test_support
+  litany
+  litany_rules)
+ (deps
+  fixtures/uexp_api.ml
+  fixtures/uexp_api.mli
+  fixtures/uexp_lone.ml
+  fixtures/uexp_lone.mli
+  fixtures/uexp_asc.ml
+  fixtures/uexp_sigs.ml
+  fixtures/uexp_sigs.mli
+  fixtures/uexp_incl.ml
+  fixtures/uexp_incl.mli
+  fixtures/uexp_main.ml
+  fixtures/uexp_lone_dup.ml
+  fixtures/.uexp.objs/byte/uexp_api.cmt
+  fixtures/.uexp.objs/byte/uexp_api.cmti
+  fixtures/.uexp.objs/byte/uexp_lone.cmt
+  fixtures/.uexp.objs/byte/uexp_lone.cmti
+  fixtures/.uexp.objs/byte/uexp_asc.cmt
+  fixtures/.uexp.objs/byte/uexp_sigs.cmt
+  fixtures/.uexp.objs/byte/uexp_sigs.cmti
+  fixtures/.uexp.objs/byte/uexp_incl.cmt
+  fixtures/.uexp.objs/byte/uexp_incl.cmti
+  fixtures/.uexp_main.eobjs/byte/dune__exe__Uexp_main.cmt))

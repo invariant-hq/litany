@@ -1,0 +1,9 @@
+(test
+ (name test_suspicious_if_same_branches)
+ (modules test_suspicious_if_same_branches)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps
+  fixtures/fix_sisb.ml
+  fixtures/.fix_sisb.objs/byte/fix_sisb.cmt
+  fixtures/ws_sisb.ml
+  fixtures/.ws_sisb.objs/byte/ws_sisb.cmt))

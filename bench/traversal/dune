@@ -1,0 +1,33 @@
+; bench_traversal is the runtest-wired thumper suite (hermetic fixture,
+; committed baseline; thumper is an ordinary test dependency since the 5.5
+; re-lock — see dune-project); bench_corpus takes a corpus directory
+; argument like bench/decode and is run by hand.
+;
+; The committed traversal.thumper baseline records all three cases — load,
+; analyze, and check: analyze pre-pays the demand-gated parse in its setup,
+; so only check sees the attribute-lane cost that rule 7 budgets. The
+; rule-7 drift gate inside bench_traversal.exe re-derives the overhead
+; ratio from a quick load/check measurement after the thumper check passes
+; (see the header of bench_traversal.ml).
+
+(executable
+ (name bench_traversal)
+ (modules bench_traversal)
+ (libraries compiler-libs.common litany litany_rules thumper))
+
+(executable
+ (name bench_corpus)
+ (modules bench_corpus)
+ (libraries compiler-libs.common litany litany_rules unix))
+
+(rule
+ (alias runtest)
+ (deps
+  traversal.thumper
+  fixtures/fix_bench.ml
+  fixtures/.fix_bench.objs/byte/fix_bench.cmt
+  (glob_files fixtures/.fix_bench.objs/byte/*.cmi))
+ (action
+  (progn
+   (run %{exe:bench_traversal.exe} --quick)
+   (diff? traversal.thumper traversal.thumper.corrected))))

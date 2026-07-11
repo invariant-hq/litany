@@ -1,0 +1,5 @@
+(test
+ (name test_manual_list_forall)
+ (modules test_manual_list_forall)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_mlfa.ml fixtures/.fix_mlfa.objs/byte/fix_mlfa.cmt))

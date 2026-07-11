@@ -1,0 +1,7 @@
+(test
+ (name test_local_alias_hop)
+ (modules test_local_alias_hop)
+ (libraries windtrap litany compiler-libs.common)
+ (deps
+  fixtures/.fix_hop.objs/byte/fix_hop.cmt
+  fixtures/.fix_hop.objs/byte/fix_hop__Fix_shadow.cmt))

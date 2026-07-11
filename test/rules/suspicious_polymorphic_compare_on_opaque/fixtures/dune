@@ -1,0 +1,8 @@
+; The support module lives in the same library so both cmis land in one
+; objs directory — the resolver searches the linted cmt's directory, and
+; the cross-unit walk needs spco_lib.cmi there.
+
+(library
+ (name fix_spco)
+ (wrapped false)
+ (modules fix_spco spco_lib))

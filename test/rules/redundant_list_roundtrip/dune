@@ -1,0 +1,5 @@
+(test
+ (name test_redundant_list_roundtrip)
+ (modules test_redundant_list_roundtrip)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_rlr.ml fixtures/.fix_rlr.objs/byte/fix_rlr.cmt))

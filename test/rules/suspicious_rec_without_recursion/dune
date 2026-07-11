@@ -1,0 +1,9 @@
+(test
+ (name test_suspicious_rec_without_recursion)
+ (modules test_suspicious_rec_without_recursion)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps
+  fixtures/fix_srwr.ml
+  fixtures/.fix_srwr.objs/byte/fix_srwr.cmt
+  fixtures/fix_srwr.fixed.ml
+  fixtures/.fix_srwr_fixed.objs/byte/fix_srwr_fixed.cmt))

@@ -1,0 +1,5 @@
+(test
+ (name test_suspicious_str_formatter)
+ (modules test_suspicious_str_formatter)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_ssf.ml fixtures/.fix_ssf.objs/byte/fix_ssf.cmt))

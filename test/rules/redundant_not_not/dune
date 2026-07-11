@@ -1,0 +1,11 @@
+(test
+ (name test_redundant_not_not)
+ (modules test_redundant_not_not)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps
+  fixtures/fix_rnn.ml
+  fixtures/.fix_rnn.objs/byte/fix_rnn.cmt
+  fixtures/fix_rnn.fixed.ml
+  fixtures/.fix_rnn_fixed.objs/byte/fix_rnn_fixed.cmt
+  fixtures/quad_rnn.ml
+  fixtures/.quad_rnn.objs/byte/quad_rnn.cmt))

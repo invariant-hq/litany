@@ -1,0 +1,22 @@
+; The dead-code fixture workspace: one private unwrapped library, one
+; executable root. dci_a -> dci_b and dci_a -> dcx_lone form the dead
+; island/chain no root reaches; dci_self holds the intra-unit recursive
+; cycles (the provisional-dead cases).
+
+(library
+ (name dcx)
+ (wrapped false)
+ (modules dcx_used dcx_lone dci_a dci_b dci_self))
+
+(executable
+ (name dcx_root)
+ (modules dcx_root)
+ (libraries dcx))
+
+; A byte-identical copy of dcx_lone.ml at a second path: paired with the
+; original's cmt it makes a second roster entry whose compilation unit
+; name (Dcx_lone) duplicates the original's from a distinct path — the
+; duplicate-identity withhold pin.
+
+(rule
+ (copy dcx_lone.ml dcx_lone_dup.ml))

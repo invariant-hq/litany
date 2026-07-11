@@ -1,0 +1,6 @@
+; The suppression cram fixture: one module carrying a working allow and a
+; stale one, compiled by the outer dune; the cram test walks its artifacts.
+
+(library
+ (name fix_rules_allow)
+ (modules allowed))

@@ -1,0 +1,26 @@
+(library
+ (name fix_mbo)
+ (modules fix_mbo))
+
+; The clippy theorem's compile leg, as a plain dune rule: the committed
+; .fixed golden's bytes, copied to a module name of their own, build as a
+; library; the suite depends on the resulting cmt, so `dune runtest`
+; exercises the golden's compilation. Every cell of this rule is Unsafe,
+; so the golden's bytes equal the fixture's — the round-trip pins that
+; --fix without --unsafe changes nothing.
+
+(rule
+ (copy fix_mbo.fixed.ml fix_mbo_fixed.ml))
+
+(library
+ (name fix_mbo_fixed)
+ (modules fix_mbo_fixed))
+
+; The Unsafe cells' golden (--fix --unsafe), under the same compile leg.
+
+(rule
+ (copy fix_mbo.unsafe.ml fix_mbo_unsafe.ml))
+
+(library
+ (name fix_mbo_unsafe)
+ (modules fix_mbo_unsafe))

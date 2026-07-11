@@ -1,0 +1,11 @@
+(test
+ (name test_redundant_if_bool)
+ (modules test_redundant_if_bool)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps
+  fixtures/fix_rib.ml
+  fixtures/.fix_rib.objs/byte/fix_rib.cmt
+  fixtures/fix_rib.fixed.ml
+  fixtures/.fix_rib_fixed.objs/byte/fix_rib_fixed.cmt
+  fixtures/fix_rib.unsafe.ml
+  fixtures/.fix_rib_unsafe.objs/byte/fix_rib_unsafe.cmt))

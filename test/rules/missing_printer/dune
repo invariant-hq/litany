@@ -1,0 +1,18 @@
+(test
+ (name test_missing_printer)
+ (modules test_missing_printer)
+ (libraries
+  windtrap
+  rules_test_support
+  compiler-libs.common
+  litany
+  litany_rules)
+ (deps
+  fixtures/fix_mpr.ml
+  fixtures/fix_mpr.mli
+  fixtures/.fix_mpr.objs/byte/fix_mpr.cmt
+  fixtures/.fix_mpr.objs/byte/fix_mpr.cmti
+  fixtures/fix_mpr_neg.ml
+  fixtures/fix_mpr_neg.mli
+  fixtures/.fix_mpr_neg.objs/byte/fix_mpr_neg.cmt
+  fixtures/.fix_mpr_neg.objs/byte/fix_mpr_neg.cmti))

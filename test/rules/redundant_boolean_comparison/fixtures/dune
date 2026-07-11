@@ -1,0 +1,24 @@
+(library
+ (name fix_rbc)
+ (modules fix_rbc))
+
+; The clippy theorem's compile leg, as a plain dune rule: the committed
+; .fixed golden's bytes, copied to a module name of their own, build as a
+; library; the suite depends on the resulting cmt, so `dune runtest`
+; exercises the golden's compilation.
+
+(rule
+ (copy fix_rbc.fixed.ml fix_rbc_fixed.ml))
+
+(library
+ (name fix_rbc_fixed)
+ (modules fix_rbc_fixed))
+
+; The Unsafe cells' golden (--fix --unsafe), under the same compile leg.
+
+(rule
+ (copy fix_rbc.unsafe.ml fix_rbc_unsafe.ml))
+
+(library
+ (name fix_rbc_unsafe)
+ (modules fix_rbc_unsafe))

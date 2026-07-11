@@ -1,0 +1,9 @@
+; Bait for the local-alias resolution case: a foreign compilation unit named
+; [Base], planted on the resolver's cmi path. A resolver that treats a local
+; alias's [Pident] head as a persistent unit reads this cmi and resolves to
+; a foreign identity. Nothing links this library; the test names its cmi.
+
+(library
+ (name fix_foreign)
+ (wrapped false)
+ (modules base))

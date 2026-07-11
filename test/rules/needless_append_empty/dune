@@ -1,0 +1,11 @@
+(test
+ (name test_needless_append_empty)
+ (modules test_needless_append_empty)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps
+  fixtures/fix_nae.ml
+  fixtures/.fix_nae.objs/byte/fix_nae.cmt
+  fixtures/fix_nae.fixed.ml
+  fixtures/.fix_nae_fixed.objs/byte/fix_nae_fixed.cmt
+  fixtures/fix_nae.unsafe.fixed.ml
+  fixtures/.fix_nae_unsafe_fixed.objs/byte/fix_nae_unsafe_fixed.cmt))

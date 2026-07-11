@@ -1,0 +1,5 @@
+(test
+ (name test_manual_option_bind)
+ (modules test_manual_option_bind)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_mob.ml fixtures/.fix_mob.objs/byte/fix_mob.cmt))

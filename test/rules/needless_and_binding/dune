@@ -1,0 +1,5 @@
+(test
+ (name test_needless_and_binding)
+ (modules test_needless_and_binding)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_nab.ml fixtures/.fix_nab.objs/byte/fix_nab.cmt))

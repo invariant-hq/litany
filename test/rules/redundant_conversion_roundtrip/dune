@@ -1,0 +1,9 @@
+(test
+ (name test_redundant_conversion_roundtrip)
+ (modules test_redundant_conversion_roundtrip)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps
+  fixtures/fix_rcr.ml
+  fixtures/.fix_rcr.objs/byte/fix_rcr.cmt
+  fixtures/fix_rcr.fixed.ml
+  fixtures/.fix_rcr_fixed.objs/byte/fix_rcr_fixed.cmt))

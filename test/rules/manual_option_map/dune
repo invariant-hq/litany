@@ -1,0 +1,9 @@
+(test
+ (name test_manual_option_map)
+ (modules test_manual_option_map)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps
+  fixtures/fix_mom.ml
+  fixtures/.fix_mom.objs/byte/fix_mom.cmt
+  fixtures/fix_mom.fixed.ml
+  fixtures/.fix_mom_fixed.objs/byte/fix_mom_fixed.cmt))

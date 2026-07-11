@@ -1,0 +1,9 @@
+(test
+ (name test_redundant_option_comparison)
+ (modules test_redundant_option_comparison)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps
+  fixtures/fix_roc.ml
+  fixtures/.fix_roc.objs/byte/fix_roc.cmt
+  fixtures/fix_roc.fixed.ml
+  fixtures/.fix_roc_fixed.objs/byte/fix_roc_fixed.cmt))

@@ -1,0 +1,13 @@
+; Two single-module libraries: the mli-backed unit (the interface is
+; the export surface) and the ml-only unit (the derived signature is).
+; The roster kind and visibility are the suite's to set — the same
+; artifacts run as public library, private library, executable, test,
+; and kindless unit.
+
+(library
+ (name fix_rpe)
+ (modules fix_rpe))
+
+(library
+ (name fix_rpe_bare)
+ (modules fix_rpe_bare))

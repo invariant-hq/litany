@@ -1,0 +1,5 @@
+(test
+ (name test_suspicious_sequence_ignored_value)
+ (modules test_suspicious_sequence_ignored_value)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_ssiv.ml fixtures/.fix_ssiv.objs/byte/fix_ssiv.cmt))

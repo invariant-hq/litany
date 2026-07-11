@@ -1,0 +1,5 @@
+(test
+ (name test_manual_result_bind)
+ (modules test_manual_result_bind)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_mrb.ml fixtures/.fix_mrb.objs/byte/fix_mrb.cmt))

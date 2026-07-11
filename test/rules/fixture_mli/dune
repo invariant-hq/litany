@@ -1,0 +1,8 @@
+; The interface text-lane cram fixture, a pinned case: a clean
+; implementation whose paired mli carries a
+; trailing tab and no final newline, compiled by the outer dune; the cram
+; test walks its artifacts.
+
+(library
+ (name fix_rules_mli)
+ (modules iface))

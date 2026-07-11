@@ -1,0 +1,4 @@
+(test
+ (name test_dead_code_solver)
+ (modules test_dead_code_solver)
+ (libraries windtrap litany_rules))

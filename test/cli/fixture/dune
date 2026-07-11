@@ -1,0 +1,7 @@
+; The cram fixture: a tiny library the outer dune builds; the cram test walks
+; its artifacts. gamma is interface-only — the 1.0 missing-artifact skip.
+
+(library
+ (name fix_cli)
+ (modules alpha beta gamma)
+ (modules_without_implementation gamma))

@@ -1,0 +1,13 @@
+# thumper baseline v1
+# suite: traversal
+
+# machine: ca352e279bc47cb1
+# host: Thibauts-MacBook-2.local · Apple M1 Max · arm64 · macos
+# ocaml: 5.5.0 · 64-bit · release
+
+analyze	alloc_words	exact	125240
+analyze	wall_time	batch=4	n=11	1.563e-03	1.497e-03 1.516e-03 1.517e-03 1.536e-03 1.550e-03 1.563e-03 1.572e-03 1.573e-03 1.582e-03 1.591e-03 1.624e-03
+check	alloc_words	exact	294901
+check	wall_time	batch=1	n=11	2.674e-03	2.279e-03 2.357e-03 2.425e-03 2.454e-03 2.598e-03 2.674e-03 2.730e-03 3.209e-03 3.298e-03 3.351e-03 3.388e-03
+load	alloc_words	exact	47918
+load	wall_time	batch=2	n=11	6.448e-04	4.086e-04 6.360e-04 6.371e-04 6.387e-04 6.395e-04 6.448e-04 6.471e-04 6.533e-04 6.646e-04 6.949e-04 6.989e-04

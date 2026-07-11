@@ -1,0 +1,5 @@
+(test
+ (name test_invalid_hashtable_key)
+ (modules test_invalid_hashtable_key)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_ihk.ml fixtures/.fix_ihk.objs/byte/fix_ihk.cmt))

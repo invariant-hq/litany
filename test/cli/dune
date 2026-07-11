@@ -1,0 +1,129 @@
+; Keep the result cache inside each cram sandbox: the result cache defaults on
+; (XDG/HOME fallback), and a test suite must never write into the user's
+; real cache. Relative, so it lands under the command's own cwd; dune and
+; the walk adapter both ignore dot-directories.
+
+(env
+ (_
+  (env-vars
+   (LITANY_CACHE_DIR .litany-cache))))
+
+; The fixture library's artifacts and sources are the cram test's deps: dune
+; builds them before the test runs, and they land in the sandbox at their
+; tree-relative paths (../fixture from inside check.t).
+
+(cram
+ (applies_to check)
+ (deps
+  %{bin:litany}
+  fixture/alpha.ml
+  fixture/beta.ml
+  fixture/beta.mli
+  fixture/gamma.mli
+  fixture/fix_cli.ml-gen
+  fixture/.fix_cli.objs/byte/fix_cli.cmt
+  fixture/.fix_cli.objs/byte/fix_cli__Alpha.cmt
+  fixture/.fix_cli.objs/byte/fix_cli__Beta.cmt
+  fixture/.fix_cli.objs/byte/fix_cli__Beta.cmti
+  fixture/.fix_cli.objs/byte/fix_cli__Gamma.cmti))
+
+; The dune-spawn argv pin: a shim dune on PATH records what
+; litany passes it; no real dune runs.
+
+(cram
+ (applies_to root)
+ (deps %{bin:litany}))
+
+; The M6 config-file cram: a nested dune project built for real inside the
+; sandbox — the dune adapter's own lane.
+
+(cram
+ (applies_to config)
+ (deps %{bin:litany}))
+
+; The M6 --fix convergence-loop cram: real rebuilds between passes.
+
+(cram
+ (applies_to fixloop)
+ (deps %{bin:litany}))
+
+; M7: the one-unit in-build gate (litany unit), proved against the
+; vendored ocamlc-loc parser — what litany emits is what dune's editor
+; pipeline receives.
+
+(cram
+ (applies_to unit)
+ (deps %{bin:litany} ../vendor_ocamlc_loc/parse.exe))
+
+; The in-build lane: one user-written litany check rule under @lint in a
+; real nested consumer project — compiler-format diagnostics from the
+; failing rule, --fix writing the real sources with convergence across
+; dune rebuilds, the sandbox refusal, and the clean-project green build.
+
+(cram
+ (applies_to inbuild)
+ (deps %{bin:litany}))
+
+; M7: units --save / --dump and the check --units round-trip.
+
+(cram
+ (applies_to units)
+ (deps %{bin:litany}))
+
+; M7: the catalog product commands.
+
+(cram
+ (applies_to rules explain)
+ (deps %{bin:litany}))
+
+; M7: check --format compiler|json|github, compiler proved through the
+; vendored parser.
+
+(cram
+ (applies_to formats)
+ (deps %{bin:litany} ../vendor_ocamlc_loc/parse.exe))
+
+; M8: the -j worker lane — byte-identity across worker counts, the --fix
+; single-process clamp, and the lost-shard law (real nested dune builds).
+
+(cram
+ (applies_to jobs)
+ (deps %{bin:litany}))
+
+; M8: the result cache — warm hits, byte-identical pages across cache
+; states, and per-component key invalidation.
+
+(cram
+ (applies_to cache)
+ (deps %{bin:litany}))
+
+; M9: the project (cross-module) rules end to end — findings over a real
+; multi-unit workspace, byte-identity across -j and cache states with facts
+; riding the payloads, the withhold gate + --explain-withheld, closed-world,
+; and the facts-only (.ml-gen) no-withhold pin.
+
+(cram
+ (applies_to project)
+ (deps %{bin:litany}))
+
+; The all-skip refusal pin: a non-empty roster of which nothing was
+; analyzed refuses —
+; the all-wrong-magic single-generation store naming both versions, every
+; other all-skip mix with the skip breakdown and the remedy per kind; any
+; analyzed unit in the mix keeps its counted skips. The fixture artifacts
+; are deps for the magic-independent (all-stale) cases.
+
+(cram
+ (applies_to magic)
+ (deps
+  %{bin:litany}
+  fixture/alpha.ml
+  fixture/beta.ml
+  fixture/beta.mli
+  fixture/gamma.mli
+  fixture/fix_cli.ml-gen
+  fixture/.fix_cli.objs/byte/fix_cli.cmt
+  fixture/.fix_cli.objs/byte/fix_cli__Alpha.cmt
+  fixture/.fix_cli.objs/byte/fix_cli__Beta.cmt
+  fixture/.fix_cli.objs/byte/fix_cli__Beta.cmti
+  fixture/.fix_cli.objs/byte/fix_cli__Gamma.cmti))

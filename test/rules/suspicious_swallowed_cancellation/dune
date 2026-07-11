@@ -1,0 +1,9 @@
+(test
+ (name test_suspicious_swallowed_cancellation)
+ (modules test_suspicious_swallowed_cancellation)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps
+  fixtures/fix_ssc.ml
+  fixtures/.fix_ssc.objs/byte/fix_ssc.cmt
+  fixtures/fix_ssc.unsafe.fixed.ml
+  fixtures/.fix_ssc_unsafe_fixed.objs/byte/fix_ssc_unsafe_fixed.cmt))

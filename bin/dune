@@ -1,0 +1,4 @@
+(executable
+ (name main)
+ (public_name litany)
+ (libraries cmdliner compiler-libs.common litany litany_rules unix))

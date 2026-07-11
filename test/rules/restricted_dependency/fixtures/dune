@@ -1,0 +1,9 @@
+; Unwrapped, so both modules are compilation units under their own
+; names: the suite forbids [Rd_dep.Internal] by dotted path, and the
+; resolver finds rd_dep.cmi beside rd_use.cmt.
+
+(library
+ (name fix_rd)
+ (wrapped false)
+ (modules rd_dep rd_use)
+ (libraries str))

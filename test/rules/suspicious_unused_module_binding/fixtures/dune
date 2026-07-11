@@ -1,0 +1,17 @@
+; Warning 32 would reject the interface-hidden orphan modules' unused
+; contents under dune's dev profile — the unused-module-binding defect
+; this fixture exists to exhibit drags its members along, so the
+; value-level echo is opted out alone. Warning 60 (the module-level
+; judgment itself) is already off in the dev profile.
+
+(library
+ (name fix_sumb)
+ (modules fix_sumb)
+ (flags
+  (:standard -w -32)))
+
+(library
+ (name fix_sumb_nomli)
+ (modules fix_sumb_nomli)
+ (flags
+  (:standard -w -32)))

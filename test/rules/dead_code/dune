@@ -1,0 +1,31 @@
+(test
+ (name test_dead_code)
+ (modules test_dead_code)
+ (libraries
+  windtrap
+  compiler-libs.common
+  rules_test_support
+  litany
+  litany_rules)
+ (deps
+  fixtures/dcx_used.ml
+  fixtures/dcx_used.mli
+  fixtures/dcx_lone.ml
+  fixtures/dcx_lone.mli
+  fixtures/dci_a.ml
+  fixtures/dci_a.mli
+  fixtures/dci_b.ml
+  fixtures/dci_b.mli
+  fixtures/dci_self.ml
+  fixtures/dcx_root.ml
+  fixtures/dcx_lone_dup.ml
+  fixtures/.dcx.objs/byte/dcx_used.cmt
+  fixtures/.dcx.objs/byte/dcx_used.cmti
+  fixtures/.dcx.objs/byte/dcx_lone.cmt
+  fixtures/.dcx.objs/byte/dcx_lone.cmti
+  fixtures/.dcx.objs/byte/dci_a.cmt
+  fixtures/.dcx.objs/byte/dci_a.cmti
+  fixtures/.dcx.objs/byte/dci_b.cmt
+  fixtures/.dcx.objs/byte/dci_b.cmti
+  fixtures/.dcx.objs/byte/dci_self.cmt
+  fixtures/.dcx_root.eobjs/byte/dune__exe__Dcx_root.cmt))

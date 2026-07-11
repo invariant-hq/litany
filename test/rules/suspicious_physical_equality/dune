@@ -1,0 +1,5 @@
+(test
+ (name test_suspicious_physical_equality)
+ (modules test_suspicious_physical_equality)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_spe.ml fixtures/.fix_spe.objs/byte/fix_spe.cmt))

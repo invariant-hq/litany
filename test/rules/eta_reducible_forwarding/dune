@@ -1,0 +1,5 @@
+(test
+ (name test_eta_reducible_forwarding)
+ (modules test_eta_reducible_forwarding)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_erf.ml fixtures/.fix_erf.objs/byte/fix_erf.cmt))

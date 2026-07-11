@@ -1,0 +1,5 @@
+(test
+ (name test_outdated_str_module)
+ (modules test_outdated_str_module)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_osm.ml fixtures/.fix_osm.objs/byte/fix_osm.cmt))

@@ -1,0 +1,5 @@
+(test
+ (name test_disable_all_warnings)
+ (modules test_disable_all_warnings)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_daw.ml fixtures/.fix_daw.objs/byte/fix_daw.cmt))

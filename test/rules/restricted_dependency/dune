@@ -1,0 +1,8 @@
+(test
+ (name test_restricted_dependency)
+ (modules test_restricted_dependency)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps
+  fixtures/rd_use.ml
+  fixtures/.fix_rd.objs/byte/rd_use.cmt
+  fixtures/.fix_rd.objs/byte/rd_dep.cmi))

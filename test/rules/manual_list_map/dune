@@ -1,0 +1,5 @@
+(test
+ (name test_manual_list_map)
+ (modules test_manual_list_map)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_mlm.ml fixtures/.fix_mlm.objs/byte/fix_mlm.cmt))

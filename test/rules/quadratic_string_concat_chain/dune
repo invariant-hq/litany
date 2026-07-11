@@ -1,0 +1,9 @@
+(test
+ (name test_quadratic_string_concat_chain)
+ (modules test_quadratic_string_concat_chain)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps
+  fixtures/fix_qscc.ml
+  fixtures/.fix_qscc.objs/byte/fix_qscc.cmt
+  fixtures/fix_qscc_nested.ml
+  fixtures/.fix_qscc_nested.objs/byte/fix_qscc_nested.cmt))

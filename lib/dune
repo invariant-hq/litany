@@ -1,0 +1,172 @@
+; The one litany library: every domain except the catalog, wrapped, so each
+; module is reachable as [Litany.<Domain>] and the library's own module
+; (litany.ml) is its interface. [open Litany] is the rule-author SDK; the
+; driver machinery (engine, render, adapter, roster, config_file, cache,
+; apply, write, suggest, suppress, naming, driver, progress) is exposed by
+; the facade for bin/ and the test suites and carries no rule-author promise
+; — the discipline is frozen by grep in test/rules/. Compiler-minor seam legs
+; (*_53/*_54/*_55) are excluded from the module set; the version-selected
+; copy rules below produce the seam modules, which the facade never aliases
+; and nothing outside the library can name.
+
+(library
+ (name litany)
+ (instrumentation
+  (backend ppx_windtrap.coverage))
+ (instrumentation
+  (backend ppx_windtrap.mutate))
+ (modules
+  adapter
+  apply
+  apply_arg
+  cache
+  config_file
+  cstr
+  dep_kind
+  digest0
+  driver
+  dune_describe
+  engine
+  expr_item
+  finding
+  fix
+  head
+  litany
+  naming
+  pat
+  pat_alias
+  progress
+  render
+  roster
+  rule
+  sexp
+  source
+  span
+  suggest
+  suppress
+  tuple
+  unit
+  write)
+ (libraries compiler-libs.common unix))
+
+; The let-module expression node moved between compiler minors
+; (Texp_letmodule's positional five-field payload through 5.4;
+; Texp_struct_item carrying a bare structure item from 5.5, which also
+; admits expression-local type groups); ppx_optcomp is not in the lock, so
+; the seam is a version-selected copy of one of two hand-written legs --
+; the same pattern as the pat seams below.
+
+(rule
+ (action
+  (copy expr_item_54.ml expr_item.ml))
+ (enabled_if
+  (< %{ocaml_version} 5.5.0)))
+
+(rule
+ (action
+  (copy expr_item_55.ml expr_item.ml))
+ (enabled_if
+  (>= %{ocaml_version} 5.5.0)))
+
+; The Texp_apply argument shape moved between compiler minors
+; ((arg_label * expression option) list in 5.3, (arg_label * apply_arg) list
+; from 5.4); ppx_optcomp is not in the lock, so the seam is a
+; version-selected copy of one of two hand-written legs — the same pattern
+; as the unit dep_kind seam. The 5.3 legs have no local build evidence (no
+; 5.3 toolchain in the lock) and their CI lane is still pending — the
+; standing deviation recorded in doc/dev/compiler-support.md (Window
+; movement).
+
+(rule
+ (action
+  (copy apply_arg_53.ml apply_arg.ml))
+ (enabled_if
+  (< %{ocaml_version} 5.4.0)))
+
+(rule
+ (action
+  (copy apply_arg_54.ml apply_arg.ml))
+ (enabled_if
+  (>= %{ocaml_version} 5.4.0)))
+
+; The Tpat_alias payload also moved at the same minor (a fifth argument,
+; the aliased pattern's type, from 5.4), so the alias view uses the same
+; version-selected-copy seam.
+
+(rule
+ (action
+  (copy pat_alias_53.ml pat_alias.ml))
+ (enabled_if
+  (< %{ocaml_version} 5.4.0)))
+
+(rule
+ (action
+  (copy pat_alias_54.ml pat_alias.ml))
+ (enabled_if
+  (>= %{ocaml_version} 5.4.0)))
+
+; The constructor_description record moved from Types (5.3) to Data_types
+; (5.4/5.5); same version-selected copy seam as apply_arg. Only the two
+; Cstr accessors read the record, so the churn never reaches pat.ml.
+
+(rule
+ (action
+  (copy cstr_53.ml cstr.ml))
+ (enabled_if
+  (< %{ocaml_version} 5.4.0)))
+
+(rule
+ (action
+  (copy cstr_54.ml cstr.ml))
+ (enabled_if
+  (>= %{ocaml_version} 5.4.0)))
+
+; The tuple payloads gained labeled components at 5.4 ((string option * _)
+; list in Texp_tuple/Tpat_tuple; plain lists in 5.3); same version-selected
+; copy seam as apply_arg. Both legs feed the unlabeled-only tuple views.
+
+(rule
+ (action
+  (copy tuple_53.ml tuple.ml))
+ (enabled_if
+  (< %{ocaml_version} 5.4.0)))
+
+(rule
+ (action
+  (copy tuple_54.ml tuple.ml))
+ (enabled_if
+  (>= %{ocaml_version} 5.4.0)))
+
+; The dep-kind type moved between compiler minors (Cmt_format.dependency_kind
+; in 5.3/5.4, Shape.Uid.Deps.kind in 5.5); ppx_optcomp is not in the lock, so
+; the seam is a version-selected copy of one of two hand-written legs — the
+; same pattern as test/unit's.
+
+(rule
+ (action
+  (copy dep_kind_54.ml dep_kind.ml))
+ (enabled_if
+  (< %{ocaml_version} 5.5.0)))
+
+(rule
+ (action
+  (copy dep_kind_55.ml dep_kind.ml))
+ (enabled_if
+  (>= %{ocaml_version} 5.5.0)))
+
+; The constructor/label description records moved from Types (5.3) to
+; Data_types (5.4); same version-selected copy seam as dep_kind, at the
+; 5.4 boundary. Only the two Head accessors read the records, so the
+; churn never reaches unit.ml.
+
+(rule
+ (action
+  (copy head_53.ml head.ml))
+ (enabled_if
+  (< %{ocaml_version} 5.4.0)))
+
+(rule
+ (action
+  (copy head_54.ml head.ml))
+ (enabled_if
+  (>= %{ocaml_version} 5.4.0)))

@@ -1,0 +1,9 @@
+(test
+ (name test_needless_list_length)
+ (modules test_needless_list_length)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps
+  fixtures/fix_nll.ml
+  fixtures/.fix_nll.objs/byte/fix_nll.cmt
+  fixtures/fix_nll.fixed.ml
+  fixtures/.fix_nll_fixed.objs/byte/fix_nll_fixed.cmt))

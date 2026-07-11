@@ -1,0 +1,10 @@
+; The editable source does not parse as OCaml (the #define line); the sed
+; preprocessor deletes it, so the compiler reads a built pp file and the unit
+; joins under the Derived witness. This is the engine's degraded lane.
+
+(library
+ (name fix_nope)
+ (modules wit_nope)
+ (preprocess
+  (action
+   (run sed -e "/^#define/d" %{input-file}))))

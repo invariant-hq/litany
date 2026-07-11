@@ -1,0 +1,15 @@
+(library
+ (name litany_rules)
+ (instrumentation
+  (backend ppx_windtrap.coverage))
+ (instrumentation
+  (backend ppx_windtrap.mutate))
+ ; Every rule compiles against the facade alone: [open Litany] re-exports
+ ; the compiler closure, including the [Tast_iterator] some rules use for
+ ; bounded rule-code subtree walks, a sanctioned rule capability; the
+ ; facade re-exports it so third-party rule stanzas need only [litany].
+ ; [compiler-libs.common]
+ ; stays for the two project-rule support modules ([dead_code_solver],
+ ; [project_facts]) whose interfaces deliberately speak raw [Shape.Uid.t]
+ ; without the facade.
+ (libraries compiler-libs.common litany))

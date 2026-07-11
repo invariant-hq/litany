@@ -1,0 +1,3 @@
+(library
+ (name fix_probe3)
+ (libraries fix_probe fix_probe2))

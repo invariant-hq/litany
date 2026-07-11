@@ -1,0 +1,9 @@
+(test
+ (name test_redundant_nested_if)
+ (modules test_redundant_nested_if)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps
+  fixtures/fix_rni.ml
+  fixtures/.fix_rni.objs/byte/fix_rni.cmt
+  fixtures/fix_rni.fixed.ml
+  fixtures/.fix_rni_fixed.objs/byte/fix_rni_fixed.cmt))

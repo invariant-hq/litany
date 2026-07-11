@@ -1,0 +1,10 @@
+(test
+ (name test_suspicious_failwith_in_library)
+ (modules test_suspicious_failwith_in_library)
+ (libraries
+  windtrap
+  rules_test_support
+  compiler-libs.common
+  litany
+  litany_rules)
+ (deps fixtures/fix_sfil.ml fixtures/.fix_sfil.objs/byte/fix_sfil.cmt))

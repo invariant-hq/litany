@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test-doc:
+    name: OCaml ${{ matrix.ocaml-compiler }} / ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+        ocaml-compiler:
+          - 5.5.0
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+
+      - name: Install OCaml
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+          dune-cache: true
+
+      - name: Install the supported Dune release
+        run: opam install --yes dune.3.23.0
+
+      - name: Pin unreleased test dependencies
+        run: |
+          opam pin add --no-action --yes thumper git+https://github.com/invariant-hq/thumper.git
+          opam pin add --no-action --yes windtrap git+https://github.com/invariant-hq/windtrap.git
+          opam pin add --no-action --yes ppx_windtrap git+https://github.com/invariant-hq/windtrap.git
+
+      - name: Resolve generated opam metadata
+        run: opam install . --deps-only --with-test --with-doc --yes
+
+      - name: Build libraries, executable, and install artifacts
+        run: opam exec -- dune build @fmt @all @install
+
+      - name: Run functional and boundary tests
+        run: opam exec -- dune runtest test
+
+      # The windtrap verdict aliases (test/dune, test/unit/dune): the
+      # coverage gate re-runs the suite instrumented and fails below
+      # @cover's --min; the mutation survey writes per-executable
+      # verdicts (it must be the run that executes the whole suite —
+      # a filtered or sharded run writes none) and @mutate merges them
+      # under killed-anywhere-wins. Survivors never fail the build:
+      # the survey is a reading list, the gate is coverage's alone.
+      - name: Enforce the coverage gate
+        run: opam exec -- dune build @cover --instrument-with ppx_windtrap.coverage
+
+      - name: Run the mutation survey
+        run: WINDTRAP_MUTATE=1 opam exec -- dune runtest test --force --instrument-with ppx_windtrap.mutate
+
+      - name: Merge the mutation report
+        run: opam exec -- dune build @mutate
+
+      - name: Build strict release documentation
+        run: opam exec -- dune build --profile release @doc
+
+      - name: Lint package metadata
+        run: opam lint litany.opam

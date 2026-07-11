@@ -1,0 +1,5 @@
+(test
+ (name test_redundant_boolean_operator)
+ (modules test_redundant_boolean_operator)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_rbo.ml fixtures/.fix_rbo.objs/byte/fix_rbo.cmt))

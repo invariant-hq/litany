@@ -1,0 +1,15 @@
+(library
+ (name fix_wit)
+ (modules
+  wit_direct
+  wit_mli
+  wit_sigs
+  wit_incl
+  wit_asc
+  wit_uses
+  wit_export
+  wit_user
+  wit_trap
+  wit_ctrl
+  wit_muses
+  wit_paren))

@@ -1,0 +1,11 @@
+(test
+ (name test_suspicious_unused_module_binding)
+ (modules test_suspicious_unused_module_binding)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps
+  fixtures/fix_sumb.ml
+  fixtures/fix_sumb.mli
+  fixtures/.fix_sumb.objs/byte/fix_sumb.cmt
+  fixtures/.fix_sumb.objs/byte/fix_sumb.cmti
+  fixtures/fix_sumb_nomli.ml
+  fixtures/.fix_sumb_nomli.objs/byte/fix_sumb_nomli.cmt))

@@ -1,0 +1,5 @@
+(test
+ (name test_redundant_bind_return)
+ (modules test_redundant_bind_return)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_rbr.ml fixtures/.fix_rbr.objs/byte/fix_rbr.cmt))

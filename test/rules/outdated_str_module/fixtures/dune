@@ -1,0 +1,4 @@
+(library
+ (name fix_osm)
+ (modules fix_osm)
+ (libraries str))

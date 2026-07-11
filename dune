@@ -1,0 +1,41 @@
+; litany on litany. The report rule gates every test run; fixing is the
+; explicit @lint alias, whose fixes arrive as dune correction diffs —
+; dune promote applies them. Fixture noise is ringed out in ./litany.
+
+(rule
+ (alias runtest)
+ (deps
+  (alias_rec check))
+ (action
+  (run litany check)))
+
+(rule
+ (alias lint)
+ (deps
+  (alias_rec check))
+ (corrections produce)
+ (action
+  (run litany check --fix)))
+
+; Run with dune build @cover --instrument-with ppx_windtrap.coverage
+; Coverage runs the test tree, never bench: a benchmark under
+; instrumentation measures the counters, not the code (observed: +44.6%
+; on analyze), and its gate failure would kill this chain before the
+; merge. (alias_rec test/runtest) scopes the run half to test/.
+
+(rule
+ (alias cover)
+ (deps
+  (alias_rec test/runtest)
+  (universe))
+ (action
+  ; measured 81.5% on 2026-08-21 (settled tree); ratchet up, never down
+  (run %{bin:windtrap} coverage --min 79)))
+
+; dune build @mutate --instrument-with ppx_windtrap.mutate
+
+(rule
+ (alias mutate)
+ (deps (universe))
+ (action
+  (run %{bin:windtrap} mutate)))

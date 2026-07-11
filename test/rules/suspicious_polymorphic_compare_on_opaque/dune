@@ -1,0 +1,8 @@
+(test
+ (name test_suspicious_polymorphic_compare_on_opaque)
+ (modules test_suspicious_polymorphic_compare_on_opaque)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps
+  fixtures/fix_spco.ml
+  fixtures/.fix_spco.objs/byte/fix_spco.cmt
+  fixtures/.fix_spco.objs/byte/spco_lib.cmi))

@@ -1,0 +1,5 @@
+(test
+ (name test_used_underscore_binding)
+ (modules test_used_underscore_binding)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_uub.ml fixtures/.fix_uub.objs/byte/fix_uub.cmt))

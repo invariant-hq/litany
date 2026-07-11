@@ -1,0 +1,5 @@
+(test
+ (name test_suspicious_wall_clock_elapsed)
+ (modules test_suspicious_wall_clock_elapsed)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_swce.ml fixtures/.fix_swce.objs/byte/fix_swce.cmt))

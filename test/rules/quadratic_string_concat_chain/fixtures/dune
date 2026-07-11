@@ -1,0 +1,7 @@
+(library
+ (name fix_qscc)
+ (modules fix_qscc))
+
+(library
+ (name fix_qscc_nested)
+ (modules fix_qscc_nested))

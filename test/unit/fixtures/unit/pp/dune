@@ -1,0 +1,14 @@
+(library
+ (name fix_pp)
+ (modules wit_pp)
+ (preprocess
+  (action
+   (progn
+    (echo "(* expanded by the fixture pp *)\n")
+    (run cat %{input-file})))))
+
+(library
+ (name fix_ppflag)
+ (modules wit_ppflag)
+ (flags
+  (:standard -pp cat)))

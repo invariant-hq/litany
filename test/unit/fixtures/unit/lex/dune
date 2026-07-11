@@ -1,0 +1,10 @@
+; Generated-classification fixture: real ocamllex output — the .ml carries
+; [# N "wit_lex.mll"] line directives, the classification marker
+; [Litany_unit.generated] reads. The library name equals its one module,
+; so the artifact is wit_lex.cmt with no alias module.
+
+(ocamllex wit_lex)
+
+(library
+ (name wit_lex)
+ (modules wit_lex))

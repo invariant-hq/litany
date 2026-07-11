@@ -1,0 +1,11 @@
+(test
+ (name test_redundant_boolean_comparison)
+ (modules test_redundant_boolean_comparison)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps
+  fixtures/fix_rbc.ml
+  fixtures/.fix_rbc.objs/byte/fix_rbc.cmt
+  fixtures/fix_rbc.fixed.ml
+  fixtures/.fix_rbc_fixed.objs/byte/fix_rbc_fixed.cmt
+  fixtures/fix_rbc.unsafe.ml
+  fixtures/.fix_rbc_unsafe.objs/byte/fix_rbc_unsafe.cmt))

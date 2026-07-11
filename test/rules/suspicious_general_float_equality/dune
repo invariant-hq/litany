@@ -1,0 +1,5 @@
+(test
+ (name test_suspicious_general_float_equality)
+ (modules test_suspicious_general_float_equality)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_sgfe.ml fixtures/.fix_sgfe.objs/byte/fix_sgfe.cmt))

@@ -1,0 +1,5 @@
+(test
+ (name test_suspicious_variant_arity_tuple)
+ (modules test_suspicious_variant_arity_tuple)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_svat.ml fixtures/.fix_svat.objs/byte/fix_svat.cmt))

@@ -1,0 +1,11 @@
+; Warning 39 (unused rec flag) fires only on the whole-inert partition
+; negative — the group that is suspicious-rec-without-recursion's
+; finding — and is an error under dune's dev profile, so the fixture
+; opts out of it alone. Every positive keeps warning 39 silent: at
+; least one binding references the group.
+
+(library
+ (name fix_nab)
+ (modules fix_nab)
+ (flags
+  (:standard -w -39)))

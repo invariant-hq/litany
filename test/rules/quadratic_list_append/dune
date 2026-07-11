@@ -1,0 +1,5 @@
+(test
+ (name test_quadratic_list_append)
+ (modules test_quadratic_list_append)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_qla.ml fixtures/.fix_qla.objs/byte/fix_qla.cmt))

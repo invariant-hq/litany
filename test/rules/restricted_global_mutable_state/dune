@@ -1,0 +1,10 @@
+(test
+ (name test_restricted_global_mutable_state)
+ (modules test_restricted_global_mutable_state)
+ (libraries
+  windtrap
+  rules_test_support
+  compiler-libs.common
+  litany
+  litany_rules)
+ (deps fixtures/fix_rgms.ml fixtures/.fix_rgms.objs/byte/fix_rgms.cmt))

@@ -1,0 +1,11 @@
+(library
+ (name fix_sisb)
+ (modules fix_sisb))
+
+; Layout is load-bearing in the whitespace-normalization fixture
+; (ocamlformat would equalize the branches' spacing), so it builds as a
+; module of its own and is listed in .ocamlformat-ignore.
+
+(library
+ (name ws_sisb)
+ (modules ws_sisb))

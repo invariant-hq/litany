@@ -1,0 +1,5 @@
+(test
+ (name test_quadratic_string_concat_fold)
+ (modules test_quadratic_string_concat_fold)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_qscf.ml fixtures/.fix_qscf.objs/byte/fix_qscf.cmt))

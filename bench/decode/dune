@@ -1,0 +1,10 @@
+; Plain executable, not a test: it needs a corpus directory argument (see
+; the header of bench_decode.ml) and its numbers are machine-local, so
+; there is no committable baseline (M3 fold disposition). The hermetic
+; per-unit decode case that thumper regression-gates is bench/traversal's
+; load case; thumper itself is an ordinary test dependency since the 5.5
+; re-lock.
+
+(executable
+ (name bench_decode)
+ (libraries compiler-libs.common litany unix))

@@ -1,0 +1,22 @@
+; The unused-export fixture workspace: one private unwrapped library and one
+; executable. Unwrapped, so unit-level references (unresolved occurrence
+; heads) name exactly the units a user mentions, keeping the conservative
+; shield per-unit rather than per-library.
+
+(library
+ (name uexp)
+ (wrapped false)
+ (modules uexp_api uexp_lone uexp_asc uexp_sigs uexp_incl))
+
+(executable
+ (name uexp_main)
+ (modules uexp_main)
+ (libraries uexp))
+
+; A byte-identical copy of uexp_lone.ml at a second path: paired with the
+; original's cmt it makes a second roster entry whose compilation unit
+; name (Uexp_lone) duplicates the original's from a distinct path — the
+; duplicate-identity withhold pin.
+
+(rule
+ (copy uexp_lone.ml uexp_lone_dup.ml))

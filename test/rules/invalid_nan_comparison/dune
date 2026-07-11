@@ -1,0 +1,5 @@
+(test
+ (name test_invalid_nan_comparison)
+ (modules test_invalid_nan_comparison)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_inc.ml fixtures/.fix_inc.objs/byte/fix_inc.cmt))

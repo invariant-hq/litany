@@ -1,0 +1,5 @@
+(test
+ (name test_needless_mutually_recursive_types)
+ (modules test_needless_mutually_recursive_types)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_nmrt.ml fixtures/.fix_nmrt.objs/byte/fix_nmrt.cmt))

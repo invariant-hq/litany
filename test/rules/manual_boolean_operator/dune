@@ -1,0 +1,11 @@
+(test
+ (name test_manual_boolean_operator)
+ (modules test_manual_boolean_operator)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps
+  fixtures/fix_mbo.ml
+  fixtures/.fix_mbo.objs/byte/fix_mbo.cmt
+  fixtures/fix_mbo.fixed.ml
+  fixtures/.fix_mbo_fixed.objs/byte/fix_mbo_fixed.cmt
+  fixtures/fix_mbo.unsafe.ml
+  fixtures/.fix_mbo_unsafe.objs/byte/fix_mbo_unsafe.cmt))

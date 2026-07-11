@@ -1,0 +1,9 @@
+(test
+ (name test_manual_temp_dir)
+ (modules test_manual_temp_dir)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps
+  fixtures/fix_mtd.ml
+  fixtures/.fix_mtd.objs/byte/fix_mtd.cmt
+  fixtures/fix_mtd.fixed.ml
+  fixtures/.fix_mtd_fixed.objs/byte/fix_mtd_fixed.cmt))

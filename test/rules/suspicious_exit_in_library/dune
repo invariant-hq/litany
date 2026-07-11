@@ -1,0 +1,10 @@
+(test
+ (name test_suspicious_exit_in_library)
+ (modules test_suspicious_exit_in_library)
+ (libraries
+  windtrap
+  rules_test_support
+  compiler-libs.common
+  litany
+  litany_rules)
+ (deps fixtures/fix_seil.ml fixtures/.fix_seil.objs/byte/fix_seil.cmt))

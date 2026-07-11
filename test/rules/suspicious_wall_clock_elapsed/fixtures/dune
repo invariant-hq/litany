@@ -1,0 +1,4 @@
+(library
+ (name fix_swce)
+ (modules fix_swce)
+ (libraries unix))

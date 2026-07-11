@@ -1,0 +1,9 @@
+(test
+ (name test_manual_tuple_matching)
+ (modules test_manual_tuple_matching)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps
+  fixtures/fix_mtm.ml
+  fixtures/.fix_mtm.objs/byte/fix_mtm.cmt
+  fixtures/fix_mtm.fixed.ml
+  fixtures/.fix_mtm_fixed.objs/byte/fix_mtm_fixed.cmt))

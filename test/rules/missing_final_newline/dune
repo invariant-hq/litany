@@ -1,0 +1,24 @@
+(test
+ (name test_missing_final_newline)
+ (modules test_missing_final_newline)
+ (libraries
+  windtrap
+  rules_test_support
+  litany
+  litany_rules
+  compiler-libs.common)
+ (deps
+  fixtures/fix_mfn_bad.ml
+  fixtures/.fix_mfn_bad.objs/byte/fix_mfn_bad.cmt
+  fixtures/fix_mfn_clean.ml
+  fixtures/.fix_mfn_clean.objs/byte/fix_mfn_clean.cmt
+  fixtures/fix_mfn_crlf.ml
+  fixtures/.fix_mfn_crlf.objs/byte/fix_mfn_crlf.cmt
+  fixtures/fix_mfn_empty.ml
+  fixtures/.fix_mfn_empty.objs/byte/fix_mfn_empty.cmt
+  fixtures/fix_mfn_crlf_bad.ml
+  fixtures/.fix_mfn_crlf_bad.objs/byte/fix_mfn_crlf_bad.cmt
+  fixtures/fix_mfn_bad.fixed.ml
+  fixtures/.fix_mfn_bad_fixed.objs/byte/fix_mfn_bad_fixed.cmt
+  fixtures/fix_mfn_crlf_bad.fixed.ml
+  fixtures/.fix_mfn_crlf_bad_fixed.objs/byte/fix_mfn_crlf_bad_fixed.cmt))

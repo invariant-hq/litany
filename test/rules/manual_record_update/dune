@@ -1,0 +1,5 @@
+(test
+ (name test_manual_record_update)
+ (modules test_manual_record_update)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_mru.ml fixtures/.fix_mru.objs/byte/fix_mru.cmt))

@@ -1,0 +1,8 @@
+; End-to-end M8 bench: the shipped binary's -j scaling and cache warm/cold
+; over a corpus directory (see the header of bench_check.ml). Plain
+; executable, run by hand — it needs a corpus argument and real wall time,
+; so it is not wired into runtest (same posture as bench/decode).
+
+(executable
+ (name bench_check)
+ (libraries unix))

@@ -1,0 +1,24 @@
+(library
+ (name fix_nae)
+ (modules fix_nae))
+
+; The clippy theorem's compile leg, as a plain dune rule, once per
+; golden: the committed .fixed goldens' bytes — the default (Safe-only)
+; application and the opted-in unsafe application — each copy to a
+; module name of their own and build as libraries; the suite depends on
+; the resulting cmts, so `dune runtest` exercises both goldens'
+; compilation.
+
+(rule
+ (copy fix_nae.fixed.ml fix_nae_fixed.ml))
+
+(library
+ (name fix_nae_fixed)
+ (modules fix_nae_fixed))
+
+(rule
+ (copy fix_nae.unsafe.fixed.ml fix_nae_unsafe_fixed.ml))
+
+(library
+ (name fix_nae_unsafe_fixed)
+ (modules fix_nae_unsafe_fixed))
