@@ -35,10 +35,10 @@ rot. An unmatched `allow` yields `unused-allow`, with a safe deletion fix:
 
 ```
 $ litany check
-lib/inventory.ml:7:3 warning unused-allow
-  allow "needless-list-length" matched no finding
-     7 |   [@litany.allow "needless-list-length: benchmarking the walk itself"]
-       |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "lib/inventory.ml", line 7, characters 2-70:
+7 |   [@litany.allow "needless-list-length: benchmarking the walk itself"]
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 0 [unused-allow]: allow "needless-list-length" matched no finding
   fix (safe): delete the unused allow
 ```
 
@@ -47,10 +47,10 @@ back, not the attribute gone, so it ships no fix:
 
 ```
 $ litany check
-lib/inventory.ml:7:3 warning unfulfilled-expect
-  expect "needless-list-length" matched no finding
-     7 |   [@litany.expect "needless-list-length: the fixture must keep firing"]
-       |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "lib/inventory.ml", line 7, characters 2-71:
+7 |   [@litany.expect "needless-list-length: the fixture must keep firing"]
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 0 [unfulfilled-expect]: expect "needless-list-length" matched no finding
 ```
 
 Both audits are gated on the named rule actually having *run* on that

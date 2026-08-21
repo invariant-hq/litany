@@ -92,10 +92,10 @@ assignment exact at -j 2.)
   [1]
   $ env -u INSIDE_DUNE LITANY_TEST_LOSE_SHARD=1 litany check --no-build -j 2
   litany: worker lost (exited 66); 1 unit of its shard skipped
-  one.ml:1:24 warning needless-list-length
-    comparison through List.length is a needless emptiness test
-       1 | let () = print_int (if List.length [] = 0 then 0 else 1)
-         |                        ^^^^^^^^^^^^^^^^^^
+  File "one.ml", line 1, characters 23-41:
+  1 | let () = print_int (if List.length [] = 0 then 0 else 1)
+                             ^^^^^^^^^^^^^^^^^^
+  Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
     fix (safe): compare with []
   
   30 rules selected · 1 unit · 1 finding (1 fixable — run `litany check --fix`) · 1 skipped (unreadable 1)

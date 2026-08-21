@@ -29,8 +29,14 @@ you write yourself, under whatever alias you like (`lint` here):
 ```
 $ dune build @lint
 File "lib/inventory.ml", line 5, characters 17-40:
+5 | let check t = if List.length t.stock = 0 then restock t else t
+                     ^^^^^^^^^^^^^^^^^^^^^^^
 Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
   fix (safe): compare with []
+
+30 rules selected · 1 unit · 1 finding (1 fixable — run `litany check --fix`) · 0 skipped
+roster: suspicious-exit-in-library withheld (kind-gated; no unit in this lane carries a stanza kind)
+roster: suspicious-str-formatter withheld (kind-gated; no unit in this lane carries a stanza kind)
 $ echo $?
 1
 ```
@@ -60,14 +66,18 @@ walks the real build context against the real sources: the same report,
 the same paths, on any dune language version, with no sandbox clause in
 the stanza.
 
-Inside an action the default report format is `compiler` — the exact
-grammar dune's diagnostic parser accepts from a failing action — so
-findings land as ordinary dune diagnostics and reach editors over dune
-RPC: add `@lint` to your watch invocation (`dune build @default @lint
--w`) and litany findings appear in VS Code, Emacs, and Vim as compiler
-warnings, with no litany-side editor code and no plugin. Findings exit 1
-and the rule fails: that is the design — the alias is a gate. An explicit
-`--format` still wins.
+The page is the same one a terminal shows — there is no separate in-build
+format. Its finding blocks are the exact grammar dune's diagnostic parser
+accepts from a failing action, so findings land as ordinary dune
+diagnostics and reach editors over dune RPC: add `@lint` to your watch
+invocation (`dune build @default @lint -w`) and litany findings appear in
+VS Code, Emacs, and Vim as compiler warnings, with no litany-side editor
+code and no plugin. Dune shows the whole page in its console, summary
+and roster lines included; its parser attaches whatever follows the last
+block to that finding's message, so the last diagnostic an editor shows
+carries the summary with it. Findings exit 1 and the rule fails: that is
+the design — the alias is a gate. An explicit `--format json` or
+`--format github` still wins.
 
 The workspace `litany` config file is read as usual, from the workspace
 root the context mirrors, so the rule means what your checkout's config
@@ -100,13 +110,24 @@ $ dune build @lint
 fix lib/inventory.ml: 1 proposed
 pass 1: 1 fix proposed (1 file)
 1 correction proposed — dune shows each as a diff and fails the build; dune promote applies and the next build re-lints (without (corrections produce) in the rule, dune discards corrections silently)
-...
+File "lib/inventory.ml", line 5, characters 17-40:
+5 | let check t = if List.length t.stock = 0 then restock t else t
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
+  fix (safe): compare with []
+
+30 rules selected · 1 unit · 1 finding (1 fixable) · 1 fix proposed · 0 skipped
+roster: suspicious-exit-in-library withheld (kind-gated; no unit in this lane carries a stanza kind)
+roster: suspicious-str-formatter withheld (kind-gated; no unit in this lane carries a stanza kind)
 File "lib/inventory.ml", line 1, characters 0-0:
 --- lib/inventory.ml
 +++ _build/default/lib/inventory.ml.corrected
-@@ -5 +5 @@
--let is_empty t = List.length t.stock = 0
-+let is_empty t = t.stock = []
+@@ -2,4 +2,4 @@
+ 
+ let restock t = t
+ 
+-let check t = if List.length t.stock = 0 then restock t else t
++let check t = if t.stock = [] then restock t else t
 $ dune promote
 Promoting _build/default/lib/inventory.ml.corrected to lib/inventory.ml.
 ```
@@ -159,15 +180,22 @@ that wire one rule per compilation unit):
 ```
 $ litany unit inventory --cmt _build/default/lib/.inventory.objs/byte/inventory.cmt --source lib/inventory.ml
 File "lib/inventory.ml", line 5, characters 17-40:
+5 | let check t = if List.length t.stock = 0 then restock t else t
+                     ^^^^^^^^^^^^^^^^^^^^^^^
 Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
   fix (safe): compare with []
+
+30 rules selected · 1 unit · 1 finding (1 fixable — run `litany check --fix`) · 0 skipped
+roster: suspicious-exit-in-library withheld (kind-gated; no unit in this lane carries a stanza kind)
+roster: suspicious-str-formatter withheld (kind-gated; no unit in this lane carries a stanza kind)
 $ echo $?
 1
 ```
 
 Its argv is the roster: no subprocess, no lock, no workspace query. The
-report is compiler-format on stderr, stdout silent, exit 1 on findings —
-the shape dune's diagnostic parser requires. The default rule set runs
+report is the same page as `litany check`, on stdout — finding blocks in
+the shape dune's diagnostic parser requires, then the summary — and the
+exit is the gate: 1 on findings. The default rule set runs
 and the workspace `litany` file is deliberately **not** read: a
 per-module build rule must mean the same thing on every checkout.
 Attribute suppression works as everywhere. A unit that cannot be admitted
@@ -182,8 +210,12 @@ can emit its own roster as one:
 ```
 $ litany units --save litany.units
 $ litany check --no-build --units litany.units
-lib/inventory.ml:5:18 warning needless-list-length
-  ...
+File "lib/inventory.ml", line 5, characters 17-40:
+5 | let check t = if List.length t.stock = 0 then restock t else t
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
+  fix (safe): compare with []
+
 30 rules selected · 1 unit · 1 finding (1 fixable — run `litany check --fix`) · 0 skipped
 ```
 
@@ -325,34 +357,33 @@ changes consume the `json` format, which carries each finding's fix.
 
 | Format | Channel | Shape |
 | --- | --- | --- |
-| `text` (default) | stdout | the human page: location, message, excerpt with carets, fix line, one summary line |
-| `compiler` | stderr, stdout silent | the exact grammar dune's diagnostic parser accepts; no excerpts, no summary; the default inside a dune action |
+| `text` (default) | stdout | the report page: per finding a compiler-shaped block — `File "…", line L, characters A-B:`, the quoted line with carets, `Warning 0 [rule]: message`, the fix line — then one summary line; the exact grammar dune's diagnostic parser accepts, so it is also the in-build format |
 | `json` | stdout | JSON Lines: one finding object per line, then one summary trailer object |
 | `github` | stdout | workflow annotations; auto-selected under `GITHUB_ACTIONS` |
 
 ```
 $ litany check --format json
 {"rule":"needless-list-length","severity":"warning","file":"lib/inventory.ml","line":5,"col":17,"end_line":5,"end_col":40,"message":"comparison through List.length is a needless emptiness test","fix":{"title":"compare with []","applicability":"safe","edits":[{"start":78,"stop":101,"text":"t.stock = []"}]}}
-{"summary":{"findings":1,"fixable":1,"units":1,"skipped":[],"roster":"ran"}}
+{"summary":{"schema":1,"rules_selected":30,"findings":1,"fixable":1,"units":1,"linted":1,"facts_only":0,"suppressed":0,"skipped":[],"failures":[],"degraded":[],"notes":[],"dropped":0,"roster":[],"exit":1}}
 ```
 
-Positions: `text` and `github` use 1-based columns; `compiler` and `json`
-use the compiler's own convention (0-based, end-exclusive). `json` edits
+Positions: `text` and `json` use the compiler's own convention (0-based,
+end-exclusive byte columns); `github` uses 1-based columns. `json` edits
 are byte offsets into the source. Paths whose bytes are not valid UTF-8
 get a reversible `path_bytes` hex twin beside the lossy `file`.
 
-Both auto-selections are defaults, not mandates: inside a dune action the
-default is `compiler` (and it outranks the `GITHUB_ACTIONS` selection — a
-dune action inside a workflow job still answers to dune), while `--fix`,
-`--list-units`, and `--explain-withheld` keep the text surface. An
-explicit `--format` always wins.
+The `GITHUB_ACTIONS` auto-selection is a default, not a mandate: `--fix`,
+`--list-units`, and `--explain-withheld` keep the text surface under it,
+and an explicit `--format` always wins.
 
-The three machine formats render the report page only: they refuse `--fix`
+The two machine formats render the report page only: they refuse `--fix`
 and `--list-units`, and anything else the run prints (build forwarding,
-rename warnings) keeps its own channel. Pair `compiler` with
-`--no-build`/`--units` when stderr must hold nothing but the report.
-Output order is total and byte-deterministic across runs: sorted by path,
-byte offset, rule name.
+rename warnings) keeps its own channel — as does the text page's fix
+narration under `--fix`. A dune rule parses only output that starts with
+`File `, so a rule whose action prints anything before the first finding
+(a rename warning, the fix narration) still fails the build but serves no
+diagnostics for that run. Output order is total and byte-deterministic
+across runs: sorted by path, byte offset, rule name.
 
 ## A custom binary: extending the catalog
 

@@ -31,23 +31,26 @@ The applying runs below simulate the user's shell with env -u INSIDE_DUNE
   fix length.ml: 1 applied
   pass 1: 1 fix applied (1 file)
   1 fix applied — artifacts are now stale; rebuild and re-run to converge
-  funcmp.ml:3:14 warning invalid-function-comparison
-    structural comparison has a function operand
-       3 | let broken = compare f g
-         |              ^^^^^^^^^^^
-  length.ml:1:19 warning needless-list-length
-    comparison through List.length is a needless emptiness test
-       1 | let is_empty xs = List.length xs = 0
-         |                   ^^^^^^^^^^^^^^^^^^
+  File "funcmp.ml", line 3, characters 13-24:
+  3 | let broken = compare f g
+                   ^^^^^^^^^^^
+  Warning 0 [invalid-function-comparison]: structural comparison has a function operand
+    
+  File "length.ml", line 1, characters 18-36:
+  1 | let is_empty xs = List.length xs = 0
+                        ^^^^^^^^^^^^^^^^^^
+  Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
     fix (safe): compare with []
-  phys.ml:1:34 warning suspicious-physical-equality
-    physical comparison has a non-immediate operand
-       1 | let same_object (a : string) b = a == b
-         |                                  ^^^^^^
-  warnattr.ml:1:1 warning disable-all-warnings
-    attribute disables all compiler warnings
-       1 | [@@@warning "-a"]
-         | ^^^^^^^^^^^^^^^^^
+    
+  File "phys.ml", line 1, characters 33-39:
+  1 | let same_object (a : string) b = a == b
+                                       ^^^^^^
+  Warning 0 [suspicious-physical-equality]: physical comparison has a non-immediate operand
+    
+  File "warnattr.ml", line 1, characters 0-17:
+  1 | [@@@warning "-a"]
+      ^^^^^^^^^^^^^^^^^
+  Warning 0 [disable-all-warnings]: attribute disables all compiler warnings
   
   30 rules selected · 6 units · 4 findings (1 fixable) · 1 fix applied · 0 skipped · 1 facts-only
   roster: suspicious-exit-in-library withheld (kind-gated; no unit in this lane carries a stanza kind)
@@ -79,15 +82,16 @@ deletion fix and --fix removes the attribute.
   fix allowed.ml: 2 applied
   pass 1: 2 fixes applied (1 file)
   2 fixes applied — artifacts are now stale; rebuild and re-run to converge
-  allowed.ml:2:21 warning needless-list-length
-    comparison through List.length is a needless emptiness test
-       2 | let also_empty xs = List.length xs = 0
-         |                     ^^^^^^^^^^^^^^^^^^
+  File "allowed.ml", line 2, characters 20-38:
+  2 | let also_empty xs = List.length xs = 0
+                          ^^^^^^^^^^^^^^^^^^
+  Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
     fix (safe): compare with []
-  allowed.ml:3:14 warning unused-allow
-    allow "needless-list-length" matched no finding
-       3 | let fine = 1 [@@litany.allow "needless-list-length: stale"]
-         |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    
+  File "allowed.ml", line 3, characters 13-59:
+  3 | let fine = 1 [@@litany.allow "needless-list-length: stale"]
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  Warning 0 [unused-allow]: allow "needless-list-length" matched no finding
     fix (safe): delete the unused allow
   
   30 rules selected · 2 units · 2 findings (2 fixable) · 2 fixes applied · 0 skipped · 1 facts-only · 1 suppressed

@@ -67,22 +67,25 @@ the vendored unit — its references resolve to local declarations and
 stay clean.
 
   $ env -u INSIDE_DUNE litany check --select restricted-dependency
-  app.ml:1:9 warning restricted-dependency
-    Legacy is a restricted module; use the supported api module
-       1 | let a = Legacy.token
-         |         ^^^^^^^^^^^^
-  app.ml:2:9 warning restricted-dependency
-    Legacy is a restricted module; use the supported api module
-       2 | let b = Legacy.Internal.secret
-         |         ^^^^^^^^^^^^^^^^^^^^^^
-  app.ml:3:12 warning restricted-dependency
-    Stdlib.invalid_arg is a restricted value; use Import.invalid_arg' — house messages carry module and function
-       3 | let f () = invalid_arg "boom"
-         |            ^^^^^^^^^^^
-  app.ml:4:28 warning restricted-dependency
-    Stdlib.Obj is a restricted module; use a typed interface
-       4 | let cast (x : int) : int = Obj.magic x
-         |                            ^^^^^^^^^
+  File "app.ml", line 1, characters 8-20:
+  1 | let a = Legacy.token
+              ^^^^^^^^^^^^
+  Warning 0 [restricted-dependency]: Legacy is a restricted module; use the supported api module
+    
+  File "app.ml", line 2, characters 8-30:
+  2 | let b = Legacy.Internal.secret
+              ^^^^^^^^^^^^^^^^^^^^^^
+  Warning 0 [restricted-dependency]: Legacy is a restricted module; use the supported api module
+    
+  File "app.ml", line 3, characters 11-22:
+  3 | let f () = invalid_arg "boom"
+                 ^^^^^^^^^^^
+  Warning 0 [restricted-dependency]: Stdlib.invalid_arg is a restricted value; use Import.invalid_arg' — house messages carry module and function
+    
+  File "app.ml", line 4, characters 27-36:
+  4 | let cast (x : int) : int = Obj.magic x
+                                 ^^^^^^^^^
+  Warning 0 [restricted-dependency]: Stdlib.Obj is a restricted module; use a typed interface
   
   1 rule selected · 3 units · 4 findings · 0 skipped · 1 facts-only
   [1]

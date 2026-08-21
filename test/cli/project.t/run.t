@@ -61,26 +61,30 @@ rooted and shielded exports are silent, and findings anchor at the .mli
 line when the unit has one.
 
   $ env -u INSIDE_DUNE litany check --select unused-export,dead-code
-  island_leaf.ml:1:5 warning dead-code
-    leaf is never used in this workspace
-       1 | let leaf () = 2
-         |     ^^^^
-  island_top.ml:1:5 warning dead-code
-    visit is never used in this workspace
-       1 | let visit () = Island_leaf.leaf () + 1
-         |     ^^^^^
-  island_top.ml:1:5 warning unused-export
-    visit is exported but never used by another unit in this workspace
-       1 | let visit () = Island_leaf.leaf () + 1
-         |     ^^^^^
-  lone.mli:1:1 warning dead-code
-    alone is never used in this workspace
-       1 | val alone : int
-         | ^^^^^^^^^^^^^^^
-  lone.mli:1:1 warning unused-export
-    alone is exported but never used by another unit in this workspace
-       1 | val alone : int
-         | ^^^^^^^^^^^^^^^
+  File "island_leaf.ml", line 1, characters 4-8:
+  1 | let leaf () = 2
+          ^^^^
+  Warning 0 [dead-code]: leaf is never used in this workspace
+    
+  File "island_top.ml", line 1, characters 4-9:
+  1 | let visit () = Island_leaf.leaf () + 1
+          ^^^^^
+  Warning 0 [dead-code]: visit is never used in this workspace
+    
+  File "island_top.ml", line 1, characters 4-9:
+  1 | let visit () = Island_leaf.leaf () + 1
+          ^^^^^
+  Warning 0 [unused-export]: visit is exported but never used by another unit in this workspace
+    
+  File "lone.mli", line 1, characters 0-15:
+  1 | val alone : int
+      ^^^^^^^^^^^^^^^
+  Warning 0 [dead-code]: alone is never used in this workspace
+    
+  File "lone.mli", line 1, characters 0-15:
+  1 | val alone : int
+      ^^^^^^^^^^^^^^^
+  Warning 0 [unused-export]: alone is exported but never used by another unit in this workspace
   
   2 rules selected · 5 units · 5 findings · 0 skipped
   [1]
@@ -128,7 +132,7 @@ private-run findings.
   $ cat > plib.opam <<'EOP'
   > EOP
   $ env -u INSIDE_DUNE litany check --select unused-export,dead-code > page.pub
-  $ grep -c "warning" page.pub
+  $ grep -c "^Warning" page.pub
   0
   [1]
   $ cat > litany <<'EOP'
@@ -137,7 +141,7 @@ private-run findings.
   > EOP
   $ env -u INSIDE_DUNE litany check --select unused-export,dead-code > page.closed
   [1]
-  $ grep -c "warning" page.closed
+  $ grep -c "^Warning" page.closed
   5
   $ rm litany
 
@@ -264,14 +268,15 @@ and only the module referenced by nobody is reported.
   > let () = assert (Gt_helper.mul 2 = 6)
   > EOP
   $ env -u INSIDE_DUNE litany check --select unused-export,dead-code --explain-withheld
-  lib/glone.ml:1:5 warning dead-code
-    nobody is never used in this workspace
-       1 | let nobody = 1
-         |     ^^^^^^
-  lib/glone.ml:1:5 warning unused-export
-    nobody is exported but never used by another unit in this workspace
-       1 | let nobody = 1
-         |     ^^^^^^
+  File "lib/glone.ml", line 1, characters 4-10:
+  1 | let nobody = 1
+          ^^^^^^
+  Warning 0 [dead-code]: nobody is never used in this workspace
+    
+  File "lib/glone.ml", line 1, characters 4-10:
+  1 | let nobody = 1
+          ^^^^^^
+  Warning 0 [unused-export]: nobody is exported but never used by another unit in this workspace
   
   2 rules selected · 9 units · 2 findings · 0 skipped
   withheld: nothing — dead-code, unused-export ran over the complete universe

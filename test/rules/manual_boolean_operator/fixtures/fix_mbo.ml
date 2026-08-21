@@ -17,6 +17,39 @@ let p4 c t = if c then false else t (* FIRE *)
    the fix restores the pair (pinned by the unsafe golden). *)
 let p5 found = string_of_bool (if found then true else retry ()) (* FIRE *)
 
+(* Trailing-open operand: the if is the unparenthesized right operand of
+   an infix operator. The bare rewrite would re-associate — `a && c || e`
+   is `(a && c) || e` — so the fix adds the pair; the truth table below
+   pins the semantics, and the fixture's runtest leg executes it on both
+   this file and the unsafe golden. *)
+let p6 a c e = a && if c then true else e (* FIRE *)
+let p7 a c e = a || if c then false else e (* FIRE *)
+
+(* A let body is not an operand: the bare rewrite, no pair added. *)
+let p8 c e =
+  let b (* FIRE *) = if c then true else e in
+  b
+
+(* Already parenthesized under &&: the author's pair is restored once,
+   never doubled (ocamlformat would strip the pair, hence the opt-out). *)
+let p9 a c e = a && (if c then true else e) (* FIRE *)
+[@@ocamlformat "disable"]
+
+let () =
+  List.iter
+    (fun a ->
+      List.iter
+        (fun c ->
+          List.iter
+            (fun e ->
+              assert (p6 a c e = (a && (c || e)));
+              assert (p7 a c e = (a || ((not c) && e)));
+              assert (p8 c e = (c || e));
+              assert (p9 a c e = (a && (c || e))))
+            [ true; false ])
+        [ true; false ])
+    [ true; false ]
+
 (* negative: two-literal branches are redundant-if-bool's *)
 let n1 c = if c then true else false
 

@@ -62,15 +62,15 @@ let find t name = List.find (fun (n, _) -> n == name) t.stock
 
 ```
 $ litany check
-lib/inventory.ml:5:18 warning needless-list-length
-  comparison through List.length is a needless emptiness test
-     5 | let check t = if List.length t.stock = 0 then restock t else t
-       |                  ^^^^^^^^^^^^^^^^^^^^^^^
+File "lib/inventory.ml", line 5, characters 17-40:
+5 | let check t = if List.length t.stock = 0 then restock t else t
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
   fix (safe): compare with []
-lib/inventory.ml:7:44 warning suspicious-physical-equality
-  physical comparison has a non-immediate operand
-     7 | let find t name = List.find (fun (n, _) -> n == name) t.stock
-       |                                            ^^^^^^^^^
+File "lib/inventory.ml", line 7, characters 43-52:
+7 | let find t name = List.find (fun (n, _) -> n == name) t.stock
+                                               ^^^^^^^^^
+Warning 0 [suspicious-physical-equality]: physical comparison has a non-immediate operand
 
 30 rules selected · 1 unit · 2 findings (1 fixable — run `litany check --fix`) · 0 skipped
 ```
@@ -102,10 +102,10 @@ $ litany check --fix
 fix lib/inventory.ml: 1 applied
 pass 1: 1 fix applied (1 file)
 pass 2 (rebuild + re-lint): findings remain
-lib/inventory.ml:7:44 warning suspicious-physical-equality
-  physical comparison has a non-immediate operand
-     7 | let find t name = List.find (fun (n, _) -> n == name) t.stock
-       |                                            ^^^^^^^^^
+File "lib/inventory.ml", line 7, characters 43-52:
+7 | let find t name = List.find (fun (n, _) -> n == name) t.stock
+                                               ^^^^^^^^^
+Warning 0 [suspicious-physical-equality]: physical comparison has a non-immediate operand
 
 30 rules selected · 1 unit · 1 finding · 1 fix applied · 0 skipped
 ```
@@ -129,7 +129,7 @@ default state, summary:
 $ litany rules
 dead-code                                 suspicious   nursery  never      off  exported value unreachable from any root
 disable-all-warnings                      suspicious   stable   never      on   a warning attribute disables every warning
-eta-reducible-forwarding                  pedantic     nursery  never      off  binding that only forwards its arguments
+eta-reducible-forwarding                  style        nursery  never      off  binding that only forwards its arguments
 ...
 suspicious-lost-backtrace                 suspicious   stable   never      on   work between catching and re-raising can overwrite the backtrace
 suspicious-physical-equality              suspicious   stable   never      on   physical comparison with a non-immediate operand
@@ -265,8 +265,7 @@ warm or cold, at any worker count. `--no-cache` runs uncached;
 
 | Format | Channel | Shape |
 | --- | --- | --- |
-| `text` (default) | stdout | the human page: excerpts, carets, fix lines, one summary line |
-| `compiler` | stderr | the exact grammar dune's diagnostic parser accepts |
+| `text` (default) | stdout | the report page: compiler-shaped `File`/`Warning` blocks with excerpts, carets, and fix lines, then one summary line — the grammar dune's diagnostic parser accepts, so the same page humans read is the one editors receive from a dune rule |
 | `json` | stdout | JSON Lines: one finding object per line, one summary trailer |
 | `github` | stdout | workflow annotations; auto-selected under `GITHUB_ACTIONS` |
 

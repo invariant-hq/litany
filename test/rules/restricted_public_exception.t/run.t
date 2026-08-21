@@ -70,10 +70,10 @@ exception its mli hides, the private library's byte-identical interface
 exception, and the executable's exception never fire.
 
   $ env -u INSIDE_DUNE litany check --select restricted-public-exception
-  pub/api.ml:1:11 warning restricted-public-exception
-    exception Parse_error is declared in a public library interface; return a result instead
-       1 | exception Parse_error of string
-         |           ^^^^^^^^^^^
+  File "pub/api.ml", line 1, characters 10-21:
+  1 | exception Parse_error of string
+                ^^^^^^^^^^^
+  Warning 0 [restricted-public-exception]: exception Parse_error is declared in a public library interface; return a result instead
   
   1 rule selected · 5 units · 1 finding · 0 skipped · 1 facts-only
   [1]

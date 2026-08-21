@@ -3,8 +3,64 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-(* The whole page is built in a buffer and handed to the formatter in one
-   piece: deterministic bytes, no pretty-printing engine in the way. *)
+(* The one report page, for humans and for dune alike. Every finding is
+   an ocamlc-shaped block — the [File "…", line L, characters A-B:] header,
+   the quoted line with carets, the [Warning 0 [<rule>]: …] line — in the
+   exact grammar dune's vendored ocamlc-loc lexer accepts, so a failing
+   dune action's output lands as diagnostics and reaches editors over RPC
+   while a terminal reads the same bytes in full. The grammar is
+   unforgiving: one wrong byte does not lose one finding in dune's parser,
+   it truncates every finding after it, so the helpers below are
+   defensive about the fatal shapes (a header-shaped message line, a
+   caret line without a quoted line before it) and the whole page is
+   built in a buffer and handed to the formatter in one piece —
+   deterministic bytes, no pretty-printing engine in the way. *)
+
+(* A message line that itself parses as a [File "…", line N…] header forges
+   structure: flush left it truncates the rest of the stream, indented it
+   becomes a bogus related entry. Neutralize by doubling the space after
+   [File] — the lexer requires the literal [File "], so [File  "] no longer
+   matches, and the text stays legible. The check mirrors the lexer's token
+   rule prefix: optional blanks, [File "<path>", ] then [line]/[lines] and a
+   digit. *)
+let defuse_header_forgery line =
+  let n = String.length line in
+  let skip_blanks i =
+    let i = ref i in
+    while !i < n && (line.[!i] = ' ' || line.[!i] = '\t') do
+      incr i
+    done;
+    !i
+  in
+  let has_prefix p i =
+    let l = String.length p in
+    i + l <= n && String.sub line i l = p
+  in
+  let start = skip_blanks 0 in
+  let forged =
+    has_prefix "File \"" start
+    &&
+    match String.index_from_opt line (start + 6) '"' with
+    | None -> false
+    | Some q -> (
+        has_prefix "\", " q
+        &&
+        let i = skip_blanks (q + 3) in
+        let i =
+          if has_prefix "lines " i then Some (i + 6)
+          else if has_prefix "line " i then Some (i + 5)
+          else None
+        in
+        match i with
+        | Some i -> i < n && line.[i] >= '0' && line.[i] <= '9'
+        | None -> false)
+  in
+  if forged then
+    String.sub line 0 (start + 4)
+    ^ "  "
+    ^ String.sub line (start + 5) (n - start - 5)
+  else line
+
 let text ?(color = false) ?(fixes = `Hint) ?(notes_detail = false)
     ~source_of_path ppf rep =
   (* One dial, two derived views: the hint and the applied count cannot
@@ -33,10 +89,12 @@ let text ?(color = false) ?(fixes = `Hint) ?(notes_detail = false)
     | Rule.Severity.Error -> "31"
     | Rule.Severity.Warning -> "33"
   in
-  let sev_name = function
-    | Rule.Severity.Error -> "error"
-    | Rule.Severity.Warning -> "warning"
-  in
+  (* Styling touches the severity word and the carets only. The [File]
+     header stays plain even on a terminal: the lexer's header rule
+     admits nothing but blanks before the [File "…"] literal, so a styled
+     header is a lost finding — dune strips ANSI before parsing, but the
+     contract is pinned against the vendored lexer, not against dune's
+     leniency. *)
   let paint code s =
     if color then Printf.sprintf "\027[%sm%s\027[0m" code s else s
   in
@@ -57,14 +115,43 @@ let text ?(color = false) ?(fixes = `Hint) ?(notes_detail = false)
     in
     fun fname -> not (List.mem fname offsets_degraded)
   in
+  (* Continuation lines carry a fixed two-space indent — blank ones too, so
+     the parser's min-indent normalization keeps deeper relative indents
+     intact — and every one is defused. *)
+  let add_continuation lines =
+    List.iter (fun l -> add "  %s" (defuse_header_forgery l)) lines
+  in
+  let first_finding = ref true in
   Engine.Report.iter_findings rep (fun ~rule ~severity f ->
+      (* One visually blank line between finding blocks, so a reader can
+         see where one diagnostic ends and the next begins. The lexer has
+         no terminator but the next header, so the separator folds into
+         the previous finding's message as a continuation — it therefore
+         carries the fixed two-space indent every continuation line does,
+         keeping the parser's min-indent normalization intact (a
+         zero-indent blank would drag the minimum to zero and un-indent
+         every message line). Pinned by the grammar suite. *)
+      if !first_finding then first_finding := false else add "  ";
       let loc = Finding.loc f in
-      let p = loc.Location.loc_start in
-      add "%s:%d:%d %s %s" p.pos_fname p.pos_lnum
-        (p.pos_cnum - p.pos_bol + 1)
-        (paint (sev_color severity) (sev_name severity))
-        rule;
-      add "  %s" (Finding.message f);
+      let p = loc.Location.loc_start and q = loc.Location.loc_end in
+      (* Header: [File "<path>", line L, characters A-B:] — [lines L-M] for
+         a multi-line span. Columns are the compiler's own convention,
+         0-based [pos_cnum - pos_bol], end-exclusive, emitted verbatim:
+         dune's [Compound_user_error.make_loc] copies the numbers into the
+         diagnostic with no adjustment. The path goes out raw — [%s], not
+         [%S] — because the lexer's path charset is any byte but
+         double-quote and newline, and escaping would change the bytes
+         editors jump to. *)
+      let a = p.pos_cnum - p.pos_bol and b = q.pos_cnum - q.pos_bol in
+      if p.pos_lnum = q.pos_lnum then
+        add "File \"%s\", line %d, characters %d-%d:" p.pos_fname p.pos_lnum a b
+      else
+        add "File \"%s\", lines %d-%d, characters %d-%d:" p.pos_fname p.pos_lnum
+          q.pos_lnum a b;
+      (* The excerpt sits between the header and the severity line, where
+         the lexer expects ocamlc's own: a [N | <line>] row, then carets
+         under the span as blanks and [^] alone — a bar on the caret row
+         would end the stream. *)
       (match
          if excerpt_trusted p.pos_fname then source_of_path p.pos_fname
          else None
@@ -75,10 +162,10 @@ let text ?(color = false) ?(fixes = `Hint) ?(notes_detail = false)
           | None -> ()
           | Some sp ->
               let line = Option.value (Source.slice src sp) ~default:"" in
-              add "%6d | %s" p.pos_lnum line;
+              let gutter = Printf.sprintf "%d | " p.pos_lnum in
+              add "%s%s" gutter line;
               (* Carets only when the offsets can be trusted against these
                  bytes; line-anchored findings quote the line alone. *)
-              let q = loc.Location.loc_end in
               if
                 Source.consistent src p && Source.consistent src q
                 && p.pos_cnum <= q.pos_cnum
@@ -86,14 +173,45 @@ let text ?(color = false) ?(fixes = `Hint) ?(notes_detail = false)
                 let lead = p.pos_cnum - Span.start sp in
                 let stop = min q.pos_cnum (Span.stop sp) in
                 let count = max 1 (stop - p.pos_cnum) in
-                add "%6s | %s%s" "" (String.make lead ' ')
+                add "%s%s"
+                  (String.make (String.length gutter + lead) ' ')
                   (paint (sev_color severity) (String.make count '^'))));
+      (* Warnings keep structured rule identity in the bracketed code;
+         errors repeat it in the message text because dune's
+         [Compound_user_error] discards the structured code on the error
+         form before editors see it. The first message line rides the
+         severity line after the colon, where it cannot be line-initial,
+         so it is not defused. *)
+      let message =
+        match severity with
+        | Rule.Severity.Warning -> Finding.message f
+        | Rule.Severity.Error -> Finding.message f ^ " [" ^ rule ^ "]"
+      in
+      let first, rest =
+        match String.split_on_char '\n' message with
+        | [] -> ("", [])
+        | first :: rest -> (first, rest)
+      in
+      let first = if first = "" then "" else " " ^ first in
+      (match severity with
+      | Rule.Severity.Warning ->
+          add "%s 0 [%s]:%s" (paint (sev_color severity) "Warning") rule first
+      | Rule.Severity.Error ->
+          add "%s:%s" (paint (sev_color severity) "Error") first);
+      add_continuation rest;
+      (* The fix promise is one more continuation line — [fix
+         (<applicability>): <title>]: a safe fix's line says what [--fix]
+         will apply, an unsafe fix's line is the suggestion it only applies
+         under [--unsafe]. The parser folds it into the finding's message,
+         so editors show it with the diagnostic. *)
       match Finding.fix f with
       | None -> ()
       | Some fx ->
-          add "  fix (%s): %s"
-            (Fix.applicability_to_string (Fix.applicability fx))
-            (Fix.title fx));
+          add_continuation
+            (String.split_on_char '\n'
+               (Printf.sprintf "fix (%s): %s"
+                  (Fix.applicability_to_string (Fix.applicability fx))
+                  (Fix.title fx))));
   (* The one aggregation: the counts printed here are the same [Summary] the
      json trailer serializes, so the human page and the machine channel
      cannot disagree on the truth set. *)
@@ -209,131 +327,6 @@ let text ?(color = false) ?(fixes = `Hint) ?(notes_detail = false)
     (Engine.Report.failures rep);
   Format.pp_print_string ppf (Buffer.contents buf)
 
-(* The compiler renderer emits the exact grammar dune's vendored ocamlc-loc
-   lexer accepts. It is a wire format: one
-   block per finding — flush-left header, severity line, indented message
-   continuation — LF only, no ANSI, no excerpts or
-   carets, nothing before the first block or after the last. One wrong byte
-   does not just lose one finding in dune's parser: a malformed block
-   truncates every finding after it, so every helper below is defensive
-   about the three fatal shapes (leading text, caret-without-excerpt,
-   forged header). *)
-
-(* A message line that itself parses as a [File "…", line N…] header forges
-   structure: flush left it truncates the rest of the stream, indented it
-   becomes a bogus related entry. Neutralize by doubling the space after
-   [File] — the lexer requires the literal [File "], so [File  "] no longer
-   matches, and the text stays legible. The check mirrors the lexer's token
-   rule prefix: optional blanks, [File "<path>", ] then [line]/[lines] and a
-   digit. *)
-let defuse_header_forgery line =
-  let n = String.length line in
-  let skip_blanks i =
-    let i = ref i in
-    while !i < n && (line.[!i] = ' ' || line.[!i] = '\t') do
-      incr i
-    done;
-    !i
-  in
-  let has_prefix p i =
-    let l = String.length p in
-    i + l <= n && String.sub line i l = p
-  in
-  let start = skip_blanks 0 in
-  let forged =
-    has_prefix "File \"" start
-    &&
-    match String.index_from_opt line (start + 6) '"' with
-    | None -> false
-    | Some q -> (
-        has_prefix "\", " q
-        &&
-        let i = skip_blanks (q + 3) in
-        let i =
-          if has_prefix "lines " i then Some (i + 6)
-          else if has_prefix "line " i then Some (i + 5)
-          else None
-        in
-        match i with
-        | Some i -> i < n && line.[i] >= '0' && line.[i] <= '9'
-        | None -> false)
-  in
-  if forged then
-    String.sub line 0 (start + 4)
-    ^ "  "
-    ^ String.sub line (start + 5) (n - start - 5)
-  else line
-
-let compiler ppf rep =
-  let buf = Buffer.create 1024 in
-  (* Header: [File "<path>", line L, characters A-B:] — [lines L-M] for a
-     multi-line span. Columns are the compiler's own convention, 0-based
-     [pos_cnum - pos_bol], end-exclusive, emitted verbatim: dune's
-     [Compound_user_error.make_loc] copies the numbers into the diagnostic
-     with no adjustment. The path goes out raw — [%s], not [%S] — because
-     the lexer's path charset is any byte but double-quote and newline, and
-     escaping would change the bytes editors jump to. *)
-  let add_header ~indent (loc : Location.t) =
-    let p = loc.Location.loc_start and q = loc.Location.loc_end in
-    let a = p.pos_cnum - p.pos_bol and b = q.pos_cnum - q.pos_bol in
-    if p.pos_lnum = q.pos_lnum then
-      Printf.bprintf buf "%sFile \"%s\", line %d, characters %d-%d:\n" indent
-        p.pos_fname p.pos_lnum a b
-    else
-      Printf.bprintf buf "%sFile \"%s\", lines %d-%d, characters %d-%d:\n"
-        indent p.pos_fname p.pos_lnum q.pos_lnum a b
-  in
-  (* Continuation lines carry a fixed two-space indent — blank ones too, so
-     the parser's min-indent normalization keeps deeper relative indents
-     intact — and every one is defused. The first line rides the severity
-     line after the colon, where it cannot be line-initial, so it is not
-     rewritten. *)
-  let add_continuation ~indent lines =
-    List.iter
-      (fun l -> Printf.bprintf buf "%s%s\n" indent (defuse_header_forgery l))
-      lines
-  in
-  Engine.Report.iter_findings rep (fun ~rule ~severity f ->
-      let loc = Finding.loc f in
-      add_header ~indent:"" loc;
-      (* Warnings keep structured rule identity in the bracketed code;
-         errors repeat it in the message text because dune's
-         [Compound_user_error] discards the structured code on the error
-         form before editors see it. *)
-      let message =
-        match severity with
-        | Rule.Severity.Warning -> Finding.message f
-        | Rule.Severity.Error -> Finding.message f ^ " [" ^ rule ^ "]"
-      in
-      let first, rest =
-        match String.split_on_char '\n' message with
-        | [] -> ("", [])
-        | first :: rest -> (first, rest)
-      in
-      (match severity with
-      | Rule.Severity.Warning ->
-          Printf.bprintf buf "Warning 0 [%s]:%s\n" rule
-            (if first = "" then "" else " " ^ first)
-      | Rule.Severity.Error ->
-          Printf.bprintf buf "Error:%s\n"
-            (if first = "" then "" else " " ^ first));
-      add_continuation ~indent:"  " rest;
-      (* The fix promise rides the block as an indented continuation line —
-         the dune lane's textual fix surface: a safe fix's line says what
-         [--fix] will apply, an unsafe fix's line is the suggestion it
-         only applies under [--unsafe]. The parser folds it into
-         [report.message], so editors show it with the diagnostic. Same
-         spelling as the text page's fix line; defused and indented like
-         any continuation. *)
-      match Finding.fix f with
-      | None -> ()
-      | Some fx ->
-          let app = Fix.applicability_to_string (Fix.applicability fx) in
-          add_continuation ~indent:"  "
-            (String.split_on_char '\n'
-               (Printf.sprintf "fix (%s): %s" app (Fix.title fx))));
-  Format.pp_print_string ppf (Buffer.contents buf)
-
 (* {1 JSON} *)
 
 (* JSON is UTF-8 by definition; litany's paths and fix replacement text are
@@ -432,8 +425,8 @@ let json ppf rep =
     end
   in
   (* Positions in the compiler's own convention: 1-based lines, 0-based
-     end-exclusive byte columns — the numbers the compiler format carries,
-     unadjusted. *)
+     end-exclusive byte columns — the numbers the text page's [File]
+     header carries, unadjusted. *)
   let loc_fields (loc : Location.t) =
     let p = loc.Location.loc_start and q = loc.Location.loc_end in
     raw "\"line\":%d,\"col\":%d,\"end_line\":%d,\"end_col\":%d" p.pos_lnum

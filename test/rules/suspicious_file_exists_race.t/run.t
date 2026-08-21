@@ -35,14 +35,15 @@ real build; the handled mkdir (the remedy) and the platform probe stay
 silent.
 
   $ env -u INSIDE_DUNE litany check --select suspicious-file-exists-race
-  lib/racelib.ml:1:23 warning suspicious-file-exists-race
-    the exists check races with the guarded operation; perform it and handle the exception
-       1 | let cleanup path = if Sys.file_exists path then Sys.remove path
-         |                       ^^^^^^^^^^^^^^^^^^^^
-  lib/racelib.ml:3:21 warning suspicious-file-exists-race
-    the exists check races with the guarded operation; perform it and handle the exception
-       3 | let ensure dir = if not (Sys.file_exists dir) then Unix.mkdir dir 0o755
-         |                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "lib/racelib.ml", line 1, characters 22-42:
+  1 | let cleanup path = if Sys.file_exists path then Sys.remove path
+                            ^^^^^^^^^^^^^^^^^^^^
+  Warning 0 [suspicious-file-exists-race]: the exists check races with the guarded operation; perform it and handle the exception
+    
+  File "lib/racelib.ml", line 3, characters 20-45:
+  3 | let ensure dir = if not (Sys.file_exists dir) then Unix.mkdir dir 0o755
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  Warning 0 [suspicious-file-exists-race]: the exists check races with the guarded operation; perform it and handle the exception
   
   1 rule selected · 1 unit · 2 findings · 0 skipped
   [1]

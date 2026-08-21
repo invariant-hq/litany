@@ -217,11 +217,19 @@ val listing : Roster.t -> build_current:bool -> unit
     entry, print units and skips in (source, artifact) order, then the counted
     summary and the roster's project-capability line. *)
 
-(** The report formats. [Text] is the human page on stdout; the three machine
-    formats render the report page only — the fix narration and the admission
-    listing speak the text surface, so the composition root refuses them under
-    [--fix] and [--list-units] up front. *)
-type format = Text | Compiler | Json | Github
+(** The report formats. [Text] is the report page on stdout — the page humans
+    read and the page dune's diagnostic parser accepts from a failing action
+    ({!Render.text}: one page, not a human one and a machine one); the two
+    machine formats render the report page only — the fix narration and the
+    admission listing speak the text surface, so the composition root refuses
+    them under [--fix] and [--list-units] up front. *)
+type format = Text | Json | Github
+
+val color : unit -> bool
+(** [color ()] is whether a report page printed now may carry ANSI styling:
+    standard output is a terminal, [NO_COLOR] is unset, and [TERM] is not
+    [dumb]. Into a pipe — or into dune, which captures an action's output to a
+    file — the page is plain bytes, so styling never reaches a parser. *)
 
 type fix = { unsafe : bool; corrections : string option }
 (** The type for the fix posture: [Some { unsafe; corrections }] applies fixes

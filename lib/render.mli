@@ -5,15 +5,16 @@
 
 (** Renderers: derived views of one report.
 
-    Each renderer formats a [Engine.Report.t] for one consumer — humans
-    ({!text}), dune's diagnostic parser ({!compiler}), editors and dashboards
-    ({!json}), GitHub annotations ({!github}). Renderers are pure formatting:
-    they read the report in its total order and may not reorder, filter, or
-    depend on parallelism or cache state — the byte-determinism law is theirs
-    too. Channel discipline (stdout vs stderr) and exit codes are the driver's;
-    every contract here says what bytes go to the formatter, and the driver says
-    where the formatter points. The dial a driver selects a renderer with is
-    [Driver.format] — one constructor per renderer below. *)
+    Each renderer formats a [Engine.Report.t] for one consumer — the report page
+    ({!text}: humans at a terminal and dune's diagnostic parser read the same
+    bytes), editors and dashboards ({!json}), GitHub annotations ({!github}).
+    Renderers are pure formatting: they read the report in its total order and
+    may not reorder, filter, or depend on parallelism or cache state — the
+    byte-determinism law is theirs too. Channel discipline (stdout vs stderr)
+    and exit codes are the driver's; every contract here says what bytes go to
+    the formatter, and the driver says where the formatter points. The dial a
+    driver selects a renderer with is [Driver.format] — one constructor per
+    renderer below. *)
 
 (** {1:renderers Renderers} *)
 
@@ -25,72 +26,74 @@ val text :
   Format.formatter ->
   Engine.Report.t ->
   unit
-(** [text ~source_of_path ppf rep] formats [rep] for humans: per finding a
-    location line, the message, the quoted source line with carets, and a fix
-    line when a fix exists ([fix (safe): ...]); then one summary line — the
-    selected-rule count first ([Engine.Report.rules_selected]: the denominator
-    that keeps [0 findings] honest about how many rules looked), units, findings
-    with the fixable count and the run's fix posture ([fixes]: [`Hint], the
-    default, adds "run [litany check --fix]" as the fixable count's remedy; the
-    driver passes [`Applied n] under [--fix], where the hint would advise what
-    is already running — the fixable count still prints, followed by the
-    applied-fix count, and [`Applied 0] prints "0 fixes applied": a fix pass
-    that applied nothing must say so; [`Proposed n] is the corrections lane's
-    same count with "proposed" for "applied" — fixes became dune corrections,
-    and the page must not claim a source write the tree never saw), skips with
-    reasons, facts-only counts, and the dropped, degraded, and
-    suppressed-finding counts when non-zero (suppressed findings themselves are
-    never rendered: [Engine.Report.suppressed] retains them) — then roster lines
-    when project rules were blocked ([Engine.Report.project_rules]: the
-    run-level blocks — not-capable, incomplete, ambiguous — hold for every rule
-    and print once; a collect failure blocks one rule and prints per rule) and
-    when kind-gated rules were structurally silent
-    ([Engine.Report.withheld_rules], one line each), per-unit degradations,
-    per-unit informational notes ([Engine.Report.notes]), and rule failures.
-    Every count on the summary line is [Engine.Summary] — the same aggregation
-    the json trailer serializes.
+(** [text ~source_of_path ppf rep] formats [rep] as the report page: per finding
+    one ocamlc-shaped block, then one summary line and the roster lines. The
+    blocks are the exact grammar dune's vendored [ocamlc-loc] lexer accepts,
+    validated against that lexer, so the page a failing dune action prints lands
+    as dune diagnostics and reaches editors over dune RPC while a terminal reads
+    the same bytes in full — there is one page, not a human one and a machine
+    one.
+
+    A finding's block is [File "<path>", line L, characters A-B:] (or
+    [lines L-M] for a multi-line span; columns are the compiler's convention —
+    0-based [pos_cnum - pos_bol], end-exclusive — emitted verbatim), then the
+    excerpt — the quoted source line as [L | <line>] with the carets under the
+    span on the next line, ocamlc's own shape, which is where the lexer skips an
+    excerpt — then [Warning 0 [<rule-name>]: <msg>] for warnings or
+    [Error: <msg> [<rule-name>]] for errors (the error form repeats the rule
+    name in the message because dune discards the structured code there), the
+    message's further lines indented, and a fix line when a fix exists
+    ([  fix (<applicability>): <title>], which the parser folds into the
+    finding's message so editors show it with the diagnostic). Indented lines
+    that would themselves read as a [File] header are defused (a forged header
+    would truncate every later finding). Nothing precedes the first block — dune
+    gates on the output starting with [File ].
+
+    Then one summary line — the selected-rule count first
+    ([Engine.Report.rules_selected]: the denominator that keeps [0 findings]
+    honest about how many rules looked), units, findings with the fixable count
+    and the run's fix posture ([fixes]: [`Hint], the default, adds "run
+    [litany check --fix]" as the fixable count's remedy; the driver passes
+    [`Applied n] under [--fix], where the hint would advise what is already
+    running — the fixable count still prints, followed by the applied-fix count,
+    and [`Applied 0] prints "0 fixes applied": a fix pass that applied nothing
+    must say so; [`Proposed n] is the corrections lane's same count with
+    "proposed" for "applied" — fixes became dune corrections, and the page must
+    not claim a source write the tree never saw), skips with reasons, facts-only
+    counts, and the dropped, degraded, and suppressed-finding counts when
+    non-zero (suppressed findings themselves are never rendered:
+    [Engine.Report.suppressed] retains them) — then roster lines when project
+    rules were blocked ([Engine.Report.project_rules]: the run-level blocks —
+    not-capable, incomplete, ambiguous — hold for every rule and print once; a
+    collect failure blocks one rule and prints per rule) and when kind-gated
+    rules were structurally silent ([Engine.Report.withheld_rules], one line
+    each), per-unit degradations, per-unit informational notes
+    ([Engine.Report.notes]), and rule failures. Every count on the summary line
+    is [Engine.Summary] — the same aggregation the json trailer serializes.
+    Dune's parser folds everything after the last severity line into the last
+    finding's message, so the last diagnostic an editor shows carries the
+    summary and roster lines with it; the terminal and dune's own console print
+    the page verbatim.
 
     [source_of_path] supplies a unit's source for excerpts, consulted with
     [Unit.path] values as carried by the findings — [None] degrades that finding
-    to location and message, never an error. The driver must serve bytes it can
+    to header and message, never an error. The driver must serve bytes it can
     vouch for: re-read and compare against the unit's witness digest, or a
     retained snapshot; on mismatch, return [None] and let the finding degrade
     rather than excerpt bytes the run never saw. Line-anchored
     (offset-inconsistent) findings render without carets by contract, and
     findings in units the report marks offsets-degraded
-    ([Engine.Report.degradations] rows carrying [Offsets]) render location and
+    ([Engine.Report.degradations] rows carrying [Offsets]) render header and
     message only — corroboration was waived there, so offsets may count
     preprocessed bytes and an excerpt would witness bytes the finding never
     touched; a resolution-degraded unit's offsets are fully verified, so its
-    excerpts render as usual. [color] enables ANSI styling and defaults to
-    [false]; the driver decides from the terminal. *)
+    excerpts render as usual.
 
-val compiler : Format.formatter -> Engine.Report.t -> unit
-(** [compiler ppf rep] formats [rep] in the exact grammar dune's vendored
-    [ocamlc-loc] lexer accepts, validated against that lexer: per finding one
-    block — [File "<path>", line L, characters A-B:] (or [lines L-M] for
-    multi-line spans) directly followed by [Warning 0 [<rule-name>]: <msg>] for
-    warnings or [Error: <msg> [<rule-name>]] for errors (the error form repeats
-    the rule name in the message because dune discards the structured code
-    there). Columns are the compiler's convention — 0-based
-    [pos_cnum - pos_bol], end-exclusive — emitted verbatim.
-
-    No excerpt or caret lines (a caret line without an excerpt is fatal to the
-    whole stream), LF endings, no ANSI, nothing before the first block or after
-    the last — a summary line would corrupt the last finding's message. Message
-    continuation lines are indented and sanitized so none matches the flush-left
-    header pattern; a forged header would truncate every later finding. A
-    finding with a fix carries the promise as one more continuation line —
-    [fix (<applicability>): <title>], the design doc's journey-(a)/(f)
-    suggestion line, folded by the parser into the message so editors show it
-    with the diagnostic. Related locations are emitted as an indented header
-    plus indented message after the main message.
-
-    The driver's obligations, without which dune ignores the output: emit to
-    {e stderr} with stdout completely silent (dune gates on the concatenation
-    [stdout ^ stderr] starting with [File ]), and exit non-zero when findings
-    exist (dune parses only failing actions). Golden-tested byte-for-byte
-    against the vendored parser. *)
+    [color] enables ANSI styling of the severity word and the carets and
+    defaults to [false]; the driver decides from the terminal. The [File] header
+    is never styled — the lexer admits nothing but blanks before it — and with
+    [color] off the page is LF-terminated plain bytes, byte-identical across
+    runs. Golden-tested byte-for-byte against the vendored parser. *)
 
 val json : Format.formatter -> Engine.Report.t -> unit
 (** [json ppf rep] formats [rep] as JSON Lines: one finding object per line in

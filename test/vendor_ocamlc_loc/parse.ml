@@ -3,10 +3,10 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-(* Cram-side oracle: reads a compiler-format stream on stdin, parses it with
-   dune's vendored ocamlc-loc parser, and prints one deterministic line per
-   parsed report — the same shape as test_compiler's [show_report] — so the
-   CLI crams can prove that what litany emits is what dune's editor pipeline
+(* Cram-side oracle: reads a report page on stdin, parses it with dune's
+   vendored ocamlc-loc parser, and prints one deterministic line per parsed
+   report — the same shape as test_render's [show_report] — so the CLI
+   crams can prove that what litany emits is what dune's editor pipeline
    receives. Prints "0 reports" for an unparseable stream: an empty pin
    would read as "nothing ran". *)
 

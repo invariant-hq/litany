@@ -38,26 +38,24 @@ let analyze ~cmt ~source =
           let report =
             Litany.Engine.run ~rules ~catalog ~roster ~load:(fun _ -> Ok u) ()
           in
-          Ok report)
+          Ok (u, report))
 
-(* Isolated rule failures are exceptional (exit 3) and must not vanish;
-   they print after the finding blocks — trailing text corrupts the last
-   block in dune's parser, which is acceptable only on this internal-error
-   path where the exit code already dominates. *)
-let print_failures report =
-  List.iter
-    (fun (fl : Litany.Engine.Report.failure) ->
-      Format.eprintf "litany: rule %s failed on %s: %s@." fl.rule fl.unit_path
-        fl.message)
-    (Litany.Engine.Report.failures report)
-
-(* The gate lane: compiler format on stderr, stdout completely silent (dune
-   parses embedded locations from [stdout ^ stderr] of failing actions),
-   exit 1 on findings. *)
-let gate report =
-  Litany.Render.compiler Format.err_formatter report;
-  Format.pp_print_flush Format.err_formatter ();
-  print_failures report;
+(* The gate lane: the report page on stdout — the grammar dune's
+   diagnostic parser accepts from a failing action (dune parses
+   [stdout ^ stderr]), exit 1 on findings. Excerpts come from the bytes
+   the unit was admitted on: the loaded unit's own source and interface
+   source, the same snapshots the loader digested. Isolated rule failures
+   print on the page after the summary (exit 3 dominates). *)
+let gate u report =
+  let source_of_path path =
+    if String.equal path (Litany.Unit.path u) then Some (Litany.Unit.source u)
+    else
+      Option.bind (Litany.Unit.interface_source u) (fun src ->
+          if String.equal (Litany.Source.path src) path then Some src else None)
+  in
+  Litany.Render.text ~color:(Litany.Driver.color ()) ~source_of_path
+    Format.std_formatter report;
+  Format.pp_print_flush Format.std_formatter ();
   Litany.Engine.Report.exit_code report
 
 (* Path hygiene at the argv boundary: dune's [%{dep:...}] may expand with a
@@ -75,7 +73,7 @@ let lint _name cmt source =
   let cmt = clean_path cmt and source = clean_path source in
   match analyze ~cmt ~source with
   | Error code -> code
-  | Ok report -> gate report
+  | Ok (u, report) -> gate u report
 
 let name_arg =
   let doc =
@@ -100,14 +98,15 @@ let man =
     `S Manpage.s_description;
     `P
       "$(iname) lints exactly one unit: its argv is the roster — no \
-       subprocess, no lock, no workspace query. Findings print on standard \
-       error in the compiler's own report format (standard output stays \
-       silent) and the exit is the gate: 1 when findings exist. Dune parses \
-       that format from failing actions and serves it over RPC, so a rule \
-       running $(iname) surfaces findings in editors as ordinary compiler \
-       diagnostics. It is the per-module gate for build systems that wire one \
-       rule per unit; under dune the whole-workspace lane is one $(b,litany \
-       check) rule (see the build-integration manual).";
+       subprocess, no lock, no workspace query. The report page prints on \
+       standard output — the same page as $(b,litany check): per finding the \
+       compiler-shaped $(b,File)/$(b,Warning) block, then one summary line — \
+       and the exit is the gate: 1 when findings exist. Dune parses that \
+       grammar from failing actions and serves it over RPC, so a rule running \
+       $(iname) surfaces findings in editors as ordinary compiler diagnostics. \
+       It is the per-module gate for build systems that wire one rule per \
+       unit; under dune the whole-workspace lane is one $(b,litany check) rule \
+       (see the build-integration manual).";
     `P
       "The default rule set runs; the workspace $(b,litany) file is not read — \
        a build rule must mean the same thing on every checkout. Attribute \

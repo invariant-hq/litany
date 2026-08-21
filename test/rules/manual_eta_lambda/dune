@@ -1,0 +1,9 @@
+(test
+ (name test_manual_eta_lambda)
+ (modules test_manual_eta_lambda)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps
+  fixtures/fix_mel.ml
+  fixtures/.fix_mel.objs/byte/fix_mel.cmt
+  fixtures/fix_mel.fixed.ml
+  fixtures/.fix_mel_fixed.objs/byte/fix_mel_fixed.cmt))

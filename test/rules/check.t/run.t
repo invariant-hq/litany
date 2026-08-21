@@ -16,23 +16,26 @@ The report: findings in the total order (path, offset, rule), each with its
 caret excerpt, then the summary line. Exit 1 — findings, no failures.
 
   $ litany check --cmt-root .
-  funcmp.ml:3:14 warning invalid-function-comparison
-    structural comparison has a function operand
-       3 | let broken = compare f g
-         |              ^^^^^^^^^^^
-  length.ml:1:19 warning needless-list-length
-    comparison through List.length is a needless emptiness test
-       1 | let is_empty xs = List.length xs = 0
-         |                   ^^^^^^^^^^^^^^^^^^
+  File "funcmp.ml", line 3, characters 13-24:
+  3 | let broken = compare f g
+                   ^^^^^^^^^^^
+  Warning 0 [invalid-function-comparison]: structural comparison has a function operand
+    
+  File "length.ml", line 1, characters 18-36:
+  1 | let is_empty xs = List.length xs = 0
+                        ^^^^^^^^^^^^^^^^^^
+  Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
     fix (safe): compare with []
-  phys.ml:1:34 warning suspicious-physical-equality
-    physical comparison has a non-immediate operand
-       1 | let same_object (a : string) b = a == b
-         |                                  ^^^^^^
-  warnattr.ml:1:1 warning disable-all-warnings
-    attribute disables all compiler warnings
-       1 | [@@@warning "-a"]
-         | ^^^^^^^^^^^^^^^^^
+    
+  File "phys.ml", line 1, characters 33-39:
+  1 | let same_object (a : string) b = a == b
+                                       ^^^^^^
+  Warning 0 [suspicious-physical-equality]: physical comparison has a non-immediate operand
+    
+  File "warnattr.ml", line 1, characters 0-17:
+  1 | [@@@warning "-a"]
+      ^^^^^^^^^^^^^^^^^
+  Warning 0 [disable-all-warnings]: attribute disables all compiler warnings
   
   30 rules selected · 6 units · 4 findings (1 fixable — run `litany check --fix`) · 0 skipped · 1 facts-only
   roster: suspicious-exit-in-library withheld (kind-gated; no unit in this lane carries a stanza kind)

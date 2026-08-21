@@ -18,15 +18,16 @@ Nursery, so exact names select the pair). The implementation contributes
 nothing — iface.ml is clean.
 
   $ litany check --cmt-root . --select trailing-whitespace,missing-final-newline
-  iface.mli:1:14 warning trailing-whitespace
-    trailing whitespace
-       1 | val eof : int	
-         |              ^
+  File "iface.mli", line 1, characters 13-14:
+  1 | val eof : int	
+                   ^
+  Warning 0 [trailing-whitespace]: trailing whitespace
     fix (safe): delete the trailing whitespace
-  iface.mli:1:15 warning missing-final-newline
-    file does not end with LF
-       1 | val eof : int	
-         |               ^
+    
+  File "iface.mli", line 1, characters 14-14:
+  1 | val eof : int	
+                    ^
+  Warning 0 [missing-final-newline]: file does not end with LF
     fix (safe): add a final newline
   
   2 rules selected · 2 units · 2 findings (2 fixable — run `litany check --fix`) · 0 skipped · 1 facts-only
@@ -41,15 +42,16 @@ implementation's, so fixing the mli stales nothing.
   fix iface.mli: 2 applied
   pass 1: 2 fixes applied (1 file)
   2 fixes applied — artifacts are now stale; rebuild and re-run to converge
-  iface.mli:1:14 warning trailing-whitespace
-    trailing whitespace
-       1 | val eof : int	
-         |              ^
+  File "iface.mli", line 1, characters 13-14:
+  1 | val eof : int	
+                   ^
+  Warning 0 [trailing-whitespace]: trailing whitespace
     fix (safe): delete the trailing whitespace
-  iface.mli:1:15 warning missing-final-newline
-    file does not end with LF
-       1 | val eof : int	
-         |               ^
+    
+  File "iface.mli", line 1, characters 14-14:
+  1 | val eof : int	
+                    ^
+  Warning 0 [missing-final-newline]: file does not end with LF
     fix (safe): add a final newline
   
   2 rules selected · 2 units · 2 findings (2 fixable) · 2 fixes applied · 0 skipped · 1 facts-only

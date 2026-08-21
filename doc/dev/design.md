@@ -157,9 +157,10 @@ convention) and because it is the ecosystem's machine format. The adapters:
   *real* enclosing context against the real sources — same report, same
   paths, read-only (amended 2026-08-21; previously a refusal). A context
   that is missing or empty — the deps line absent — is a refusal naming
-  that remedy, never a silent green. The default report format becomes
-  `compiler`, so a failing rule's findings are dune diagnostics and
-  reach editors over dune RPC.
+  that remedy, never a silent green. The report page's finding blocks
+  are the grammar dune's diagnostic parser accepts, so a failing rule's
+  findings are dune diagnostics and reach editors over dune RPC — the
+  same page a terminal shows; there is no in-build format.
 - **one unit in the build** (`litany unit`): the degenerate one-unit
   case; argv is the roster, and the invoking rule's `%{cmt:...}`
   dependency is the freshness engine.
@@ -356,11 +357,16 @@ stanza carries both.)
 ## Diagnostics and output
 
 `Finding.t` = rule, location, message, optional fix.
-Renderers are derived views: `text` (human), `compiler` (the exact grammar
-dune's `ocamlc-loc` parser accepts — stderr only, stdout silent, no
-excerpts, `Warning 0 [<rule>]:` blocks, golden-tested against the vendored
-parser), `json` (JSON Lines plus a summary trailer; non-UTF-8 path bytes
-get a reversible hex twin), `github` (annotations, auto-selected under
+Renderers are derived views: `text` (the report page — per finding an
+ocamlc-shaped block in the exact grammar dune's `ocamlc-loc` parser
+accepts: `File "…", line L, characters A-B:`, the quoted line with carets
+between header and severity line as ocamlc prints them, `Warning 0
+[<rule>]: …`, the fix line as an indented continuation; then one summary
+line and the roster lines, which dune's parser folds into the last
+finding's message — golden-tested against the vendored parser; humans
+and dune read the same bytes, so there is no separate compiler format),
+`json` (JSON Lines plus a summary trailer; non-UTF-8 path bytes get a
+reversible hex twin), `github` (annotations, auto-selected under
 `GITHUB_ACTIONS`).
 
 ### Failures and refusals
@@ -464,7 +470,7 @@ the namespace:
 | `suppress` | `Directive.t` | Compiled `[@litany.allow]`/`[@litany.expect]` policy for one unit: harvest, scope, match, audit inputs. |
 | `rules` | (catalog) | The built-in catalog: one module per rule plus `Litany_rules.all`. |
 | `engine` | `Report.t` | The pure core: one traversal per substrate, kind-indexed dispatch, emit contract, total order, exit codes. |
-| `render` | (formatters) | Four derived views of one report: `text`, `compiler`, `json`, `github`. |
+| `render` | (formatters) | Three derived views of one report: `text` (the page humans and dune both read), `json`, `github`. |
 | `adapter` | (per-adapter) | How build systems reach the core: `Dune`, `Walk`, and the `Unit_file` codec. |
 | `config_file` | `Config_file.t`, `Glob.t` | The `litany` file: positioned dune-style sexp reader, closed schema, per-path globs. |
 | `cache` | (handles) | The content-addressed result cache. |

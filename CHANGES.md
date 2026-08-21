@@ -31,7 +31,8 @@ The surface at 1.0:
   (default), a unit file any build system can emit (`--units`), a
   prebuilt-artifact walk (`--cmt-root`), and an in-build lane
   wired through a dune alias.
-- Per-unit result caching and `-j` parallel workers; `text`,
-  `compiler`, `json`, and `github` output formats; exit codes 0 clean,
-  1 findings, 2 refusal, 3 internal error.
+- Per-unit result caching and `-j` parallel workers; `text` (the report
+  page, in the grammar dune's diagnostic parser accepts), `json`, and
+  `github` output formats; exit codes 0 clean, 1 findings, 2 refusal, 3
+  internal error.
 - Supports OCaml 5.5.

@@ -34,10 +34,10 @@ needed:
 
 ```
 $ litany check
-lib/inventory.ml:5:18 warning needless-list-length
-  comparison through List.length is a needless emptiness test
-     5 | let check t = if List.length t.stock = 0 then restock t else t
-       |                  ^^^^^^^^^^^^^^^^^^^^^^^
+File "lib/inventory.ml", line 5, characters 17-40:
+5 | let check t = if List.length t.stock = 0 then restock t else t
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
   fix (safe): compare with []
 
 30 rules selected · 1 unit · 1 finding (1 fixable — run `litany check --fix`) · 0 skipped
@@ -78,17 +78,29 @@ turns it off in a terminal that wants none.
 ## Reading a finding
 
 ```
-lib/inventory.ml:5:18 warning needless-list-length
-  comparison through List.length is a needless emptiness test
+File "lib/inventory.ml", line 5, characters 17-40:
+5 | let check t = if List.length t.stock = 0 then restock t else t
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
+  fix (safe): compare with []
 ```
 
-- `lib/inventory.ml:5:18` — file, 1-based line and column of the
-  construct.
-- `warning` — the severity, derived from the rule's group: `correctness`
-  findings are errors, everything else warns. See [rules.md](rules.md).
-- `needless-list-length` — the rule name. `litany explain
-  needless-list-length` prints its full documentation; `litany rules`
-  lists the catalog.
+A finding is shaped like a compiler diagnostic, on purpose: it is the
+grammar dune's diagnostic parser accepts, so the same page you read in a
+terminal lands in your editor when litany runs as a dune rule
+([build-integration.md](build-integration.md)).
+
+- `File "lib/inventory.ml", line 5, characters 17-40:` — file, 1-based
+  line, and the construct's byte columns in the compiler's convention
+  (0-based, end-exclusive); editors jump straight to it.
+- `5 | …` and the carets — the quoted line and the span under it.
+- `Warning` — the severity, derived from the rule's group: `correctness`
+  findings print `Error:`, everything else warns. See
+  [rules.md](rules.md).
+- `[needless-list-length]` — the rule name, in the compiler's warning-code
+  slot (an error carries it at the end of its message instead). `litany
+  explain needless-list-length` prints its full documentation; `litany
+  rules` lists the catalog.
 - `fix (safe): compare with []` — the finding carries a fix, and applying
   it preserves behavior.
 

@@ -12,38 +12,40 @@ whole session.)
   $ cp -RL ../fixture proj && chmod -R u+w proj && cd proj
 
   $ litany check --cmt-root . --select style
-  ws.ml:1:15 warning trailing-whitespace
-    trailing whitespace
-       1 | let padded = 1  
-         |               ^^
+  File "ws.ml", line 1, characters 14-16:
+  1 | let padded = 1  
+                    ^^
+  Warning 0 [trailing-whitespace]: trailing whitespace
     fix (safe): delete the trailing whitespace
   
-  23 rules selected · 6 units · 1 finding (1 fixable — run `litany check --fix`) · 0 skipped · 1 facts-only
+  24 rules selected · 6 units · 1 finding (1 fixable — run `litany check --fix`) · 0 skipped · 1 facts-only
   [1]
 
   $ litany check --cmt-root . --select needless-list-length
-  length.ml:1:19 warning needless-list-length
-    comparison through List.length is a needless emptiness test
-       1 | let is_empty xs = List.length xs = 0
-         |                   ^^^^^^^^^^^^^^^^^^
+  File "length.ml", line 1, characters 18-36:
+  1 | let is_empty xs = List.length xs = 0
+                        ^^^^^^^^^^^^^^^^^^
+  Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
     fix (safe): compare with []
   
   1 rule selected · 6 units · 1 finding (1 fixable — run `litany check --fix`) · 0 skipped · 1 facts-only
   [1]
 
   $ litany check --cmt-root . --ignore needless-list-length
-  funcmp.ml:3:14 warning invalid-function-comparison
-    structural comparison has a function operand
-       3 | let broken = compare f g
-         |              ^^^^^^^^^^^
-  phys.ml:1:34 warning suspicious-physical-equality
-    physical comparison has a non-immediate operand
-       1 | let same_object (a : string) b = a == b
-         |                                  ^^^^^^
-  warnattr.ml:1:1 warning disable-all-warnings
-    attribute disables all compiler warnings
-       1 | [@@@warning "-a"]
-         | ^^^^^^^^^^^^^^^^^
+  File "funcmp.ml", line 3, characters 13-24:
+  3 | let broken = compare f g
+                   ^^^^^^^^^^^
+  Warning 0 [invalid-function-comparison]: structural comparison has a function operand
+    
+  File "phys.ml", line 1, characters 33-39:
+  1 | let same_object (a : string) b = a == b
+                                       ^^^^^^
+  Warning 0 [suspicious-physical-equality]: physical comparison has a non-immediate operand
+    
+  File "warnattr.ml", line 1, characters 0-17:
+  1 | [@@@warning "-a"]
+      ^^^^^^^^^^^^^^^^^
+  Warning 0 [disable-all-warnings]: attribute disables all compiler warnings
   
   29 rules selected · 6 units · 3 findings · 0 skipped · 1 facts-only
   roster: suspicious-exit-in-library withheld (kind-gated; no unit in this lane carries a stanza kind)
@@ -63,20 +65,22 @@ of claiming the name is unknown.
   [2]
 
   $ litany check --cmt-root . --select all --ignore perf,style
-  funcmp.ml:3:14 warning invalid-function-comparison
-    structural comparison has a function operand
-       3 | let broken = compare f g
-         |              ^^^^^^^^^^^
-  phys.ml:1:34 warning suspicious-physical-equality
-    physical comparison has a non-immediate operand
-       1 | let same_object (a : string) b = a == b
-         |                                  ^^^^^^
-  warnattr.ml:1:1 warning disable-all-warnings
-    attribute disables all compiler warnings
-       1 | [@@@warning "-a"]
-         | ^^^^^^^^^^^^^^^^^
+  File "funcmp.ml", line 3, characters 13-24:
+  3 | let broken = compare f g
+                   ^^^^^^^^^^^
+  Warning 0 [invalid-function-comparison]: structural comparison has a function operand
+    
+  File "phys.ml", line 1, characters 33-39:
+  1 | let same_object (a : string) b = a == b
+                                       ^^^^^^
+  Warning 0 [suspicious-physical-equality]: physical comparison has a non-immediate operand
+    
+  File "warnattr.ml", line 1, characters 0-17:
+  1 | [@@@warning "-a"]
+      ^^^^^^^^^^^^^^^^^
+  Warning 0 [disable-all-warnings]: attribute disables all compiler warnings
   
-  28 rules selected · 6 units · 3 findings · 0 skipped · 1 facts-only
+  27 rules selected · 6 units · 3 findings · 0 skipped · 1 facts-only
   roster: suspicious-exit-in-library withheld (kind-gated; no unit in this lane carries a stanza kind)
   roster: suspicious-str-formatter withheld (kind-gated; no unit in this lane carries a stanza kind)
   roster: suspicious-transposable-arguments withheld (kind-gated; no unit in this lane carries a stanza kind)
@@ -90,15 +94,16 @@ run, so absence proves nothing).
   $ cd .. && cp -RL ../fixture_allow proj2 && chmod -R u+w proj2 && cd proj2
 
   $ litany check --cmt-root .
-  allowed.ml:2:21 warning needless-list-length
-    comparison through List.length is a needless emptiness test
-       2 | let also_empty xs = List.length xs = 0
-         |                     ^^^^^^^^^^^^^^^^^^
+  File "allowed.ml", line 2, characters 20-38:
+  2 | let also_empty xs = List.length xs = 0
+                          ^^^^^^^^^^^^^^^^^^
+  Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
     fix (safe): compare with []
-  allowed.ml:3:14 warning unused-allow
-    allow "needless-list-length" matched no finding
-       3 | let fine = 1 [@@litany.allow "needless-list-length: stale"]
-         |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    
+  File "allowed.ml", line 3, characters 13-59:
+  3 | let fine = 1 [@@litany.allow "needless-list-length: stale"]
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  Warning 0 [unused-allow]: allow "needless-list-length" matched no finding
     fix (safe): delete the unused allow
   
   30 rules selected · 2 units · 2 findings (2 fixable — run `litany check --fix`) · 0 skipped · 1 facts-only · 1 suppressed

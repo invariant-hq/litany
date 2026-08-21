@@ -1,8 +1,10 @@
-check --format selects the report surface: compiler (the exact grammar
-dune's diagnostic parser accepts, on stderr), json (JSON Lines plus one
-summary trailer), github (workflow annotations, auto-selected under
-GITHUB_ACTIONS). The compiler stream is proved through dune's own vendored
-ocamlc-loc parser. The fixture is a real nested dune project.
+check --format selects the report surface: text (the default — the report
+page: finding blocks in the grammar dune's diagnostic parser accepts,
+excerpts and carets between header and severity line as ocamlc prints
+them, then one summary line), json (JSON Lines plus one summary trailer),
+github (workflow annotations, auto-selected under GITHUB_ACTIONS). The
+text page is proved through dune's own vendored ocamlc-loc parser. The
+fixture is a real nested dune project.
 
   $ unset GITHUB_ACTIONS
   $ PARSE=$PWD/../../vendor_ocamlc_loc/parse.exe
@@ -21,24 +23,32 @@ ocamlc-loc parser. The fixture is a real nested dune project.
   > EOP
   $ env -u INSIDE_DUNE dune build --root . @check 2>/dev/null
 
-compiler: the report rides stderr with stdout completely silent (dune
-gates on the combined stream starting with "File "), exit 1 on findings.
---no-build keeps stderr pure — nothing but the report.
+text: the whole page rides stdout with stderr silent — dune gates on the
+combined stream starting with "File " — exit 1 on findings. --no-build
+keeps stderr pure.
 
-  $ env -u INSIDE_DUNE litany check --no-build --format compiler > page.out 2> page.err; echo "exit=$?"
+  $ env -u INSIDE_DUNE litany check --no-build > page.out 2> page.err; echo "exit=$?"
   exit=1
-  $ wc -c < page.out | tr -d ' '
+  $ wc -c < page.err | tr -d ' '
   0
-  $ cat page.err
+  $ cat page.out
   File "length.ml", line 1, characters 18-36:
+  1 | let is_empty xs = List.length xs = 0
+                        ^^^^^^^^^^^^^^^^^^
   Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
     fix (safe): compare with []
+  
+  30 rules selected · 3 units · 1 finding (1 fixable — run `litany check --fix`) · 0 skipped · 1 facts-only
 
-The stream parses in dune's vendored lexer — what litany emits is what
-the editor pipeline receives.
+The page parses in dune's vendored lexer — what litany emits is what the
+editor pipeline receives: the excerpt is skipped as ocamlc's own, the
+fix line folds into the message, and the summary (everything up to the
+next header, which there is none of) folds into the last finding's
+message rather than ending the stream. No ANSI into a pipe, so the
+bytes are the parser's.
 
-  $ $PARSE < page.err
-  length.ml:1:18-36 warning 0 [needless-list-length] "comparison through List.length is a needless emptiness test\nfix (safe): compare with []"
+  $ $PARSE < page.out
+  length.ml:1:18-36 warning 0 [needless-list-length] "comparison through List.length is a needless emptiness test\n  fix (safe): compare with []\n\n30 rules selected \194\183 3 units \194\183 1 finding (1 fixable \226\128\148 run `litany check --fix`) \194\183 0 skipped \194\183 1 facts-only"
 
 json: one finding object per line on stdout in report order, then the
 summary trailer. CI reads the trailer; bots read the fix edits.
@@ -70,14 +80,23 @@ the admission listing speak the text surface.
   $ env -u INSIDE_DUNE litany check --no-build --format json --fix
   litany: --format json renders the report page only; --fix speaks the text surface
   [2]
-  $ env -u INSIDE_DUNE litany check --no-build --format compiler --list-units
-  litany: --format compiler renders the report page only; --list-units speaks the text surface
+  $ env -u INSIDE_DUNE litany check --no-build --format github --list-units
+  litany: --format github renders the report page only; --list-units speaks the text surface
   [2]
 
-A clean report: compiler renders zero bytes on both streams, github zero
-annotations, json the trailer alone — exit 0.
+There is no separate compiler format: the text page is the one dune
+parses.
 
-  $ env -u INSIDE_DUNE litany check --no-build --format compiler --ignore needless-list-length 2>&1; echo "exit=$?"
+  $ env -u INSIDE_DUNE litany check --no-build --format compiler 2>&1 | grep -c "expected one of"
+  1
+  $ env -u INSIDE_DUNE litany check --no-build --format compiler 2>/dev/null; echo "exit=$?"
+  exit=2
+
+A clean report: text is the summary line alone, github zero annotations,
+json the trailer alone — exit 0.
+
+  $ env -u INSIDE_DUNE litany check --no-build --ignore needless-list-length; echo "exit=$?"
+  29 rules selected · 3 units · 0 findings · 0 skipped · 1 facts-only
   exit=0
   $ env -u INSIDE_DUNE litany check --no-build --format github --ignore needless-list-length; echo "exit=$?"
   exit=0

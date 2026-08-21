@@ -17,7 +17,7 @@
     (lint
      (select default)                    ; groups or rule names; default | all
      (extend style unused-export)
-     (ignore needless-identity-function)
+     (ignore manual-eta-lambda)
      (closed-world false))
 
     (rule line-length

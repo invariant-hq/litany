@@ -1,5 +1,6 @@
-; Dune's ocamlc-loc parser, vendored for the compiler-renderer golden
-; tests: lexer.mll byte-identical to dune's otherlibs/ocamlc-loc/src,
+; Dune's ocamlc-loc parser, vendored as the report page's grammar oracle
+; (test/unit/test_render.ml): lexer.mll byte-identical to dune's
+; otherlibs/ocamlc-loc/src,
 ; ocamlc_loc.ml with only the Dyn-dependent printers stripped. TEST-ONLY —
 ; no public_name, never shipped; the library name is prefixed so it cannot
 ; collide with another vendor copy of the same source in one workspace.
@@ -10,9 +11,9 @@
 
 (ocamllex lexer)
 
-; Cram-side oracle: parses a compiler-format stream from stdin and prints
-; one line per parsed report, so the CLI crams (test/cli/unit.t,
-; formats.t) can pin what dune's editor pipeline actually receives.
+; Cram-side oracle: parses a report page from stdin and prints one line
+; per parsed report, so the CLI crams (test/cli/unit.t, formats.t) can
+; pin what dune's editor pipeline actually receives.
 
 (executable
  (name parse)

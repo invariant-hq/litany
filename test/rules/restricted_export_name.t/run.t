@@ -60,30 +60,35 @@ message naming the condemning option; helper', hidden by naming.mli,
 stays silent, and every root name of bare.ml is export surface.
 
   $ env -u INSIDE_DUNE litany check --select restricted-export-name
-  bare.ml:1:6 warning restricted-export-name
-    u' ends with "'", forbidden in exported names by (forbid-suffix ')
-       1 | type u' = string
-         |      ^^
-  bare.ml:2:5 warning restricted-export-name
-    go' ends with "'", forbidden in exported names by (forbid-suffix ')
-       2 | let go' x = x
-         |     ^^^
-  bare.ml:3:5 warning restricted-export-name
-    total_count_of_all_things carries 4 underscores, over the (max-underscores 3) limit for exported names
-       3 | let total_count_of_all_things = 0
-         |     ^^^^^^^^^^^^^^^^^^^^^^^^^
-  naming.ml:1:6 warning restricted-export-name
-    t' ends with "'", forbidden in exported names by (forbid-suffix ')
-       1 | type t' = int
-         |      ^^
-  naming.ml:3:5 warning restricted-export-name
-    parse' ends with "'", forbidden in exported names by (forbid-suffix ')
-       3 | let parse' n = helper' n
-         |     ^^^^^^
-  naming.ml:4:5 warning restricted-export-name
-    a_b_c_d_e carries 4 underscores, over the (max-underscores 3) limit for exported names
-       4 | let a_b_c_d_e = 4
-         |     ^^^^^^^^^
+  File "bare.ml", line 1, characters 5-7:
+  1 | type u' = string
+           ^^
+  Warning 0 [restricted-export-name]: u' ends with "'", forbidden in exported names by (forbid-suffix ')
+    
+  File "bare.ml", line 2, characters 4-7:
+  2 | let go' x = x
+          ^^^
+  Warning 0 [restricted-export-name]: go' ends with "'", forbidden in exported names by (forbid-suffix ')
+    
+  File "bare.ml", line 3, characters 4-29:
+  3 | let total_count_of_all_things = 0
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  Warning 0 [restricted-export-name]: total_count_of_all_things carries 4 underscores, over the (max-underscores 3) limit for exported names
+    
+  File "naming.ml", line 1, characters 5-7:
+  1 | type t' = int
+           ^^
+  Warning 0 [restricted-export-name]: t' ends with "'", forbidden in exported names by (forbid-suffix ')
+    
+  File "naming.ml", line 3, characters 4-10:
+  3 | let parse' n = helper' n
+          ^^^^^^
+  Warning 0 [restricted-export-name]: parse' ends with "'", forbidden in exported names by (forbid-suffix ')
+    
+  File "naming.ml", line 4, characters 4-13:
+  4 | let a_b_c_d_e = 4
+          ^^^^^^^^^
+  Warning 0 [restricted-export-name]: a_b_c_d_e carries 4 underscores, over the (max-underscores 3) limit for exported names
   
   1 rule selected · 3 units · 6 findings · 0 skipped · 1 facts-only
   [1]
@@ -138,5 +143,5 @@ to their own readers — and the tier keeps the rule opt-in.
   > let () = print_int helper'
   > EOP
   $ env -u INSIDE_DUNE litany check --select restricted-export-name 2>&1 | grep -A 1 "tool/main"
-  tool/main.ml:1:5 warning restricted-export-name
-    helper' ends with "'", forbidden in exported names by (forbid-suffix ')
+  File "tool/main.ml", line 1, characters 4-11:
+  1 | let helper' = 41

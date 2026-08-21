@@ -1,5 +1,0 @@
-(test
- (name test_needless_identity_function)
- (modules test_needless_identity_function)
- (libraries windtrap rules_test_support litany litany_rules)
- (deps fixtures/fix_nif.ml fixtures/.fix_nif.objs/byte/fix_nif.cmt))

@@ -47,10 +47,10 @@ move — vendor/vlen.ml was analyzed, its report deselected.
   >  (reason "vendored code"))
   > EOP
   $ env -u INSIDE_DUNE litany check
-  length.ml:1:19 warning needless-list-length
-    comparison through List.length is a needless emptiness test
-       1 | let is_empty xs = List.length xs = 0
-         |                   ^^^^^^^^^^^^^^^^^^
+  File "length.ml", line 1, characters 18-36:
+  1 | let is_empty xs = List.length xs = 0
+                        ^^^^^^^^^^^^^^^^^^
+  Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
     fix (safe): compare with []
   
   30 rules selected · 5 units · 1 finding (1 fixable — run `litany check --fix`) · 0 skipped · 2 facts-only
@@ -67,10 +67,10 @@ replaces the default set; extend adds to it.
   >  (max-segments 3))
   > EOP
   $ env -u INSIDE_DUNE litany check
-  chain.ml:1:12 warning quadratic-string-concat-chain
-    chained (^) recopies later segments; use String.concat
-       1 | let path = "a" ^ "b" ^ "c" ^ "d"
-         |            ^^^^^^^^^^^^^^^^^^^^^
+  File "chain.ml", line 1, characters 11-32:
+  1 | let path = "a" ^ "b" ^ "c" ^ "d"
+                 ^^^^^^^^^^^^^^^^^^^^^
+  Warning 0 [quadratic-string-concat-chain]: chained (^) recopies later segments; use String.concat
   
   1 rule selected · 5 units · 1 finding · 0 skipped · 2 facts-only
   [1]

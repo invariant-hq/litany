@@ -3,8 +3,10 @@ is one rule the user writes, whose (alias_rec check) deps build every
 artifact before the action runs. Litany detects the action vantage from
 where cwd actually is (inside the build context), walks the enclosing
 context, pairs artifacts with the real source tree the context mirrors,
-and defaults to the compiler report format so a failing rule's findings
-land as dune diagnostics. Litany never writes a source from inside
+and prints the report page — whose finding blocks are the grammar
+dune's diagnostic parser accepts, so a failing rule's findings land as
+dune diagnostics; the same page a terminal shows, summary and all.
+Litany never writes a source from inside
 dune: the one in-dune fix transport is dune's corrections/promotion
 flow at (lang dune 3.23). The fixtures are real nested consumer
 projects — one at dune lang 3.21 (reporting works; --fix refuses
@@ -52,18 +54,27 @@ consecutive runs.
   > let () = assert (drained [] && Store.Depot.is_empty [])
   > EOP
 
-The report rule: dune build @lint fails with compiler-format diagnostics
-naming the real source paths — parsed by dune, served to editors over
-RPC. No dune subprocess is spawned by litany; the deps line already
-built the tree.
+The report rule: dune build @lint fails with the report page — finding
+blocks in dune's own diagnostic grammar naming the real source paths,
+parsed by dune and served to editors over RPC, then the summary. No dune
+subprocess is spawned by litany; the deps line already built the tree.
 
   $ env -u INSIDE_DUNE dune build --root . @lint 2>&1; echo "exit=$?"
   File "bin/main.ml", line 1, characters 17-35:
+  1 | let drained xs = List.length xs = 0
+                       ^^^^^^^^^^^^^^^^^^
   Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
     fix (safe): compare with []
+    
   File "lib/depot.ml", line 1, characters 18-36:
+  1 | let is_empty xs = List.length xs = 0
+                        ^^^^^^^^^^^^^^^^^^
   Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
     fix (safe): compare with []
+  
+  30 rules selected · 3 units · 2 findings (2 fixable — run `litany check --fix`) · 0 skipped · 1 facts-only
+  roster: suspicious-exit-in-library withheld (kind-gated; no unit in this lane carries a stanza kind)
+  roster: suspicious-str-formatter withheld (kind-gated; no unit in this lane carries a stanza kind)
   exit=1
 
 Report scope equals deps scope: a rule in a subdirectory's dune lints
@@ -82,8 +93,14 @@ silent on bin/'s, and the root rule above keeps reporting both.
   > EOP
   $ env -u INSIDE_DUNE dune build --root . @lint 2>&1; echo "exit=$?"
   File "lib/depot.ml", line 1, characters 18-36:
+  1 | let is_empty xs = List.length xs = 0
+                        ^^^^^^^^^^^^^^^^^^
   Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
     fix (safe): compare with []
+  
+  30 rules selected · 1 unit · 1 finding (1 fixable — run `litany check --fix`) · 0 skipped
+  roster: suspicious-exit-in-library withheld (kind-gated; no unit in this lane carries a stanza kind)
+  roster: suspicious-str-formatter withheld (kind-gated; no unit in this lane carries a stanza kind)
   exit=1
   $ cat > lib/dune <<'EOP'
   > (library (name store))
@@ -106,11 +123,20 @@ dune corrections and never writes a source.)
   > EOP
   $ env -u INSIDE_DUNE dune build --root . @lint 2>&1; echo "exit=$?"
   File "bin/main.ml", line 1, characters 17-35:
+  1 | let drained xs = List.length xs = 0
+                       ^^^^^^^^^^^^^^^^^^
   Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
     fix (safe): compare with []
+    
   File "lib/depot.ml", line 1, characters 18-36:
+  1 | let is_empty xs = List.length xs = 0
+                        ^^^^^^^^^^^^^^^^^^
   Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
     fix (safe): compare with []
+  
+  30 rules selected · 3 units · 2 findings (2 fixable — run `litany check --fix`) · 0 skipped · 1 facts-only
+  roster: suspicious-exit-in-library withheld (kind-gated; no unit in this lane carries a stanza kind)
+  roster: suspicious-str-formatter withheld (kind-gated; no unit in this lane carries a stanza kind)
   exit=1
 
 In-dune fixing is version-gated: litany never writes a source from
@@ -140,9 +166,10 @@ The sources are untouched — the refusal fired before any analysis.
   let drained xs = List.length xs = 0
   let () = assert (drained [] && Store.Depot.is_empty [])
 
-A clean project's report rule is green — the gate passes and prints
-nothing. (The findings are fixed by hand here; from a shell, litany
-check --fix is the lane — pinned in fixloop.t.)
+A clean project's report rule is green — the gate passes, and the page
+is the summary alone, shown whenever the action actually runs. (The
+findings are fixed by hand here; from a shell, litany check --fix is
+the lane — pinned in fixloop.t.)
 
   $ cat > bin/main.ml <<'EOP'
   > let drained xs = xs = []
@@ -159,6 +186,9 @@ check --fix is the lane — pinned in fixloop.t.)
   >  (action (run litany check)))
   > EOP
   $ env -u INSIDE_DUNE dune build --root . @lint 2>&1; echo "exit=$?"
+  30 rules selected · 3 units · 0 findings · 0 skipped · 1 facts-only
+  roster: suspicious-exit-in-library withheld (kind-gated; no unit in this lane carries a stanza kind)
+  roster: suspicious-str-formatter withheld (kind-gated; no unit in this lane carries a stanza kind)
   exit=0
 
 The dune lang 3.23 project: every user rule is sandboxed there —
@@ -227,11 +257,20 @@ unsandboxed lane's report.
   > EOP
   $ env -u INSIDE_DUNE dune build --root . @lint 2>&1; echo "exit=$?"
   File "bin/main.ml", line 1, characters 17-35:
+  1 | let drained xs = List.length xs = 0
+                       ^^^^^^^^^^^^^^^^^^
   Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
     fix (safe): compare with []
+    
   File "lib/depot.ml", line 1, characters 18-36:
+  1 | let is_empty xs = List.length xs = 0
+                        ^^^^^^^^^^^^^^^^^^
   Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
     fix (safe): compare with []
+  
+  30 rules selected · 3 units · 2 findings (2 fixable — run `litany check --fix`) · 0 skipped · 1 facts-only
+  roster: suspicious-exit-in-library withheld (kind-gated; no unit in this lane carries a stanza kind)
+  roster: suspicious-str-formatter withheld (kind-gated; no unit in this lane carries a stanza kind)
   exit=1
 
 The canonical corrections stanza: --fix in the action, (corrections
@@ -255,15 +294,16 @@ and shows the same change.)
   fix lib/depot.ml: 1 proposed
   pass 1: 2 fixes proposed (2 files)
   2 corrections proposed — dune shows each as a diff and fails the build; dune promote applies and the next build re-lints (without (corrections produce) in the rule, dune discards corrections silently)
-  bin/main.ml:1:18 warning needless-list-length
-    comparison through List.length is a needless emptiness test
-       1 | let drained xs = List.length xs = 0
-         |                  ^^^^^^^^^^^^^^^^^^
+  File "bin/main.ml", line 1, characters 17-35:
+  1 | let drained xs = List.length xs = 0
+                       ^^^^^^^^^^^^^^^^^^
+  Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
     fix (safe): compare with []
-  lib/depot.ml:1:19 warning needless-list-length
-    comparison through List.length is a needless emptiness test
-       1 | let is_empty xs = List.length xs = 0
-         |                   ^^^^^^^^^^^^^^^^^^
+    
+  File "lib/depot.ml", line 1, characters 18-36:
+  1 | let is_empty xs = List.length xs = 0
+                        ^^^^^^^^^^^^^^^^^^
+  Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
     fix (safe): compare with []
   
   30 rules selected · 3 units · 2 findings (2 fixable) · 2 fixes proposed · 0 skipped · 1 facts-only
@@ -331,10 +371,10 @@ that line is the only signal.
   fix bin/main.ml: 1 proposed
   pass 1: 1 fix proposed (1 file)
   1 correction proposed — dune shows each as a diff and fails the build; dune promote applies and the next build re-lints (without (corrections produce) in the rule, dune discards corrections silently)
-  bin/main.ml:1:18 warning needless-list-length
-    comparison through List.length is a needless emptiness test
-       1 | let drained xs = List.length xs = 0
-         |                  ^^^^^^^^^^^^^^^^^^
+  File "bin/main.ml", line 1, characters 17-35:
+  1 | let drained xs = List.length xs = 0
+                       ^^^^^^^^^^^^^^^^^^
+  Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
     fix (safe): compare with []
   
   30 rules selected · 3 units · 1 finding (1 fixable) · 1 fix proposed · 0 skipped · 1 facts-only

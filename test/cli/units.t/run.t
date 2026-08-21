@@ -61,10 +61,10 @@ beside it is the same story: the lock arbitrates dune-vs-dune, never
 litany's reads.
 
   $ litany check --units litany.units
-  length.ml:1:19 warning needless-list-length
-    comparison through List.length is a needless emptiness test
-       1 | let is_empty xs = List.length xs = 0
-         |                   ^^^^^^^^^^^^^^^^^^
+  File "length.ml", line 1, characters 18-36:
+  1 | let is_empty xs = List.length xs = 0
+                        ^^^^^^^^^^^^^^^^^^
+  Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
     fix (safe): compare with []
   
   30 rules selected · 3 units · 1 finding (1 fixable — run `litany check --fix`) · 0 skipped · 1 facts-only

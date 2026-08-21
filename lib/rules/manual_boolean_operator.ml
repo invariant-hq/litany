@@ -38,11 +38,70 @@ from the condition's and surviving branch's source slices
 (`Unit.splice`), parenthesizing non-atomic operands; every cell splices
 `not`, `&&`, or `||` — spellings that resolve in the fix site's scope,
 which the rule never checked — so all fixes are unsafe, applied only
-under `--fix --unsafe`.|}
+under `--fix --unsafe`. The replacement is an infix expression, and an
+`if` may legally sit unparenthesized as the right operand of an infix
+operator (`a && if c then true else e`), where the bare rewrite would
+re-associate — `a && c || e` is `(a && c) || e`, a silent behavior
+change; when the `if` is an application's trailing operand the fix
+parenthesizes the rewrite (`a && (c || e)`), and an `if` already
+parenthesized keeps its pair through `Unit.delimited`. A standalone
+`if`, or one that is a `let` body, takes the bare rewrite.|}
     ()
 
 let with_else = Pat.(if_ __ __ (some __))
 let literal u e = Pat.run Pat.(ebool __) u e Fun.id
+
+(* Any application's unlabeled, evaluated arguments — optional ones
+   skipped, so an operator carrying an [?opt] parameter is still an
+   application whose trailing operand is found. *)
+let application = Pat.(apply_opt drop __)
+
+(* [trailing_operand u target] is [true] iff [target] is the last argument
+   of an application somewhere in [u]'s typedtree — the one parent under
+   which an unparenthesized [if] is legal yet not trailing-open to the
+   end of its construct: the right operand of an infix operator
+   ([a && if c then true else e]), where a bare infix rewrite
+   re-associates. The parent context the dispatch callback does not carry,
+   recovered by a [Tast_iterator] walk of the same tree the engine
+   dispatches ([Unit.implementation]), so physical identity decides.
+   Pruned to expressions whose span encloses [target]'s — a ghost span
+   cannot prune — and run only at the rare fix-emitting nodes. *)
+let trailing_operand u (target : Typedtree.expression) =
+  let found = ref false in
+  let encloses (outer : Location.t) =
+    outer.loc_ghost
+    || outer.loc_start.pos_cnum <= target.exp_loc.loc_start.pos_cnum
+       && target.exp_loc.loc_end.pos_cnum <= outer.loc_end.pos_cnum
+  in
+  let last_is_target args =
+    match List.rev args with last :: _ -> last == target | [] -> false
+  in
+  let default = Tast_iterator.default_iterator in
+  let iterator =
+    {
+      default with
+      Tast_iterator.expr =
+        (fun sub (ex : Typedtree.expression) ->
+          if (not !found) && encloses ex.exp_loc then begin
+            (match Pat.run application u ex last_is_target with
+            | Some true -> found := true
+            | Some false | None -> ());
+            if not !found then default.expr sub ex
+          end);
+    }
+  in
+  iterator.structure iterator (Unit.implementation u);
+  !found
+
+(* [replacement u e text] is the infix [text] prepared to replace [e]'s
+   whole location: the author's pair restored when [e] was delimited
+   ([Unit.delimited]), a new pair added when [e] is an application's
+   trailing operand, and bare otherwise — a [let] body or a standalone
+   [if] is not over-wrapped. *)
+let replacement u (e : Typedtree.expression) text =
+  if (not (Unit.parenthesized u e)) && trailing_operand u e then
+    "(" ^ text ^ ")"
+  else Unit.delimited u e text
 
 let rule =
   Rule.expr meta @@ fun u e ->
@@ -92,7 +151,7 @@ let rule =
               | Some c, Some b ->
                   Some
                     (Fix.unsafe_replace e.exp_loc
-                       (Unit.delimited u e (rewrite c b))
+                       (replacement u e (rewrite c b))
                        ~title)
               | None, _ | _, None -> None
             in

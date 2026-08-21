@@ -4,8 +4,8 @@
   ---------------------------------------------------------------------------*)
 
 (* Byte-exact goldens for the machine formats (json, github) over reports
-   from real engine runs — same fixture discipline as the text and compiler
-   suites. The json cases pin the whole line including the trailer; the
+   from real engine runs — same fixture discipline as the report page's
+   suite. The json cases pin the whole line including the trailer; the
    byte-string convention (lossy + hex twin) is exercised through a fix
    whose replacement text is not valid UTF-8 — the one byte-string channel a
    test can drive without a non-UTF-8 filename, which APFS refuses to

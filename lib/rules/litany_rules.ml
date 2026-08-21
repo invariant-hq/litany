@@ -12,6 +12,7 @@ module Invalid_hashtable_key = Invalid_hashtable_key
 module Invalid_nan_comparison = Invalid_nan_comparison
 module Manual_boolean_operator = Manual_boolean_operator
 module Manual_case_guard = Manual_case_guard
+module Manual_eta_lambda = Manual_eta_lambda
 module Manual_format_quoting = Manual_format_quoting
 module Manual_list_exists = Manual_list_exists
 module Manual_list_filter_map = Manual_list_filter_map
@@ -31,7 +32,6 @@ module Missing_printer = Missing_printer
 module Needless_and_binding = Needless_and_binding
 module Needless_append_empty = Needless_append_empty
 module Needless_fun_match = Needless_fun_match
-module Needless_identity_function = Needless_identity_function
 module Needless_list_length = Needless_list_length
 module Needless_list_map_before_concat = Needless_list_map_before_concat
 module Needless_mutually_recursive_types = Needless_mutually_recursive_types
@@ -101,6 +101,7 @@ let all =
     Invalid_nan_comparison.rule;
     Manual_boolean_operator.rule;
     Manual_case_guard.rule;
+    Manual_eta_lambda.rule;
     Manual_format_quoting.rule;
     Manual_list_exists.rule;
     Manual_list_filter_map.rule;
@@ -120,7 +121,6 @@ let all =
     Needless_and_binding.rule;
     Needless_append_empty.rule;
     Needless_fun_match.rule;
-    Needless_identity_function.rule;
     Needless_list_length.rule;
     Needless_list_map_before_concat.rule;
     Needless_mutually_recursive_types.rule;

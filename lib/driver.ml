@@ -1084,38 +1084,41 @@ let stop_after_build_failure err ~log =
     log;
   Format.eprintf "files were modified; git diff shows the applied fixes@."
 
-(* The report formats. [Text] is the human page on stdout; the three
-   machine formats render the report page only — the fix narration and the
-   admission listing speak the text surface, so [--fix] and [--list-units]
-   refuse them up front. *)
-type format = Text | Compiler | Json | Github
+(* The report formats. [Text] is the report page on stdout — the page
+   humans read and dune parses, one and the same; the two machine formats
+   render the report page only — the fix narration and the admission
+   listing speak the text surface, so [--fix] and [--list-units] refuse
+   them up front. *)
+type format = Text | Json | Github
+
+(* Color follows the terminal: ANSI on a tty unless NO_COLOR or a dumb
+   TERM says otherwise; plain bytes into a pipe. Inside dune, isatty is
+   always false (output is captured to a file), so dune asks for color
+   explicitly the way it does for the compiler: it sets
+   [OCAML_COLOR=always] in every action's environment when its own
+   console supports color, and strips ANSI itself where a consumer
+   (RPC) needs plain bytes. Honoring it is what keeps [dune build @lint]
+   colored exactly when [ocamlc]'s own warnings are. [NO_COLOR] wins
+   over everything; [OCAML_COLOR=never] is respected too. *)
+let color () =
+  match Sys.getenv_opt "NO_COLOR" with
+  | Some _ -> false
+  | None -> (
+      match Sys.getenv_opt "OCAML_COLOR" with
+      | Some "always" -> true
+      | Some "never" -> false
+      | Some _ | None ->
+          Unix.isatty Unix.stdout && Sys.getenv_opt "TERM" <> Some "dumb")
 
 let render_page report snapshots ~format ~fixes ~notes_detail =
-  match format with
+  (match format with
   | Text ->
-      (* Color follows the terminal: ANSI on a tty unless NO_COLOR or a dumb
-         TERM says otherwise; plain bytes into a pipe. *)
-      let color =
-        Unix.isatty Unix.stdout
-        && Sys.getenv_opt "NO_COLOR" = None
-        && Sys.getenv_opt "TERM" <> Some "dumb"
-      in
-      Render.text ~color ~fixes ~notes_detail
+      Render.text ~color:(color ()) ~fixes ~notes_detail
         ~source_of_path:(Hashtbl.find_opt snapshots)
-        Format.std_formatter report;
-      Format.pp_print_flush Format.std_formatter ()
-  | Compiler ->
-      (* The renderer's driver obligations: stderr with stdout completely
-         silent (dune gates on [stdout ^ stderr] starting with [File ]);
-         exit 1 on findings is the report's own code. *)
-      Render.compiler Format.err_formatter report;
-      Format.pp_print_flush Format.err_formatter ()
-  | Json ->
-      Render.json Format.std_formatter report;
-      Format.pp_print_flush Format.std_formatter ()
-  | Github ->
-      Render.github Format.std_formatter report;
-      Format.pp_print_flush Format.std_formatter ()
+        Format.std_formatter report
+  | Json -> Render.json Format.std_formatter report
+  | Github -> Render.github Format.std_formatter report);
+  Format.pp_print_flush Format.std_formatter ()
 
 (* [--explain-withheld]: after the page, name what blocked which project
    rule — the report's per-rule disposition algebra spelled out rule-major,

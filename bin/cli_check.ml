@@ -328,27 +328,21 @@ let check root cmt_root units no_build trust_build list_units select ignore fix
         with
         | Error code -> code
         | Ok in_action_ctx -> (
-            (* The auto in-action lane's bit, and only its: the compiler
-               format default follows the roster the run actually uses. An
-               explicit [--units]/[--cmt-root] run inside an action keeps
-               its lane's own conventions — litany's cram suite runs
-               exactly such invocations from inside dune actions. *)
-            let in_action = in_action_ctx <> None in
             match
               (* Explicit machine formats refuse the two text-surface modes; the
-         GITHUB_ACTIONS auto-selection is a default, not a mandate, and
-         yields to them silently. *)
+                 GITHUB_ACTIONS auto-selection is a default, not a mandate, and
+                 yields to them silently. Inside a dune action nothing
+                 changes: the text page is the grammar dune's diagnostic
+                 parser accepts from a failing action, so the page a
+                 terminal shows is the page dune serves to editors. *)
               match format_flag with
-              | Some
-                  (( Litany.Driver.Compiler | Litany.Driver.Json
-                   | Litany.Driver.Github ) as f)
+              | Some ((Litany.Driver.Json | Litany.Driver.Github) as f)
                 when fix || list_units || explain_withheld ->
                   Error
                     (Cli_common.refuse
                        "--format %s renders the report page only; %s speaks \
                         the text surface"
                        (match f with
-                       | Litany.Driver.Compiler -> "compiler"
                        | Litany.Driver.Json -> "json"
                        | Litany.Driver.Github -> "github"
                        | Litany.Driver.Text -> assert false)
@@ -357,18 +351,7 @@ let check root cmt_root units no_build trust_build list_units select ignore fix
                         else "--explain-withheld"))
               | Some f -> Ok f
               | None ->
-                  (* In-action, the report's consumer is dune: the compiler
-             renderer is the grammar dune's diagnostic parser accepts
-             from a failing action, so findings land as dune diagnostics
-             and reach editors over dune RPC. The text-surface modes keep
-             text (the fix narration is the action's transcript), and it
-             outranks the GITHUB_ACTIONS default — a dune action inside a
-             workflow job still answers to dune. *)
                   if
-                    in_action && (not fix) && (not list_units)
-                    && not explain_withheld
-                  then Ok Litany.Driver.Compiler
-                  else if
                     Sys.getenv_opt "GITHUB_ACTIONS" <> None
                     && (not fix) && not list_units
                   then Ok Litany.Driver.Github
@@ -626,20 +609,17 @@ let unsafe_arg =
 
 let format_arg =
   let doc =
-    "Report format: $(b,text) (the default — the human page with excerpts and \
-     one summary line, on standard output), $(b,compiler) (the exact grammar \
-     dune's diagnostic parser accepts, on standard error with standard output \
-     silent — no excerpts, no summary), $(b,json) (JSON Lines: one finding \
-     object per line, one summary trailer, on standard output), or $(b,github) \
-     (workflow annotations — auto-selected when $(b,GITHUB_ACTIONS) is set and \
-     no $(b,--format) is given). Inside a dune action the default is \
-     $(b,compiler), so a failing rule's findings land as dune diagnostics and \
-     reach editors over dune RPC; an explicit $(b,--format) always wins. The \
-     three machine formats render the report page only and refuse $(b,--fix) \
-     and $(b,--list-units); anything else the run prints (build forwarding, \
-     rename warnings) keeps its own channel, so pair $(b,compiler) with \
-     $(b,--no-build)/$(b,--units) when the standard-error stream must hold \
-     nothing but the report."
+    "Report format: $(b,text) (the default — the report page on standard \
+     output: per finding the compiler-shaped $(b,File)/$(b,Warning) block with \
+     the quoted line and carets and its fix line, then one summary line; the \
+     same page dune parses into diagnostics from a failing action, so findings \
+     reach editors over dune RPC with nothing to configure), $(b,json) (JSON \
+     Lines: one finding object per line, one summary trailer, on standard \
+     output), or $(b,github) (workflow annotations — auto-selected when \
+     $(b,GITHUB_ACTIONS) is set and no $(b,--format) is given; an explicit \
+     $(b,--format) always wins). The two machine formats render the report \
+     page only and refuse $(b,--fix) and $(b,--list-units); anything else the \
+     run prints (build forwarding, rename warnings) keeps its own channel."
   in
   Arg.(
     value
@@ -648,7 +628,6 @@ let format_arg =
            (enum
               [
                 ("text", Litany.Driver.Text);
-                ("compiler", Litany.Driver.Compiler);
                 ("json", Litany.Driver.Json);
                 ("github", Litany.Driver.Github);
               ]))
@@ -704,19 +683,19 @@ let man =
        unit file from $(b,litany units --save) or any other build system — no \
        dune spawned, no build run. $(b,--list-units) prints the admission \
        listing without running rules. $(b,--format) selects the report surface \
-       (text, compiler, json, github).";
+       (text, json, github).";
     `P
       "Run as a dune action — one user-written rule, typically $(b,(rule \
        (alias lint) (deps (alias_rec check)) (action (run litany check)))) — \
        no dune is spawned: litany detects the action vantage, walks the \
        enclosing build context for the artifacts the rule's deps just built, \
        and pairs them with the real source tree, so findings anchor at source \
-       paths and (with the $(b,compiler) default format) land as dune \
-       diagnostics. With $(b,(corrections produce)) in the rule and $(b,--fix) \
-       in the action — $(b,(lang dune 3.23)); litany never writes a source \
-       from inside dune — fixes become dune corrections: the build fails \
-       showing each as a diff and $(b,dune promote) applies them. See the \
-       build-integration manual.";
+       paths and — the report page being the grammar dune's diagnostic parser \
+       accepts — land as dune diagnostics. With $(b,(corrections produce)) in \
+       the rule and $(b,--fix) in the action — $(b,(lang dune 3.23)); litany \
+       never writes a source from inside dune — fixes become dune corrections: \
+       the build fails showing each as a diff and $(b,dune promote) applies \
+       them. See the build-integration manual.";
     `P
       "Configuration, when wanted, is one $(b,litany) file at the workspace \
        root — closed schema, positioned errors, exit 2 on any mistake. Its \

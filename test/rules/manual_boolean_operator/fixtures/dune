@@ -24,3 +24,28 @@
 (library
  (name fix_mbo_unsafe)
  (modules fix_mbo_unsafe))
+
+; The semantics leg: the fixture's truth-table assertions run, on the
+; fixture's own bytes and on the unsafe golden's, so the trailing-operand
+; rewrite is proved to compute what the if did — not merely to compile.
+
+(rule
+ (copy fix_mbo.ml fix_mbo_run.ml))
+
+(executable
+ (name fix_mbo_run)
+ (modules fix_mbo_run))
+
+(rule
+ (copy fix_mbo.unsafe.ml fix_mbo_unsafe_run.ml))
+
+(executable
+ (name fix_mbo_unsafe_run)
+ (modules fix_mbo_unsafe_run))
+
+(rule
+ (alias runtest)
+ (action
+  (progn
+   (run %{exe:fix_mbo_run.exe})
+   (run %{exe:fix_mbo_unsafe_run.exe}))))

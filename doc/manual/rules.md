@@ -118,14 +118,14 @@ unit references:
 
 ```
 $ litany check --select unused-export,dead-code
-lib/legacy.mli:1:1 warning dead-code
-  migrate is never used in this workspace
-     1 | val migrate : (string * int) list -> (string * int) list
-       | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-lib/legacy.mli:1:1 warning unused-export
-  migrate is exported but never used by another unit in this workspace
-     1 | val migrate : (string * int) list -> (string * int) list
-       | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "lib/legacy.mli", line 1, characters 0-56:
+1 | val migrate : (string * int) list -> (string * int) list
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 0 [dead-code]: migrate is never used in this workspace
+File "lib/legacy.mli", line 1, characters 0-56:
+1 | val migrate : (string * int) list -> (string * int) list
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Warning 0 [unused-export]: migrate is exported but never used by another unit in this workspace
 
 2 rules selected · 3 units · 2 findings · 0 skipped
 ```

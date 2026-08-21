@@ -353,6 +353,27 @@ the compiled golden proves the pair. The seam is in `Unit`, not `Fix`:
 `Fix.safe_replace` takes a location because rules also replace keyword
 gaps and case arms, where no expression exists to consult.
 
+### Trailing-open operands: the pair the author never wrote
+
+The sibling case has no delimiters to restore. An `if`, `match`, `let`,
+or `fun` may legally sit unparenthesized as the *right* operand of an
+infix operator — `a && if c then true else e` parses, the `if` extending
+to the end of the expression. A rule that replaces that node with an
+infix expression re-associates silently: `manual-boolean-operator`'s
+`c || e` made it `a && c || e`, which is `(a && c) || e`, a behavior
+change that compiles. `Unit.delimited` cannot see it — the slice was
+never delimited — and applications are immune (they bind tightest, so a
+spliced application in that position stays whole). The rule for authors:
+a fix whose replacement is an infix expression must ask whether the
+replaced node is an application's trailing argument (the parent context
+the callback does not carry; recover it with the `Tast_iterator` walk
+`redundant-option-comparison`'s `link_operand` models, deciding by
+physical identity) and add the pair itself when it is — and must not
+add it elsewhere: `let b = if c then true else e` takes the bare
+rewrite. The fixture carries the shape under `&&` with a truth table
+the fixture's own `runtest` leg executes on the golden, so the compiled
+golden proves the semantics, not only the parse.
+
 ### PPX-copied locations
 
 The emit contract's fourth gate — corroboration by a pre-PPX node span —

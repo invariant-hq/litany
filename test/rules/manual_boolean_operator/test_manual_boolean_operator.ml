@@ -34,6 +34,10 @@ let () =
               "if c then false else e is longhand for not c && e";
               "if c then true else e is longhand for c || e";
               "if c then true else e is longhand for c || e";
+              "if c then false else e is longhand for not c && e";
+              "if c then true else e is longhand for c || e";
+              "if c then true else e is longhand for c || e";
+              "if c then true else e is longhand for c || e";
             ]
             (List.map
                (fun (_, f) -> Litany.Finding.message f)

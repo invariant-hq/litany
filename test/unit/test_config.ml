@@ -47,7 +47,7 @@ let full_example =
       "(lint";
       " (select default)";
       " (extend style unused-export)";
-      " (ignore needless-identity-function)";
+      " (ignore manual-eta-lambda)";
       " (closed-world false))";
       "";
       "(rule line-length";
@@ -86,8 +86,7 @@ let reading_tests =
           equal (list string)
             [ "style"; "unused-export" ]
             (values (Config.extend t));
-          equal (list string)
-            [ "needless-identity-function" ]
+          equal (list string) [ "manual-eta-lambda" ]
             (values (Config.ignored t));
           is_false (Config.closed_world t);
           (match Config.rules t with
@@ -360,7 +359,7 @@ let check_names_tests =
                   "default";
                   "style";
                   "unused-export";
-                  "needless-identity-function";
+                  "manual-eta-lambda";
                 ]
               ~rules:[ "line-length" ]
           with

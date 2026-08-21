@@ -56,7 +56,7 @@
  (deps %{bin:litany} ../vendor_ocamlc_loc/parse.exe))
 
 ; The in-build lane: one user-written litany check rule under @lint in a
-; real nested consumer project — compiler-format diagnostics from the
+; real nested consumer project — the report page's diagnostics from the
 ; failing rule, --fix writing the real sources with convergence across
 ; dune rebuilds, the sandbox refusal, and the clean-project green build.
 
@@ -76,7 +76,7 @@
  (applies_to rules explain)
  (deps %{bin:litany}))
 
-; M7: check --format compiler|json|github, compiler proved through the
+; M7: check --format text|json|github, the text page proved through the
 ; vendored parser.
 
 (cram

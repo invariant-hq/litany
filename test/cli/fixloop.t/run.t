@@ -49,7 +49,7 @@ re-run continues converging.
   > EOP
   $ env -u INSIDE_DUNE litany check --fix > cap.out 2>&1; echo "exit=$?"
   exit=1
-  $ sed -n '1,8p' cap.out
+  $ sed -n '1,11p' cap.out
   fix chain.ml: 1 applied, 5 deferred (conflicts with an applied fix)
   pass 1: 1 fix applied (1 file)
   fix chain.ml: 1 applied, 3 deferred (conflicts with an applied fix)
@@ -57,7 +57,10 @@ re-run continues converging.
   fix chain.ml: 1 applied, 1 deferred (conflicts with an applied fix)
   pass 3 (rebuild + re-lint): 1 fix applied (1 file)
   pass cap (3) reached — re-run litany check --fix to continue converging
-  chain.ml:1:12 warning redundant-not-not
+  File "chain.ml", line 1, characters 11-43:
+  1 | let f xs = (not (not (List.length xs = 0)))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  Warning 0 [redundant-not-not]: double negation is redundant
 
 The re-run picks up where the cap stopped and converges.
 
@@ -110,10 +113,10 @@ bytes, so the fixed unit now skips stale — the message's very point.)
   fix chain.ml: 1 applied
   pass 1: 1 fix applied (1 file)
   1 fix applied — artifacts are now stale; rebuild and re-run to converge
-  chain.ml:1:12 warning redundant-not-not
-    double negation is redundant
-       1 | let f xs = not (not (xs = []))
-         |            ^^^^^^^^^^^^^^^^^^^
+  File "chain.ml", line 1, characters 11-30:
+  1 | let f xs = not (not (xs = []))
+                 ^^^^^^^^^^^^^^^^^^^
+  Warning 0 [redundant-not-not]: double negation is redundant
     fix (safe): drop the double negation
   
   31 rules selected · 2 units · 1 finding (1 fixable) · 1 fix applied · 0 skipped · 1 facts-only
