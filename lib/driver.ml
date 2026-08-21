@@ -911,7 +911,7 @@ let apply_pass ~unsafe ~into report ~baselines =
                       :: (counted (List.length conflicting) deferral
                          @ counted
                              (List.length (Apply.excluded plan))
-                             "excluded (unsafe or display-only)"))
+                             "more with --unsafe"))
                   in
                   Printf.printf "fix %s: %s\n" path segments;
                   let written = outcome = Apply.Applied in
@@ -1418,7 +1418,11 @@ let run_check ~progress ~rebuild ~format ~jobs ~cache roster ~build_current
                 (skip_breakdown skips))
   in
   let pass_line n result ~clean ~proposed =
-    if result.applied > 0 then
+    (* Corrections mode narrates once, below — a "pass 1" line would number
+       a pass that cannot recur (litany never rebuilds inside dune) and
+       restate the same count. *)
+    if proposed then ()
+    else if result.applied > 0 then
       let files = List.length result.files in
       let detail =
         Printf.sprintf "%d %s%s" files (word files "file")
@@ -1427,10 +1431,8 @@ let run_check ~progress ~rebuild ~format ~jobs ~cache roster ~build_current
            else "")
       in
       if n = 1 then
-        Printf.printf "pass 1: %d %s %s (%s)\n" result.applied
-          (fixes result.applied)
-          (if proposed then "proposed" else "applied")
-          detail
+        Printf.printf "pass 1: %d %s applied (%s)\n" result.applied
+          (fixes result.applied) detail
       else
         Printf.printf "pass %d (rebuild + re-lint): %d %s applied (%s)\n" n
           result.applied (fixes result.applied) detail
@@ -1491,19 +1493,16 @@ let run_check ~progress ~rebuild ~format ~jobs ~cache roster ~build_current
               | Some _, _ ->
                   (* The corrections one-pass note: no source was written —
                      the tree is dune's to change, through the diffs this
-                     rule's corrected files become at teardown. The
-                     (corrections produce) clause is named every time:
-                     litany cannot see the invoking stanza, and without the
-                     field dune discards the corrected files silently — a
-                     green build with the fixes dropped must never pass
-                     without this line having said so. *)
-                  let files = List.length result.files in
+                     rule's corrected files become at teardown. One line,
+                     one instruction; the (corrections produce) requirement
+                     is the stanza's documentation (build-integration.md),
+                     not a per-run warning — litany cannot see the invoking
+                     stanza, so a warning here would be a guess printed to
+                     every correctly configured user. *)
                   Printf.printf
-                    "%d %s proposed — dune shows each as a diff and fails the \
-                     build; dune promote applies and the next build re-lints \
-                     (without (corrections produce) in the rule, dune discards \
-                     corrections silently)\n"
-                    files (word files "correction");
+                    "%d %s proposed — review the diffs below; apply with: dune \
+                     promote\n"
+                    result.applied (fixes result.applied);
                   (* Sources untouched, so nothing rides the [written]
                      exclusion; the exit must be 0 whatever the report says
                      — dune processes corrections only from actions that

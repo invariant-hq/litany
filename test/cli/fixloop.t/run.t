@@ -142,7 +142,7 @@ and the pass line counts it.
   > let g xs = xs @ []
   > EOP
   $ env -u INSIDE_DUNE litany check --fix 2>&1 | sed -n '1p;$p'
-  fix app.ml: 0 applied, 1 excluded (unsafe or display-only)
+  fix app.ml: 0 applied, 1 more with --unsafe
   31 rules selected · 2 units · 1 finding (1 fixable) · 0 fixes applied · 0 skipped · 1 facts-only
   $ env -u INSIDE_DUNE litany check --fix --unsafe
   fix app.ml: 1 applied

@@ -292,8 +292,7 @@ and shows the same change.)
   $ dune build --root . @lint 2>&1; echo "exit=$?"
   fix bin/main.ml: 1 proposed
   fix lib/depot.ml: 1 proposed
-  pass 1: 2 fixes proposed (2 files)
-  2 corrections proposed — dune shows each as a diff and fails the build; dune promote applies and the next build re-lints (without (corrections produce) in the rule, dune discards corrections silently)
+  2 fixes proposed — review the diffs below; apply with: dune promote
   File "bin/main.ml", line 1, characters 17-35:
   1 | let drained xs = List.length xs = 0
                        ^^^^^^^^^^^^^^^^^^
@@ -369,8 +368,7 @@ that line is the only signal.
   > EOP
   $ env -u INSIDE_DUNE dune build --root . @lint 2>&1; echo "exit=$?"
   fix bin/main.ml: 1 proposed
-  pass 1: 1 fix proposed (1 file)
-  1 correction proposed — dune shows each as a diff and fails the build; dune promote applies and the next build re-lints (without (corrections produce) in the rule, dune discards corrections silently)
+  1 fix proposed — review the diffs below; apply with: dune promote
   File "bin/main.ml", line 1, characters 17-35:
   1 | let drained xs = List.length xs = 0
                        ^^^^^^^^^^^^^^^^^^

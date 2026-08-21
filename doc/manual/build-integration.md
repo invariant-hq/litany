@@ -108,8 +108,7 @@ a promotion; `dune promote` is what actually writes your tree:
 ```
 $ dune build @lint
 fix lib/inventory.ml: 1 proposed
-pass 1: 1 fix proposed (1 file)
-1 correction proposed — dune shows each as a diff and fails the build; dune promote applies and the next build re-lints (without (corrections produce) in the rule, dune discards corrections silently)
+1 fix proposed — review the diffs below; apply with: dune promote
 File "lib/inventory.ml", line 5, characters 17-40:
 5 | let check t = if List.length t.stock = 0 then restock t else t
                      ^^^^^^^^^^^^^^^^^^^^^^^
@@ -160,9 +159,10 @@ every dune language version.
 so it cannot tell whether the rule carries `(corrections produce)`. A
 sandboxed `--fix` action without the field still writes its corrected
 files — and dune discards them at teardown without a word: the build
-goes green with the fixes dropped and the sources untouched. That is why
-the proposal note above always names the field; if your fix rule builds
-green while findings remain, that line is telling you what is missing.
+goes green with the fixes dropped and the sources untouched. The
+symptom is exactly that: a fix rule that builds green while `1 fix
+proposed` keeps printing. If you see it, the rule is missing
+`(corrections produce)`.
 
 **Honest limits.** The in-action roster is an artifact walk of the build
 context, not a full roster: project (cross-module) rules —
