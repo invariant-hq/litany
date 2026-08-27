@@ -37,9 +37,9 @@ A bare litany units dumps the roster for eyes — the same document as
   $ env -u INSIDE_DUNE litany units
   (litany-units 1)
   (cmi-dirs _build/default/.unitslib.objs/byte)
-  (unit (source length.ml) (cmt _build/default/.unitslib.objs/byte/unitslib__Length.cmt) (library unitslib) (public false) (kind lib))
-  (unit (source clean.ml) (cmt _build/default/.unitslib.objs/byte/unitslib__Clean.cmt) (library unitslib) (public false) (kind lib))
   (unit (source _build/default/unitslib.ml-gen) (cmt _build/default/.unitslib.objs/byte/unitslib.cmt) (library unitslib) (public false) (kind lib))
+  (unit (source clean.ml) (cmt _build/default/.unitslib.objs/byte/unitslib__Clean.cmt) (library unitslib) (public false) (kind lib))
+  (unit (source length.ml) (cmt _build/default/.unitslib.objs/byte/unitslib__Length.cmt) (library unitslib) (public false) (kind lib))
 
 --save writes the canonical unit file: csexp, atoms as length-prefixed raw
 bytes (any path round-trips), one form per line, byte-deterministic.
@@ -49,9 +49,9 @@ bytes (any path round-trips), one form per line, byte-deterministic.
   $ cat litany.units
   (12:litany-units1:1)
   (8:cmi-dirs34:_build/default/.unitslib.objs/byte)
-  (4:unit(6:source9:length.ml)(3:cmt55:_build/default/.unitslib.objs/byte/unitslib__Length.cmt)(7:library8:unitslib)(6:public5:false)(4:kind3:lib))
-  (4:unit(6:source8:clean.ml)(3:cmt54:_build/default/.unitslib.objs/byte/unitslib__Clean.cmt)(7:library8:unitslib)(6:public5:false)(4:kind3:lib))
   (4:unit(6:source30:_build/default/unitslib.ml-gen)(3:cmt47:_build/default/.unitslib.objs/byte/unitslib.cmt)(7:library8:unitslib)(6:public5:false)(4:kind3:lib))
+  (4:unit(6:source8:clean.ml)(3:cmt54:_build/default/.unitslib.objs/byte/unitslib__Clean.cmt)(7:library8:unitslib)(6:public5:false)(4:kind3:lib))
+  (4:unit(6:source9:length.ml)(3:cmt55:_build/default/.unitslib.objs/byte/unitslib__Length.cmt)(7:library8:unitslib)(6:public5:false)(4:kind3:lib))
   $ env -u INSIDE_DUNE litany units --save again.units && cmp litany.units again.units && echo deterministic
   deterministic
 

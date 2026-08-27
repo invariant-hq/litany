@@ -25,7 +25,6 @@
   dep_kind
   digest0
   driver
-  dune_describe
   engine
   expr_item
   finding

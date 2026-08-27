@@ -3,127 +3,206 @@
    SPDX-License-Identifier: ISC
   ---------------------------------------------------------------------------*)
 
-(* The describe half decodes describe_workspace.csexp — real bytes captured
-   from this workspace with [dune describe workspace --format csexp --lang
-   0.1 --with-deps] at M2 time and committed verbatim, so the decoder is
-   pinned to what dune actually emits, not to what its documentation says.
-   The walk half exercises [Litany.Adapter.Walk] over the compiled fixtures
-   of test/unit and over crafted directory trees. *)
+(* The dune half exercises [Litany.Adapter.Dune.roster ~build:false] over
+   crafted build trees — the roster is read straight from the tree, so the
+   tests spawn nothing. The walk half exercises [Litany.Adapter.Walk] over
+   the compiled fixtures of test/unit and over crafted directory trees. *)
 
 open Windtrap
 
-(* The describe decode is adapter-internal (a non-facade module of the
-   litany library, litany_dune_describe.ml); reach it by its unmangled global
-   name rather than widening the gated [Litany.Adapter] surface. *)
-module Describe = Litany.Dune_describe
+module Dune = Litany.Adapter.Dune
 module Walk = Litany.Adapter.Walk
 module Roster = Litany.Roster
 
-let fixture =
-  In_channel.with_open_bin "describe_workspace.csexp" In_channel.input_all
+(* A crafted workspace: writers for source files, dune files, and empty
+   artifact placeholders (the roster reads no artifact bytes). *)
+let craft () =
+  let dir = temp_dir () in
+  let rec mkdir_p d =
+    if not (Sys.file_exists d) then begin
+      mkdir_p (Filename.dirname d);
+      Sys.mkdir d 0o700
+    end
+  in
+  let write rel contents =
+    let path = Filename.concat dir rel in
+    mkdir_p (Filename.dirname path);
+    Out_channel.with_open_bin path (fun oc ->
+        Out_channel.output_string oc contents)
+  in
+  (dir, write)
 
-let decoded =
-  fixture |> Describe.decode |> Result.map_error (fun e -> `Msg e) |> fun r ->
-  lazy (require_ok ~msg:"fixture decode" r)
+let dune_roster dir =
+  require_ok ~msg:"dune roster"
+    (Result.map_error
+       (fun e -> `Msg (Format.asprintf "%a" Dune.pp_error e))
+       (Dune.roster ~build:false ~root:dir ()))
 
-let libraries d =
-  List.filter_map
-    (function Describe.Library l -> Some l | Describe.Executables _ -> None)
-    d.Describe.stanzas
+let entry_for r source =
+  match
+    List.find_opt
+      (fun e -> Roster.Entry.source e = source)
+      (Roster.entries r)
+  with
+  | Some e -> e
+  | None ->
+      failf "no entry for %s (have: %s)" source
+        (String.concat ", "
+           (List.map Roster.Entry.source (Roster.entries r)))
 
-let executables d =
-  List.filter_map
-    (function Describe.Executables e -> Some e | Describe.Library _ -> None)
-    d.Describe.stanzas
-
-let describe_tests =
-  group "Dune_describe"
+let dune_tests =
+  group "Dune"
     [
-      test "decodes the captured workspace reply" (fun () ->
-          let d = Lazy.force decoded in
+      test "an absent build tree is an empty, complete roster" (fun () ->
+          let dir, write = craft () in
+          write "dune-project" "(lang dune 3.0)\n";
+          let r = dune_roster dir in
+          is_true (Roster.complete r);
+          equal int 0 (List.length (Roster.entries r)));
+      test "a library unit carries its stanza's name, kind, and visibility"
+        (fun () ->
+          let dir, write = craft () in
+          write "lib/dune"
+            "(library (name inv) (public_name inventory))\n";
+          write "lib/store.ml" "let x = 1\n";
+          write "_build/default/lib/.inv.objs/byte/inv__Store.cmt" "";
+          write "_build/default/lib/.inv.objs/byte/inv.cmt" "";
+          write "_build/default/lib/inv.ml-gen" "";
+          let r = dune_roster dir in
+          let store = entry_for r "lib/store.ml" in
+          equal (option string) (Some "inv") (Roster.Entry.library store);
+          is_true (Roster.Entry.kind store = Some Roster.Library);
+          is_true (Roster.Entry.visibility store = Roster.Public);
+          (* The wrapped library's alias module stays, sourced from its
+             generated impl. *)
+          let alias = entry_for r "_build/default/lib/inv.ml-gen" in
+          is_true (Roster.Entry.kind alias = Some Roster.Library));
+      test "the trailing-underscore alias unit pairs its generated source"
+        (fun () ->
+          (* A wrapped library holding a module of its own name gets the
+             [lib__] alias unit; its leaf is empty under the [__] split, so
+             a naive pairing minted [dir/.ml] and every such unit skipped
+             missing-source (75 units on one real tree). *)
+          let dir, write = craft () in
+          write "lib/dune" "(library (name inv))\n";
+          write "lib/inv.ml" "";
+          write "_build/default/lib/.inv.objs/byte/inv__.cmt" "";
+          write "_build/default/lib/.inv.objs/byte/inv__Inv.cmt" "";
+          write "_build/default/lib/inv__.ml-gen" "";
+          let r = dune_roster dir in
+          let alias = entry_for r "_build/default/lib/inv__.ml-gen" in
+          equal (option string) (Some "inv") (Roster.Entry.library alias);
+          ignore (entry_for r "lib/inv.ml"));
+      test "a private library reads Private; an unfound stanza stays Unknown"
+        (fun () ->
+          let dir, write = craft () in
+          write "lib/dune" "(library (name inv))\n";
+          write "lib/store.ml" "";
+          write "_build/default/lib/.inv.objs/byte/inv__Store.cmt" "";
+          write "other/store2.ml" "";
+          write "_build/default/other/.mystery.objs/byte/mystery__Store2.cmt"
+            "";
+          let r = dune_roster dir in
+          is_true
+            (Roster.Entry.visibility (entry_for r "lib/store.ml")
+            = Roster.Private);
+          let unfound = entry_for r "other/store2.ml" in
+          is_true (Roster.Entry.visibility unfound = Roster.Unknown);
+          (* The objs directory still names the owning library. *)
+          equal (option string) (Some "mystery") (Roster.Entry.library unfound));
+      test "the dune-file scan splits tests from executables" (fun () ->
+          let dir, write = craft () in
+          write "bin/dune" "(executable (name main))\n";
+          write "bin/main.ml" "";
+          write "_build/default/bin/.main.eobjs/byte/dune__exe__Main.cmt" "";
+          write "test/dune" "(test (name t))\n";
+          write "test/t.ml" "";
+          write "_build/default/test/.t.eobjs/byte/dune__exe__T.cmt" "";
+          write "loose/dune" "; nothing relevant\n";
+          write "loose/x.ml" "";
+          write "_build/default/loose/.x.eobjs/byte/dune__exe__X.cmt" "";
+          let r = dune_roster dir in
+          is_true (Roster.Entry.kind (entry_for r "bin/main.ml")
+                   = Some Roster.Executable);
+          is_true (Roster.Entry.kind (entry_for r "test/t.ml")
+                   = Some Roster.Test);
+          (* An eobjs unit whose stanza the scan cannot find stays
+             metadata-less: exe-family is known, which stanza is not. *)
+          let loose = entry_for r "loose/x.ml" in
+          is_true (Roster.Entry.kind loose = None);
+          equal (option string) None (Roster.Entry.library loose));
+      test "generated harness stanzas and the exe alias are excluded"
+        (fun () ->
+          (* The inline-tests runner mirrors a real stanza's sources under
+             a generated dot-directory stanza; admitting it minted
+             duplicate-source entries (and crashed the unit-file encoder on
+             a real tree). The per-stanza [dune__exe] alias collides by
+             construction. *)
+          let dir, write = craft () in
+          write "lib/dune" "(library (name inv) (inline_tests))\n";
+          write "lib/store.ml" "";
+          write "_build/default/lib/.inv.objs/byte/inv__Store.cmt" "";
+          write
+            "_build/default/lib/.inv.inline-tests/.t.eobjs/byte/dune__exe__Main.cmt"
+            "";
+          write "_build/default/bin/.main.eobjs/byte/dune__exe.cmt" "";
+          let r = dune_roster dir in
+          equal int 1 (List.length (Roster.entries r));
+          equal string "lib/store.ml"
+            (Roster.Entry.source (List.hd (Roster.entries r))));
+      test "qualified subdir units pair through the source index" (fun () ->
+          (* Under [(include_subdirs qualified)] the unit's source lives
+             deeper than the stanza directory; the leaf convention alone
+             guessed [lib/read_file.ml] and skipped missing-source (40
+             units on one real tree). The proximity-scoped index pairs it;
+             a same-basename source in a sibling stanza's subtree does not
+             steal it. *)
+          let dir, write = craft () in
+          write "lib/dune" "(library (name inv))\n";
+          write "lib/fs/read_file.ml" "";
+          write "other/read_file.ml" "";
+          write "_build/default/lib/.inv.objs/byte/inv__Fs__Read_file.cmt" "";
+          let r = dune_roster dir in
+          ignore (entry_for r "lib/fs/read_file.ml"));
+      test "a built pp source rides its entry" (fun () ->
+          let dir, write = craft () in
+          write "lib/dune" "(library (name inv))\n";
+          write "lib/store.ml" "";
+          write "_build/default/lib/.inv.objs/byte/inv__Store.cmt" "";
+          write "_build/default/lib/store.pp.ml" "";
+          let r = dune_roster dir in
           equal (option string)
-            (Some "/Users/tmattio/Workspace/invariant/litany") d.Describe.root;
-          equal (option string) (Some "_build/default") d.Describe.build_context);
-      test "finds every stanza of the captured reply" (fun () ->
-          let d = Lazy.force decoded in
-          equal int ~msg:"local libraries" 21
-            (List.length
-               (List.filter
-                  (fun (l : Describe.library) -> l.local)
-                  (libraries d)));
-          equal int ~msg:"executables stanzas" 3 (List.length (executables d)));
-      test "decodes a local library's module paths" (fun () ->
-          let d = Lazy.force decoded in
-          let ident =
-            List.find
-              (fun (l : Describe.library) -> l.name = "litany_ident")
-              (libraries d)
-          in
-          is_true ident.local;
-          equal (option string) (Some "_build/default/lib/ident")
-            ident.source_dir;
-          equal (list string)
-            [ "_build/default/lib/ident/.litany_ident.objs/byte" ]
-            ident.include_dirs;
-          match ident.modules with
-          | [ m ] ->
-              equal string "Litany_ident" m.name;
-              equal (option string)
-                (Some "_build/default/lib/ident/litany_ident.ml") m.impl;
-              equal (option string)
-                (Some "_build/default/lib/ident/litany_ident.mli") m.intf;
-              equal (option string)
-                (Some
-                   "_build/default/lib/ident/.litany_ident.objs/byte/litany_ident.cmt")
-                m.cmt;
-              equal (option string)
-                (Some
-                   "_build/default/lib/ident/.litany_ident.objs/byte/litany_ident.cmti")
-                m.cmti
-          | ms -> failf "expected one module, got %d" (List.length ms));
-      test "decodes a non-local library with empty modules" (fun () ->
-          let d = Lazy.force decoded in
-          let compiler_libs =
-            List.find
-              (fun (l : Describe.library) -> l.name = "compiler-libs")
-              (libraries d)
-          in
-          is_false compiler_libs.local;
-          equal (list string) []
-            (List.map
-               (fun (m : Describe.module_) -> m.name)
-               compiler_libs.modules);
-          is_true (compiler_libs.include_dirs <> []));
-      test "decodes an executables stanza" (fun () ->
-          let d = Lazy.force decoded in
-          let main =
-            List.find
-              (fun (e : Describe.executables) -> e.names = [ "main" ])
-              (executables d)
-          in
-          match main.modules with
-          | [ m ] ->
-              equal string "Main" m.name;
-              equal (option string)
-                (Some "_build/default/bin/.main.eobjs/byte/dune__exe__Main.cmt")
-                m.cmt
-          | ms -> failf "expected one module, got %d" (List.length ms));
-      test "rejects truncated bytes with an offset" (fun () ->
-          match Describe.decode (String.sub fixture 0 100) with
-          | Error reason -> contains ~sub:"byte" reason
-          | Ok _ -> fail "decoded truncated bytes");
-      test "rejects a top-level atom" (fun () ->
-          is_true (Result.is_error (Describe.decode "5:hello")));
-      test "rejects a lying length prefix" (fun () ->
-          is_true (Result.is_error (Describe.decode "(999:x)")));
-      test "rejects trailing data" (fun () ->
-          is_true (Result.is_error (Describe.decode "()3:foo")));
-      test "tolerates unknown item kinds" (fun () ->
-          match Describe.decode "((7:mystery1:x)(4:root1:/))" with
-          | Ok d ->
-              equal (option string) (Some "/") d.Describe.root;
-              equal int 0 (List.length d.Describe.stanzas)
-          | Error e -> failf "refused a forward-compatible reply: %s" e);
+            (Some "_build/default/lib/store.pp.ml")
+            (Roster.Entry.preprocessed_source (entry_for r "lib/store.ml")));
+      test "cmi dirs are the walked object dirs plus the pkg store" (fun () ->
+          let dir, write = craft () in
+          write "lib/dune" "(library (name inv))\n";
+          write "lib/store.ml" "";
+          write "_build/default/lib/.inv.objs/byte/inv__Store.cmt" "";
+          write "_build/_private/default/.pkg/dep.1.0/target/lib/dep/dep.cmi"
+            "";
+          write
+            "_build/_private/default/.pkg/dep.1.0/target/lib/dep/sub/none.txt"
+            "";
+          let r = dune_roster dir in
+          is_true ~msg:"local objs dir"
+            (List.mem "_build/default/lib/.inv.objs/byte" (Roster.cmi_dirs r));
+          is_true ~msg:"pkg store dir"
+            (List.mem "_build/_private/default/.pkg/dep.1.0/target/lib/dep"
+               (Roster.cmi_dirs r));
+          is_false ~msg:"cmi-less dir excluded"
+            (List.mem
+               "_build/_private/default/.pkg/dep.1.0/target/lib/dep/sub"
+               (Roster.cmi_dirs r)));
+      test "is deterministic across runs" (fun () ->
+          let dir, write = craft () in
+          write "lib/dune" "(library (name inv))\n";
+          write "lib/a.ml" "";
+          write "lib/b.ml" "";
+          write "_build/default/lib/.inv.objs/byte/inv__A.cmt" "";
+          write "_build/default/lib/.inv.objs/byte/inv__B.cmt" "";
+          let s r = List.map Roster.Entry.source (Roster.entries r) in
+          equal (list string) (s (dune_roster dir)) (s (dune_roster dir)));
     ]
 
 (* {1 The artifact walk} *)
@@ -341,4 +420,4 @@ let walk_tests =
               failf "expected the one real artifact, got %d" (List.length es));
     ]
 
-let () = run "litany_adapter" [ describe_tests; walk_tests ]
+let () = run "litany_adapter" [ dune_tests; walk_tests ]

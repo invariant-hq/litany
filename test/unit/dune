@@ -244,15 +244,14 @@
   fixtures/engine/plain/emit_a.ml
   fixtures/engine/plain/.fix_engine.objs/byte/fix_engine__Emit_a.cmt))
 
-; The describe fixture is real captured bytes (see test_adapter.ml); the walk
-; tests reuse the compiled witness fixtures of the unit suite.
+; The walk and dune-roster tests reuse the compiled witness fixtures of the
+; unit suite and build crafted trees in temp dirs.
 
 (test
  (name test_adapter)
  (modules test_adapter)
  (libraries windtrap litany unix)
  (deps
-  describe_workspace.csexp
   fixtures/unit/plain/wit_direct.ml
   fixtures/unit/plain/wit_mli.ml
   fixtures/unit/plain/wit_mli.mli

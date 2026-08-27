@@ -221,19 +221,16 @@ let roster_of_flags ~progress ~in_action_ctx ~root ~cmt_root ~units ~build
               else Ok (roster, true))
       | None -> (
           (* The dune-exec cell, decided, not accidental:
-             under INSIDE_DUNE at the shell vantage the read-only dune
-             lane still works. The build step is skipped — driving a
-             build from inside dune is the actual hazard — and [dune
-             describe] runs with the lock arbitrating dune-vs-dune, never
-             litany's reads: at [dune exec] the lock is free (dune
-             releases it while the child runs) and describe answers with
-             findings; when another dune holds the root's lock, describe
-             fails fast into the [Lock_held] refusal (probed: ~20 ms,
-             dune errors naming the pid rather than blocking).
-             [build_current] holds only when this run executed the build,
-             or under --trust-build — otherwise there is no freshness
-             evidence and Derived witnesses skip honestly. [--fix] never
-             reaches here (refused up front at the exec vantage). *)
+             under INSIDE_DUNE at the shell vantage the dune lane still
+             works. The build step is skipped — driving a build from
+             inside dune is the actual hazard — and the roster read takes
+             no lock at all: it walks the build tree dune already
+             materialized, so it answers identically at [dune exec], beside
+             a watch server, or standalone. [build_current] holds only
+             when this run executed the build, or under --trust-build —
+             otherwise there is no freshness evidence and Derived
+             witnesses skip honestly. [--fix] never reaches here (refused
+             up front at the exec vantage). *)
           let inside = Cli_common.inside_dune () in
           let build = build && not inside in
           match Litany.Adapter.Dune.roster ~progress ~build ~root () with

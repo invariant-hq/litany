@@ -374,28 +374,33 @@ never findings.
 
 **dune** (the built-in default). `litany check` spawns `dune build @check` (skipped by
 `--no-build`; `@check` materializes `.cmt`/`.cmti` for libraries and
-executables without linking, `_ref/dune/src/dune_rules/check_rules.ml:3-28`),
-then `dune describe workspace --format csexp --lang 0.1 --with-deps` once.
-Two subprocesses per check pass. The roster is the union of the describe
-reply and an **artifact walk** of the context's build directory for
-`.cmt`/`.cmti` files belonging to no described module — necessary because
-`(test)` stanzas do not appear in `describe workspace`
-(`_ref/dune/bin/describe/describe_workspace.ml:592-601` matches only
-executables and libraries) even though `@check` builds their artifacts;
-walked-only units join under the ordinary witness and are counted
-(`n units via artifact walk`). Library visibility does not come from
-describe (its `Lib` record has no such field); Litany reads `(public_name
-…)` from the workspace's `dune` files with a tolerant s-expression scan,
-validated against the roster by library name — and an unknown visibility
-defaults to **public** (root), never to dead-code candidate. A `describe`
-field for tests and visibility is a tracked upstream ask. Build failure:
-dune's own errors stream through, then exit 2 — lint presupposes a building
-project. A running watch server: `dune build` forwards to it, but `dune
-describe` cannot take the lock — the run refuses with the remedy (use the
-lint alias; or `litany units --save FILE` while the server is stopped, then
-`litany check --no-build --units FILE` — stale entries surface as skips).
-`@check` exists only in merlin-enabled contexts; a context without it is
-named in the refusal.
+executables without linking, `_ref/dune/src/dune_rules/check_rules.ml:3-28`)
+— the one dune subprocess per check pass, and it composes with a live
+watch server: a secondary `dune build` forwards its request to the lock
+holder. Everything else is read from the build tree dune already
+materialized, with no lock and no second subprocess: the **artifact walk**
+of the default context is the enumeration; each unit's stanza is recovered
+from its object directory's name (`.NAME.objs` a library, `.NAME.eobjs` an
+executable-family stanza — dune's own naming); and a tolerant
+s-expression scan of the stanza directory's `dune` file classifies it —
+library visibility from `(public_name …)`, `(test)` against `(executable)`
+from the stanza names — with an unknown visibility defaulting to
+**public** (root), never to dead-code candidate. External dependencies'
+cmi search dirs come from the dune-pkg store under `_build/_private`; a
+workspace without a store contributes none and name resolution degrades
+per the resolver's contract. After a green `@check` the walk finds exactly
+what `dune describe` used to report, plus the `(test)` stanzas describe
+always omitted (`_ref/dune/bin/describe/describe_workspace.ml:592-601`
+matches only executables and libraries); a stale walk costs witness-gated
+skips, never findings. (An earlier design asked `dune describe workspace`
+for the census. It lost twice over: describe takes dune's global lock, so
+it hard-fails beside the watch server that is litany's primary caller's
+normal state; and in a dune-pkg workspace a cold or config-skewed package
+universe makes describe rebuild dependencies from source inside the
+query — minutes of wall clock litany cannot bound.) Build failure: dune's
+own errors stream through, then exit 2 — lint presupposes a building
+project. `@check` exists only in merlin-enabled contexts; a context
+without it is named in the refusal.
 
 **artifact walk** (built in, adapter of last resort). `litany check --cmt-root DIR` pairs artifacts with
 sources by the Direct witness alone. No roster: local rules only, and the
@@ -763,7 +768,6 @@ contrast; *facts-only* is a per-unit outcome, not a failure.
 | Post-fix build failure | refusal | build error + list of applied fixes + `files were modified; git diff shows the applied fixes` |
 | Config error | refusal | `litany:4: unknown rule "styel" (did you mean "style"?)` |
 | dune missing | refusal | `dune not found — use --units or --cmt-root for artifacts built elsewhere` |
-| Watch server holds the lock | refusal | `dune describe cannot run beside a watch server — use the lint alias, or litany units --save` |
 | Context without `@check` | refusal | `context 'X' has no @check (not merlin-enabled) — lint the default context` |
 
 ### Compiler-version support
@@ -840,7 +844,7 @@ the WIP's own strict-TOML config was 954):
 | Component | est. lines |
 |---|---|
 | driver + CLI (six subcommands) | 700–1,000 |
-| dune adapter (describe decode, visibility scan, build spawn, walk) | 700–900 |
+| dune adapter (build-tree roster, stanza scan, build spawn, walk) | 700–900 |
 | unit-file + artifact-walk adapters | 300–400 |
 | unit loader (cmt read, magic, witnesses) + canonical-name resolver | 900–1,250 |
 | `Pat` (typed set; parsed rules match raw `Parsetree` in 1.0) | 1,700–2,400 |
@@ -1010,7 +1014,7 @@ applied this design's own law — derive from the OCaml ecosystem's facts —
 and chose dune-style s-expressions in a root `litany` file instead: zero
 new syntax for the audience (every OCaml developer writes dune files),
 zero new dependency (litany already maintains s-expression code for the
-describe decoder and the csexp unit file), comments and nesting native,
+dune-file scan and the csexp unit file), comments and nesting native,
 and the upstream `(lint (litany))` dune-stanza future becomes a
 relocation instead of a translation. Consciously given up: TOML
 familiarity for cross-ecosystem users and third-party TOML tooling. The

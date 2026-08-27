@@ -113,24 +113,53 @@ let clean_rel_dir =
    ([dune__exe.ml-gen]) live there, one level above [byte]. *)
 let objs_rel_dir = strip_trailing mode_seg
 
-(* [.NAME.eobjs] is the object directory of an executable-family stanza
-   ([executable]/[executables]/[test]/[tests]) — NAME is the stanza's (first)
-   name. [eobjs_stanza rel_dir] recovers the stanza's source directory and
-   that name from an artifact directory beneath it; [None] when [rel_dir]
-   descends through no such directory (library [.objs] trees). *)
-let eobjs_stanza rel_dir =
+(* Dune names every stanza's object directory after the stanza:
+   [.NAME.objs] for a [(library NAME)], [.NAME.eobjs] for an
+   executable-family stanza ([executable]/[executables]/[test]/[tests])
+   with NAME the stanza's (first) name. [stanza_of_rel_dir rel_dir]
+   recovers the stanza's source directory, its name, and which family owns
+   it from an artifact directory beneath it — the directory name is dune's
+   own statement of ownership, not a guess; [None] when [rel_dir] descends
+   through neither. The [.eobjs] suffix also ends in [.objs], so it is
+   tested first. *)
+type stanza_family = Library_stanza | Executable_family
+
+let stanza_of_rel_dir rel_dir =
   let rec go acc = function
     | [] -> None
     | seg :: rest ->
         let n = String.length seg in
         if n > 7 && seg.[0] = '.' && Filename.check_suffix seg ".eobjs" then
-          Some (String.concat "/" (List.rev acc), String.sub seg 1 (n - 7))
+          Some
+            ( String.concat "/" (List.rev acc),
+              String.sub seg 1 (n - 7),
+              Executable_family )
+        else if n > 6 && seg.[0] = '.' && Filename.check_suffix seg ".objs"
+        then
+          Some
+            ( String.concat "/" (List.rev acc),
+              String.sub seg 1 (n - 6),
+              Library_stanza )
         else go (seg :: acc) rest
   in
   go [] (String.split_on_char '/' rel_dir)
 
+(* A stanza directory inside a dot directory is dune-generated harness
+   scaffolding — [.NAME.inline-tests] runners and kin. Their units mirror a
+   real stanza's sources under a generated stanza, so admitting them mints
+   duplicate-source entries (one walked mentat tree held 21 of them, enough
+   to trip the unit-file codec's duplicate-source invariant); excluded from
+   the roster wholesale. *)
+let generated_stanza_dir stanza_dir =
+  List.exists
+    (fun seg -> String.length seg > 0 && seg.[0] = '.')
+    (String.split_on_char '/' stanza_dir)
+
 (* ["lib__Foo"] names module [Foo] of wrapped library [lib]; the source
-   basename is the uncapitalized last [__] component. *)
+   basename is the uncapitalized last [__] component. A base {e ending} in
+   ["__"] is the wrapped library's own alias unit ([lib__], minted when the
+   library holds a module of its own name): its leaf is the whole base —
+   the generated [lib__.ml-gen] is the source the pairing must find. *)
 let leaf_of base =
   let len = String.length base in
   let rec last_sep i found =
@@ -138,12 +167,17 @@ let leaf_of base =
     else if base.[i] = '_' && base.[i + 1] = '_' then last_sep (i + 2) (i + 2)
     else last_sep (i + 1) found
   in
-  match last_sep 0 0 with 0 -> base | at -> String.sub base at (len - at)
+  match last_sep 0 0 with
+  | 0 -> base
+  | at when at = len -> base
+  | at -> String.sub base at (len - at)
 
-(* Editable-source index of a source tree: basename -> sorted relative
-   paths. Directories starting with ['.'] or ['_'] never hold editable
-   sources ([_build] copies must not be anchors), so they are pruned. *)
-let source_index root =
+(* Editable-source index of a source tree: basename -> sorted paths, each
+   [mk rel] ([Walk] anchors them under its source root, the dune roster
+   keeps them root-relative). Directories starting with ['.'] or ['_']
+   never hold editable sources ([_build] copies must not be anchors), so
+   they are pruned. *)
+let source_index_with ~mk root =
   let tbl = Hashtbl.create 256 in
   walk_tree root
     ~prune:(fun name -> name = "" || name.[0] = '.' || name.[0] = '_')
@@ -151,12 +185,14 @@ let source_index root =
       if Filename.check_suffix name ".ml" || Filename.check_suffix name ".mli"
       then
         Hashtbl.replace tbl name
-          ((root // rel) :: Option.value (Hashtbl.find_opt tbl name) ~default:[]));
+          (mk rel :: Option.value (Hashtbl.find_opt tbl name) ~default:[]));
   (* Deterministic buckets: candidates in path order. *)
   Hashtbl.filter_map_inplace
     (fun _ paths -> Some (List.sort String.compare paths))
     tbl;
   tbl
+
+let source_index root = source_index_with ~mk:(fun rel -> root // rel) root
 
 (* [segments p] is [p]'s path components, empty and [.] segments dropped, so
    textual prefix comparison works on relative and absolute paths alike. *)
@@ -328,38 +364,13 @@ let path_has prog =
           Sys.file_exists candidate && not (is_real_dir candidate))
         (String.split_on_char ':' path)
 
-(* Bounded execution: both spawns bound what they retain in memory, and
-   the silent spawn is additionally bounded in time. The build spawn
+(* Bounded retention: the one spawn bounds what it retains in memory. It
    deliberately has no timeout: a legitimate dune build may be arbitrarily
    long, and its output streams to the user who can interrupt it. *)
 
-(* The retained-transcript bound for the forwarded build (classification
-   reads only the leading bytes of dune's error output) and the reply bound
-   for describe (a reply beyond this is a runaway, not a workspace). *)
+(* The retained-transcript bound for the forwarded build: classification
+   reads only the leading bytes of dune's error output. *)
 let forward_capture_limit = 8 * 1024 * 1024
-let describe_reply_limit = 256 * 1024 * 1024
-let describe_timeout_seconds = 600.
-
-(* Terminate a child that violated a bound: TERM, a short drain grace,
-   then KILL; always reaped. *)
-let terminate pid =
-  (try Unix.kill pid Sys.sigterm with Unix.Unix_error _ -> ());
-  let deadline = Unix.gettimeofday () +. 2.0 in
-  let rec reap () =
-    match Unix.waitpid [ Unix.WNOHANG ] pid with
-    | 0, _ ->
-        if Unix.gettimeofday () > deadline then begin
-          (try Unix.kill pid Sys.sigkill with Unix.Unix_error _ -> ());
-          ignore (Unix.waitpid [] pid)
-        end
-        else begin
-          ignore (Unix.select [] [] [] 0.05);
-          reap ()
-        end
-    | _ -> ()
-    | exception Unix.Unix_error (Unix.EINTR, _, _) -> reap ()
-  in
-  reap ()
 
 (* Runs [argv] with stdout and stderr merged into one stream that is both
    forwarded to our stderr as it arrives and captured — the build's output
@@ -402,85 +413,6 @@ let run_forwarding ~progress ~root argv =
   let _, status = Unix.waitpid [] pid in
   (status, Buffer.contents buf)
 
-(* Runs [argv] capturing stdout (the payload) and stderr (the diagnostic)
-   separately; stderr goes through a temp file so reading one pipe to EOF
-   cannot deadlock against the other filling up. Bounded both ways: the
-   payload may not exceed [describe_reply_limit] and the whole spawn may
-   not exceed [describe_timeout_seconds] — a violation terminates the
-   child and returns [Error reason] (the caller's refusal detail); a
-   silent litany-owned query has no business running unbounded. *)
-let run_capturing ~progress ~root argv =
-  let err_file = Filename.temp_file "litany-dune" ".stderr" in
-  Fun.protect
-    ~finally:(fun () -> try Sys.remove err_file with Sys_error _ -> ())
-    (fun () ->
-      let err_fd =
-        Unix.openfile err_file [ Unix.O_WRONLY; Unix.O_TRUNC ] 0o600
-      in
-      let r, w = Unix.pipe ~cloexec:true () in
-      let pid =
-        with_cwd root (fun () ->
-            Unix.create_process argv.(0) argv Unix.stdin w err_fd)
-      in
-      Unix.close w;
-      Unix.close err_fd;
-      let deadline = Unix.gettimeofday () +. describe_timeout_seconds in
-      let buf = Buffer.create 65536 in
-      let chunk = Bytes.create 65536 in
-      let violation reason =
-        Unix.close r;
-        terminate pid;
-        Error reason
-      in
-      let rec drain () =
-        let remaining = deadline -. Unix.gettimeofday () in
-        if remaining <= 0. then
-          violation
-            (Printf.sprintf "no reply within %.0f seconds"
-               describe_timeout_seconds)
-        else
-          (* Polled in short steps so the meter's clock keeps moving; the
-             deadline is still the deadline — a poll that times out early
-             just redraws and waits again. *)
-          match Unix.select [ r ] [] [] (Float.min remaining 0.1) with
-          | exception Unix.Unix_error (Unix.EINTR, _, _) -> drain ()
-          | [], _, _ when remaining > 0.1 ->
-              Progress.refresh progress;
-              drain ()
-          | [], _, _ ->
-              violation
-                (Printf.sprintf "no reply within %.0f seconds"
-                   describe_timeout_seconds)
-          | _ -> (
-              match Unix.read r chunk 0 (Bytes.length chunk) with
-              | 0 ->
-                  Unix.close r;
-                  let _, status = Unix.waitpid [] pid in
-                  Ok status
-              | n ->
-                  if Buffer.length buf + n > describe_reply_limit then
-                    violation
-                      (Printf.sprintf "reply exceeds %d MiB"
-                         (describe_reply_limit / (1024 * 1024)))
-                  else begin
-                    Buffer.add_subbytes buf chunk 0 n;
-                    drain ()
-                  end
-              | exception Unix.Unix_error (Unix.EINTR, _, _) -> drain ())
-      in
-      match drain () with
-      | Error reason -> Error reason
-      | Ok status ->
-          let err =
-            match In_channel.with_open_bin err_file In_channel.input_all with
-            | s -> s
-            | exception Sys_error _ -> ""
-          in
-          Ok (status, Buffer.contents buf, err))
-
-let first_line s =
-  match String.index_opt s '\n' with None -> s | Some i -> String.sub s 0 i
-
 (* {1 The unit file} *)
 
 module Unit_file = struct
@@ -491,9 +423,9 @@ module Unit_file = struct
 
   (* {2 Csexp with offsets}
 
-     A separate parser from [Dune_describe]'s: a unit file is a *sequence* of
-     top-level forms, not one document, and every error must carry the byte
-     offset of the offending form or atom, so values are position-annotated.
+     A unit file is a *sequence* of top-level forms, not one document, and
+     every error must carry the byte offset of the offending form or atom,
+     so values are position-annotated.
      Whitespace is tolerated between top-level forms only (encode ends each
      form with a newline, one greppable line per unit); inside a form the
      grammar is strict csexp. *)
@@ -714,11 +646,12 @@ end
 
 (* {1 Tolerant dune-file scan}
 
-   Visibility comes from scanning the [dune] file of each described local
-   library's source directory for its [(library ...)] stanza: a
-   [(public_name ...)] answers [Public], its absence in a found stanza
-   answers [Private], and an unscannable file or an unfound stanza stays
-   [Unknown] — stated, never guessed. This is a lenient human-syntax sexp
+   Stanza metadata comes from scanning the [dune] file of each walked
+   unit's stanza directory: a [(library ...)] stanza answers visibility — a
+   [(public_name ...)] is [Public], its absence in a found stanza
+   [Private] — and the executable-family stanza names split [Executable]
+   from [Test]. An unscannable file or an unfound stanza stays [Unknown] /
+   kind-less — stated, never guessed. This is a lenient human-syntax sexp
    reader: bare atoms, quoted strings, [;] comments; anything it cannot read
    makes the whole file unscannable.
 
@@ -816,75 +749,52 @@ let library_visibilities sexps =
       | _ -> None)
     sexps
 
-(* The [(test ...)]/[(tests ...)] stanza names of one scanned dune
-   file. [dune describe workspace] omits test stanzas entirely even though
-   [@check] builds them, so their units reach the roster only through the
-   union walk — and a stanza kind can come only from this scan, the same
-   reader that answers visibility. A test's object directory is
-   [.NAME.eobjs] with NAME the stanza's (first) name, so matching that name
-   against the scanned test names identifies the owning stanza exactly. An
-   unscannable file or an unfound stanza yields no claim: the unit stays
-   metadata-less and project capability degrades with the cause named —
-   stated, never guessed. *)
+(* The stanza names of one scanned dune file, per family. An [.eobjs]
+   object directory says only "executable family": whether NAME is a
+   [(test ...)]/[(tests ...)] or an [(executable ...)]/[(executables ...)]
+   stanza can come only from this scan, the same reader that answers
+   visibility. An unscannable file or an unfound stanza yields no claim:
+   the unit stays metadata-less and project capability degrades with the
+   cause named — stated, never guessed. *)
+let stanza_field_names field fields =
+  List.concat_map
+    (function
+      | List (Atom head :: names) when String.equal head field ->
+          List.filter_map (function Atom n -> Some n | List _ -> None) names
+      | _ -> [])
+    fields
+
 let test_stanza_names sexps =
   List.concat_map
     (function
-      | List (Atom "test" :: fields) ->
-          List.filter_map
-            (function List [ Atom "name"; Atom n ] -> Some n | _ -> None)
-            fields
-      | List (Atom "tests" :: fields) ->
-          List.concat_map
-            (function
-              | List (Atom "names" :: names) ->
-                  List.filter_map
-                    (function Atom n -> Some n | List _ -> None)
-                    names
-              | _ -> [])
-            fields
+      | List (Atom "test" :: fields) -> stanza_field_names "name" fields
+      | List (Atom "tests" :: fields) -> stanza_field_names "names" fields
+      | _ -> [])
+    sexps
+
+let executable_stanza_names sexps =
+  List.concat_map
+    (function
+      | List (Atom "executable" :: fields) -> stanza_field_names "name" fields
+      | List (Atom "executables" :: fields) ->
+          stanza_field_names "names" fields
       | _ -> [])
     sexps
 
 (* {1 The dune adapter} *)
 
 module Dune = struct
-  type error =
-    | Dune_missing
-    | Build_failed
-    | Lock_held of int option
-    | No_check_alias of string
-    | Describe_failed of string
+  type error = Dune_missing | Build_failed | No_check_alias of string
 
-  (* Dune's lock error names the holder — "A running dune (pid: N)
-     instance has locked the build directory" (stdune [global_lock.ml]) —
-     and the refusal carries the pid along (UX-06). [None] when the lock
-     file predates dune's pid stamping or the wording changes; the
-     message then omits it. *)
-  let lock_holder_pid err =
-    let marker = "pid: " in
-    let mlen = String.length marker in
-    let n = String.length err in
-    let is_digit c = c >= '0' && c <= '9' in
-    let rec digits_from start stop =
-      if stop < n && is_digit err.[stop] then digits_from start (stop + 1)
-      else if stop > start then
-        int_of_string_opt (String.sub err start (stop - start))
-      else None
-    in
-    let rec find i =
-      if i + mlen > n then None
-      else if String.equal (String.sub err i mlen) marker then
-        digits_from (i + mlen) (i + mlen)
-      else find (i + 1)
-    in
-    find 0
-
-  (* Both spawns pin dune's root to the directory litany was pointed at
-     ([--root .] with the child's cwd already there): without it, dune
-     root-walks upward and a workspace nested under another dune project (a
-     git worktree, a vendored subtree) resolves to the outer project — the
-     run then dies on "Don't know about directory", silently breaking
-     litany's own --root promise. *)
+  (* Both the build spawn and dune's root resolution pin dune's root to the
+     directory litany was pointed at ([--root .] with the child's cwd
+     already there): without it, dune root-walks upward and a workspace
+     nested under another dune project (a git worktree, a vendored subtree)
+     resolves to the outer project — the run then dies on "Don't know about
+     directory", silently breaking litany's own --root promise. The build
+     is the one dune subprocess left in this adapter, and it composes with
+     a live watch: a secondary [dune build] forwards its request to the
+     watch server holding the lock instead of fighting it. *)
   let build_check ~progress ~root =
     let status, out =
       run_forwarding ~progress ~root
@@ -899,242 +809,134 @@ module Dune = struct
         then Error (No_check_alias "default")
         else Error Build_failed
 
-  let describe ~progress ~root =
-    let argv =
-      [|
-        "dune";
-        "describe";
-        "workspace";
-        "--format";
-        "csexp";
-        "--lang";
-        "0.1";
-        "--root";
-        ".";
-      |]
-    in
-    match run_capturing ~progress ~root argv with
-    | Error reason -> Error (Describe_failed ("dune describe: " ^ reason))
-    | Ok (status, out, err) -> (
-        match status with
-        | Unix.WEXITED 0 -> Ok out
-        | _ ->
-            let lowered = String.lowercase_ascii err in
-            if
-              contains_substring ~sub:"lock" lowered
-              || contains_substring ~sub:"already running" lowered
-            then Error (Lock_held (lock_holder_pid err))
-            else Error (Describe_failed (first_line err)))
+  (* One tolerant scan per stanza directory, memoized — one directory owns
+     many walked units. The scan reads the editable dune file: stanza
+     directories are context-relative, hence source-tree paths. *)
+  type stanza_scan = {
+    libraries : (string * Roster.visibility) list;
+    executables : string list;
+    tests : string list;
+  }
 
-  let strip_context ~context path =
-    if String.equal path context then
-      (* A stanza at the workspace root: describe's source_dir is the bare
-         context, and the stripped path is the root itself — without this
-         arm visibility_map would look for a dune file inside _build and
-         silently leave root-level libraries Unknown. *)
-      "."
-    else
-      let prefix = context ^ "/" in
-      if String.starts_with ~prefix path then
-        String.sub path (String.length prefix)
-          (String.length path - String.length prefix)
-      else path
+  let unscanned = { libraries = []; executables = []; tests = [] }
 
-  let visibility_map ~root ~context (desc : Dune_describe.t) =
-    let tbl = Hashtbl.create 16 in
-    List.iter
-      (function
-        | Dune_describe.Library
-            { name; local = true; source_dir = Some source_dir; _ } -> (
-            let dune_file =
-              root // strip_context ~context source_dir // "dune"
-            in
-            match In_channel.with_open_bin dune_file In_channel.input_all with
-            | exception Sys_error _ -> ()
+  let stanza_scan_cache root =
+    let memo = Hashtbl.create 16 in
+    fun stanza_dir ->
+      match Hashtbl.find_opt memo stanza_dir with
+      | Some scan -> scan
+      | None ->
+          let scan =
+            match
+              In_channel.with_open_bin
+                (root // stanza_dir // "dune")
+                In_channel.input_all
+            with
+            | exception Sys_error _ -> unscanned
             | contents -> (
                 match parse_dune_file contents with
-                | None -> ()
-                | Some sexps -> (
-                    match List.assoc_opt name (library_visibilities sexps) with
-                    | Some vis -> Hashtbl.replace tbl name vis
-                    | None -> ())))
-        | _ -> ())
-      desc.stanzas;
-    fun name -> Option.value (Hashtbl.find_opt tbl name) ~default:Roster.Unknown
+                | None -> unscanned
+                | Some sexps ->
+                    {
+                      libraries = library_visibilities sexps;
+                      executables = executable_stanza_names sexps;
+                      tests = test_stanza_names sexps;
+                    })
+          in
+          Hashtbl.add memo stanza_dir scan;
+          scan
 
-  (* A stanza claims its modules' artifacts by unit-group key — the artifact
-     path minus its extension — so claiming a module's cmt claims its cmti
-     and vice versa (describe reports [(cmti ())] for executables' modules
-     even though [@check] materializes the cmti). Claims stick even when no
-     entry results: the union walk must not resurrect a described module. *)
-  let claim_key path = Filename.remove_extension path
+  (* External dependencies' cmi search dirs. The dune-pkg store
+     materializes each locked package under
+     [_build/_private/<context>/.pkg/<pkg>/target], so every directory
+     beneath a package's [target/lib] holding a [.cmi] is a search dir —
+     the same set describe's include_dirs used to enumerate. A workspace
+     without a store (opam, vendored) contributes nothing here and the
+     name resolver degrades per its own contract: missing means
+     match-nothing, stated. *)
+  let pkg_store_cmi_dirs ~root ~context =
+    let store =
+      "_build" // "_private" // Filename.basename context // ".pkg"
+    in
+    match Sys.readdir (root // store) with
+    | exception Sys_error _ -> []
+    | pkgs ->
+        Array.sort String.compare pkgs;
+        let acc = ref [] in
+        Array.iter
+          (fun pkg ->
+            let lib = store // pkg // "target" // "lib" in
+            if is_real_dir (root // lib) then
+              walk_tree (root // lib)
+                ~prune:(fun _ -> false)
+                ~file:(fun ~rel ~name ->
+                  if Filename.check_suffix name ".cmi" then
+                    let dir =
+                      match Filename.dirname rel with "." -> "" | d -> d
+                    in
+                    acc := (lib // dir) :: !acc))
+          pkgs;
+        dedup (List.rev !acc)
 
-  let claim_module ~claimed (m : Dune_describe.module_) =
-    Option.iter (fun p -> Hashtbl.replace claimed (claim_key p) ()) m.cmt;
-    Option.iter (fun p -> Hashtbl.replace claimed (claim_key p) ()) m.cmti
-
-  (* Describe reports build-tree paths ([_build/default/bin/main.ml]); the
-     editable source is the same path with the context stripped, when it
-     exists in the source tree — otherwise the unit is generated and the
-     build copy is its only source. *)
-  let entry_of_module ~root ~context ~claimed ~library ~visibility ~kind
-      (m : Dune_describe.module_) =
-    claim_module ~claimed m;
-    match (m.cmt, m.cmti) with
-    | None, None -> None
-    | cmt, cmti -> (
-        let editable build_path =
-          let rel = strip_context ~context build_path in
-          if (not (String.equal rel build_path)) && Sys.file_exists (root // rel)
-          then rel
-          else build_path
-        in
-        (* Preprocessed modules read a built [<m>.pp.ml]: describe does not
-           name it, but dune materializes it next to the module's build-tree
-           impl. Naming it makes such units join Derived instead of skipping
-           stale; the witness still decides. *)
-        let preprocessed_source =
-          Option.bind m.impl (fun impl ->
-              let pp = Filename.remove_extension impl ^ ".pp.ml" in
-              if Sys.file_exists (root // pp) then Some pp else None)
-        in
-        let build_source =
-          match (m.impl, m.intf) with
-          | Some p, _ | None, Some p -> Some p
-          | None, None -> None
-        in
-        (* The paired interface source rides the entry for the text lane:
-           only when the unit's own source is the implementation — an
-           interface-only module's mli is already its [source]. *)
-        let interface_source =
-          match (m.impl, m.intf) with
-          | Some _, Some intf -> Some (editable intf)
-          | _ -> None
-        in
-        match Option.map editable build_source with
-        | None -> None
-        | Some source ->
-            Some
-              (Roster.Entry.v ~source ?cmt ?cmti ?preprocessed_source
-                 ?interface_source ?library ~visibility ?kind ()))
-
-  let describe_entries ~root ~context ~claimed ~visibility_of
-      (desc : Dune_describe.t) =
-    List.concat_map
-      (function
-        | Dune_describe.Library { local = false; _ } -> []
-        | Dune_describe.Library { name; modules; _ } ->
-            List.filter_map
-              (entry_of_module ~root ~context ~claimed ~library:(Some name)
-                 ~visibility:(visibility_of name) ~kind:(Some Roster.Library))
-              modules
-        | Dune_describe.Executables { names; modules; _ } ->
-            let library =
-              match names with [] -> None | first :: _ -> Some first
-            in
-            List.filter_map
-              (fun (m : Dune_describe.module_) ->
-                (* Every executables stanza with two or more
-                   modules gets a generated alias module ([dune__exe.ml-gen],
-                   compilation unit [Dune__exe]), so any workspace with two
-                   such stanzas holds duplicate unit names by construction —
-                   permanently tripping the duplicate-identity
-                   withhold in the project rules. The roster excludes the
-                   alias — artifacts claimed, no entry — rather than asking
-                   the check for a path-keyed exemption: the check guards
-                   name-keyed joins that would stay ambiguous under readmitted
-                   duplicate names (qualifying identity by owner path is the
-                   intended post-1.0 fix). Sound to
-                   drop: the alias is generated (facts-only), exports no
-                   values, and references only its own stanza's modules, each
-                   already a root via [kind Executable]. A real duplicate —
-                   two executables both named [main.ml] — still withholds.
-                   Library alias modules stay: library names are unique per
-                   workspace, so they cannot collide. *)
-                let generated_alias =
-                  match m.impl with
-                  | Some impl -> Filename.check_suffix impl ".ml-gen"
-                  | None -> false
-                in
-                if generated_alias then begin
-                  claim_module ~claimed m;
-                  None
-                end
-                else
-                  entry_of_module ~root ~context ~claimed ~library
-                    ~visibility:Roster.Unknown ~kind:(Some Roster.Executable) m)
-              modules)
-      desc.stanzas
-
-  (* [(test)] stanzas do not appear in describe even though [@check] builds
-     them: the context walk picks up their artifacts (and any other
-     described-by-no-one unit). A walked unit whose artifact
-     directory is the object directory of a scanned [(test ...)]/[(tests
-     ...)] stanza carries that stanza's ownership — [kind Test], the stanza
-     name as [library] — from the same tolerant dune-file scan that answers
-     visibility; without it, every tree with tests lacked kind metadata and
-     project rules were unavailable workspace-wide. Any other walked-only
-     entry still carries no ownership metadata — the walk cannot know a
-     stanza kind without a stanza to read it from. *)
-  let union_walk_entries ~root ~context ~claimed =
-    if not (is_real_dir (root // context)) then []
-    else
-      let units = group_units (walk_artifacts (root // context)) in
-      (* Memoized per stanza directory: the scan reads the editable dune
-         file ([rel_dir] is context-relative, so stanza directories are
-         source-tree paths), and one directory owns many walked units. *)
-      let test_names = Hashtbl.create 8 in
-      let test_stanza_owner ~stanza_dir ~name =
-        let names =
-          match Hashtbl.find_opt test_names stanza_dir with
-          | Some names -> names
-          | None ->
-              let names =
-                match
-                  In_channel.with_open_bin
-                    (root // stanza_dir // "dune")
-                    In_channel.input_all
-                with
-                | exception Sys_error _ -> []
-                | contents -> (
-                    match parse_dune_file contents with
-                    | None -> []
-                    | Some sexps -> test_stanza_names sexps)
-              in
-              Hashtbl.add test_names stanza_dir names;
-              names
-        in
-        List.mem name names
-      in
+  (* The roster read straight from the build tree: the artifact walk is the
+     enumeration, the object-directory name recovers each unit's stanza,
+     and the tolerant dune-file scan classifies it. Nothing here asks dune
+     anything — after a green [@check] every stanza module's artifact is
+     materialized, so walking finds exactly what describe used to report,
+     plus the [(test)] stanzas describe always omitted. A roster is an
+     enumeration, never a proof: a walk racing a rebuild costs
+     witness-gated skips at join time, never findings. *)
+  let build_tree_roster ~root ~context =
+    let units =
+      if is_real_dir (root // context) then
+        group_units (walk_artifacts (root // context))
+      else []
+    in
+    let scan = stanza_scan_cache root in
+    (* The source index answers layouts the leaf convention cannot — under
+       [(include_subdirs qualified)] a unit's source lives deeper than its
+       stanza directory — with [pair_source]'s proximity scope deciding, the
+       same way the [Walk] adapter pairs. Lazy: a tree whose every unit
+       pairs by convention never walks its sources. *)
+    let index = lazy (source_index_with ~mk:Fun.id root) in
+    let lookup name =
+      Option.value (Hashtbl.find_opt (Lazy.force index) name) ~default:[]
+    in
+    let boundary = project_boundary_probe () in
+    let project_boundary dir = boundary (root // dir) in
+    let entries =
       List.filter_map
         (fun (u : unit_group) ->
-          let cmt = Option.map (fun rel -> context // rel) u.cmt in
-          let cmti = Option.map (fun rel -> context // rel) u.cmti in
-          let is_claimed = function
-            | Some p -> Hashtbl.mem claimed (claim_key p)
-            | None -> false
+          let stanza = stanza_of_rel_dir u.rel_dir in
+          let excluded =
+            (* Generated harness stanzas (dot-directory stanza dirs) and
+               the per-stanza executable alias module ([dune__exe.ml-gen],
+               compilation unit [Dune__exe] for every executable-family
+               stanza with two or more modules): both dune-generated, both
+               name-colliding by construction. The alias is sound to drop —
+               generated (facts-only), exports no values, references only
+               its own stanza's modules, each already a root via its kind —
+               rather than asking the check for a path-keyed exemption:
+               the check guards name-keyed joins that would stay ambiguous
+               under readmitted duplicate names. A real duplicate — two
+               executables both named [main.ml] — still withholds. Library
+               alias modules stay: library names are unique per
+               workspace. *)
+            (match stanza with
+            | Some (stanza_dir, _, _) -> generated_stanza_dir stanza_dir
+            | None -> false)
+            || String.equal u.base "dune__exe"
           in
-          if is_claimed cmt || is_claimed cmti then None
-          else if String.equal u.base "dune__exe" then
-            (* Walk lane: a multi-module [(test)] stanza gets the
-               same generated [Dune__exe] alias as a described executable —
-               undescribed, so it arrives here — and two such tests (or a
-               test beside a described stanza) collide on the name exactly
-               as above. Same judgment: excluded from the roster, never a
-               path-keyed exemption in the duplicate check. *)
-            None
+          if excluded then None
           else
+            let cmt = Option.map (fun rel -> context // rel) u.cmt in
+            let cmti = Option.map (fun rel -> context // rel) u.cmti in
             let intf_only = Option.is_none cmt in
             let exists p = Sys.file_exists (root // p) in
             let pair intf_only =
-              pair_source
-                ~exists
-                  (* No candidates ([lookup] is empty), so the fallback
-                   scope never applies here. *)
-                ~project_boundary:(fun _ -> false)
-                ~editable_root:"" ~build_root:context
-                ~lookup:(fun _ -> [])
-                ~rel_dir:u.rel_dir ~base:u.base ~intf_only
+              pair_source ~exists ~project_boundary ~editable_root:""
+                ~build_root:context ~lookup ~rel_dir:u.rel_dir ~base:u.base
+                ~intf_only
             in
             let source = pair intf_only in
             (* The text lane's second file: a paired unit's editable mli,
@@ -1146,17 +948,50 @@ module Dune = struct
                 let mli = pair true in
                 if exists mli then Some mli else None
             in
-            let library, kind =
-              match eobjs_stanza u.rel_dir with
-              | Some (stanza_dir, name) when test_stanza_owner ~stanza_dir ~name
-                ->
-                  (Some name, Some Roster.Test)
-              | Some _ | None -> (None, None)
+            (* Preprocessed modules read a built [<m>.pp.ml]: dune
+               materializes it beside the module's build-tree impl. Naming
+               it lets such units join Derived instead of skipping stale;
+               the witness still decides. *)
+            let preprocessed_source =
+              if intf_only then None
+              else
+                let pp =
+                  context // clean_rel_dir u.rel_dir
+                  // (String.uncapitalize_ascii (leaf_of u.base) ^ ".pp.ml")
+                in
+                if exists pp then Some pp else None
+            in
+            let library, visibility, kind =
+              match stanza with
+              | None -> (None, Roster.Unknown, None)
+              | Some (stanza_dir, name, Library_stanza) ->
+                  (* The [.objs] directory is dune's own statement that a
+                     library named [name] owns these units; the scan adds
+                     visibility when it finds the stanza. *)
+                  ( Some name,
+                    Option.value
+                      (List.assoc_opt name (scan stanza_dir).libraries)
+                      ~default:Roster.Unknown,
+                    Some Roster.Library )
+              | Some (stanza_dir, name, Executable_family) ->
+                  let claims = scan stanza_dir in
+                  if List.mem name claims.tests then
+                    (Some name, Roster.Unknown, Some Roster.Test)
+                  else if List.mem name claims.executables then
+                    (Some name, Roster.Unknown, Some Roster.Executable)
+                  else (None, Roster.Unknown, None)
             in
             Some
-              (Roster.Entry.v ~source ?cmt ?cmti ?interface_source ?library
-                 ?kind ()))
+              (Roster.Entry.v ~source ?cmt ?cmti ?preprocessed_source
+                 ?interface_source ?library ~visibility ?kind ()))
         units
+    in
+    let local_cmi_dirs =
+      dedup (List.map (fun (u : unit_group) -> context // u.rel_dir) units)
+    in
+    Roster.v ~complete:true
+      ~cmi_dirs:(local_cmi_dirs @ pkg_store_cmi_dirs ~root ~context)
+      entries
 
   let roster ?(progress = Progress.v ~enabled:false ~jobs:1) ?(build = true)
       ~root () =
@@ -1173,39 +1008,9 @@ module Dune = struct
             else Ok ()
           with
           | Error _ as e -> e
-          | Ok () -> (
-              Progress.phase progress "describing the workspace";
-              match describe ~progress ~root with
-              | Error _ as e -> e
-              | Ok reply -> (
-                  Progress.phase progress "reading the workspace";
-                  match Dune_describe.decode reply with
-                  | Error detail -> Error (Describe_failed detail)
-                  | Ok desc ->
-                      let context =
-                        Option.value desc.build_context
-                          ~default:"_build/default"
-                      in
-                      let visibility_of = visibility_map ~root ~context desc in
-                      let claimed = Hashtbl.create 64 in
-                      let described =
-                        describe_entries ~root ~context ~claimed ~visibility_of
-                          desc
-                      in
-                      let walked = union_walk_entries ~root ~context ~claimed in
-                      let cmi_dirs =
-                        dedup
-                          (List.concat_map
-                             (function
-                               | Dune_describe.Library { include_dirs; _ }
-                               | Dune_describe.Executables { include_dirs; _ }
-                                 ->
-                                   include_dirs)
-                             desc.stanzas)
-                      in
-                      Ok
-                        (Roster.v ~complete:true ~cmi_dirs (described @ walked))
-                  )))
+          | Ok () ->
+              Progress.phase progress "reading the build tree";
+              Ok (build_tree_roster ~root ~context:"_build/default"))
 
   let pp_error ppf = function
     | Dune_missing ->
@@ -1216,33 +1021,11 @@ module Dune = struct
         Format.fprintf ppf
           "dune build @@check failed; its errors are above. Lint presupposes a \
            building project."
-    | Lock_held pid ->
-        (* Journey (b)'s refusal, verbatim (design doc §1, UX-06): the
-           holder's pid when dune named one, then the two structured
-           remedies — the in-build lane first (the server itself runs
-           litany check when @lint is among its aliases), the units
-           capture-then-lint spelling second, ending with the command
-           that then works beside the server. *)
-        Format.fprintf ppf
-          "cannot query dune: another dune instance holds the project lock%s\n\
-          \  If that is your watch server, lint through it instead: add the\n\
-          \  @@lint rule (one stanza; see the build-integration manual) and\n\
-          \  put @@lint among the server's aliases — the server then runs\n\
-          \  litany check itself.\n\
-          \  Or capture a roster once while the server is stopped:\n\
-          \    litany units --save litany.units\n\
-          \  then, with the server running:\n\
-          \    litany check --no-build --units litany.units [--fix]"
-          (match pid with
-          | Some p -> Printf.sprintf "\n(dune reports: pid %d)." p
-          | None -> ".")
     | No_check_alias context ->
         Format.fprintf ppf
           "the %s context is not merlin-enabled, so its @@check alias does not \
            exist. Lint the default context."
           context
-    | Describe_failed detail ->
-        Format.fprintf ppf "dune describe failed: %s" detail
 end
 
 (* {1 The artifact walk} *)

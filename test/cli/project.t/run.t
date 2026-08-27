@@ -204,24 +204,21 @@ silent false negatives) over a collapsed identity.
   > EOP
   $ env -u INSIDE_DUNE litany check --select unused-export,dead-code --explain-withheld
   2 rules selected · 2 units · 0 findings · 0 skipped
-  roster: project rules withheld (duplicate compilation unit name Dune__exe__Main: tools/main.ml, bin/main.ml)
-  withheld dead-code: duplicate compilation unit name Dune__exe__Main: tools/main.ml, bin/main.ml — cross-module identity is keyed by unit name
-  withheld unused-export: duplicate compilation unit name Dune__exe__Main: tools/main.ml, bin/main.ml — cross-module identity is keyed by unit name
+  roster: project rules withheld (duplicate compilation unit name Dune__exe__Main: bin/main.ml, tools/main.ml)
+  withheld dead-code: duplicate compilation unit name Dune__exe__Main: bin/main.ml, tools/main.ml — cross-module identity is keyed by unit name
+  withheld unused-export: duplicate compilation unit name Dune__exe__Main: bin/main.ml, tools/main.ml — cross-module identity is keyed by unit name
 
-Two pinned classification hazards. A (test) stanza never
-appears in dune describe, so its units used to reach the roster
-metadata-less and project rules were unavailable on every tree with
-tests; and every multi-module executable-family stanza generates a
-Dune__exe alias unit (dune__exe.ml-gen), so any two such stanzas held
-duplicate compilation unit names by construction and tripped the
-duplicate-identity withhold forever. The adapter now claims
-(test)/(tests) stanzas from the scanned dune files (kind test, the
-stanza name as library) and excludes the generated alias units from the
-roster — the described ones (executables) and the walked ones
-(multi-module tests) alike: two multi-module executables plus a
-multi-module test, and both rules run over the complete universe — the
-module referenced only by the test stays silent (its user is a root),
-and only the module referenced by nobody is reported.
+Two pinned classification hazards. The scanned dune files split
+(test)/(tests) stanzas from (executable)/(executables) — kind test, the
+stanza name as library — so a tree with tests stays project-capable;
+and every multi-module executable-family stanza generates a Dune__exe
+alias unit (dune__exe.ml-gen), so any two such stanzas hold duplicate
+compilation unit names by construction — the adapter excludes the
+generated alias units from the roster, tests and executables alike: two
+multi-module executables plus a multi-module test, and both rules run
+over the complete universe — the module referenced only by the test
+stays silent (its user is a root), and only the module referenced by
+nobody is reported.
 
   $ cd .. && mkdir grad && cd grad
   $ cat > dune-project <<'EOP'

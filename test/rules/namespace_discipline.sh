@@ -12,7 +12,7 @@
 # Interface doc comments are out of scope (odoc cross-references need the
 # full names — the invariant is about what code links, not what
 # documentation cites), so the check covers *.ml.
-internal='Adapter|Apply|Cache|Config_file|Digest0|Driver|Dune_describe|Engine|Naming|Progress|Render|Roster|Sexp|Suggest|Suppress|Write'
+internal='Adapter|Apply|Cache|Config_file|Digest0|Driver|Engine|Naming|Progress|Render|Roster|Sexp|Suggest|Suppress|Write'
 status=0
 for f in "$@"; do
   hits=$(grep -nE "(^|[^A-Za-z0-9_.])($internal)\.|\bLitany\.($internal)\b" "$f")

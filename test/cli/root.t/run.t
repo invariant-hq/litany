@@ -3,7 +3,7 @@ The dune lane pins dune's root to the directory litany was pointed at
 and a workspace nested under another dune project resolves to the outer
 one, dying on "Don't know about directory" — litany's --root promise
 silently broken. A shim dune on PATH records the argv litany
-spawns; both spawns must carry --root.
+spawns; the build — the one dune subprocess — must carry --root.
 
   $ mkdir shim proj
   $ cat > shim/dune <<'SH'
@@ -22,14 +22,14 @@ failure — exit 2, nothing runs after it):
   litany: dune build @check failed; its errors are above. Lint presupposes a building project.
   [2]
 
-The describe spawn (--no-build skips the build):
+--no-build spawns nothing at all: the roster is read straight from the
+build tree, so an empty project is an empty, complete run — and the shim
+records no second argv:
 
   $ ARGLOG=$PWD/args.log PATH=$PWD/shim:$PATH env -u INSIDE_DUNE litany check --root proj --no-build
-  litany: dune describe failed: shim-refused
-  [2]
+  30 rules selected · 0 units · 0 findings · 0 skipped
 
-Both argvs carried --root:
+The one argv carried --root:
 
   $ cat args.log
   build --root . @check
-  describe workspace --format csexp --lang 0.1 --root .

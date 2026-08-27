@@ -78,7 +78,6 @@ module Cache = Cache
 module Config_file = Config_file
 module Digest0 = Digest0
 module Driver = Driver
-module Dune_describe = Dune_describe
 module Engine = Engine
 module Naming = Naming
 module Progress = Progress

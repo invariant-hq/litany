@@ -27,7 +27,7 @@
 
     Canonical s-expressions (csexp) — atoms are length-prefixed raw bytes, so
     any filename round-trips losslessly, and csexp is the ecosystem's machine
-    format ([dune describe], the merlin protocol). A file is one
+    format (the merlin protocol, a build system's own reports). A file is one
     [(litany-units 1)] version header, an optional [(complete false)] form, an
     optional [(cmi-dirs <dir>...)] form, then one form per unit:
 
@@ -79,39 +79,44 @@ end
 
 (** The built-in default: zero config under dune.
 
-    Two subprocesses per check pass: [dune build --root . @check] (skipped by
-    [--no-build]; [@check] materializes cmt/cmti without linking), then
-    [dune describe workspace --format csexp --lang 0.1 --with-deps --root .]
-    once — both with the linted root as working directory and dune's root pinned
-    there, so a workspace nested under another dune project never root-walks to
-    the outer one. Both spawns are bounded: the forwarded build retains at most
-    8 MiB of transcript for failure classification (beyond it, classification
-    degrades to the generic refusal — the user saw the stream either way), the
-    describe reply is capped at 256 MiB and the whole describe spawn at 600
-    seconds; a violated bound terminates the child — TERM, a two-second drain
-    grace, then KILL, always reaped — and refuses with the reason. Child stderr
-    goes through a temp file, never a second pipe, so no two-pipe-deadlock
-    exists to manage. The kill is of the direct pid only, not the process group:
-    a timed-out describe's own descendants are dune's to reap — a brief survival
-    is the accepted risk. The build spawn deliberately has no timeout: a
-    legitimate build may be arbitrarily long, streams to the user, and answers
-    to Ctrl-C. The roster is the union of the describe reply and an artifact
-    walk of the context's build directory for artifacts belonging to no
-    described module — [(test)] stanzas do not appear in describe even though
-    [@check] builds them; walked-only units join under the ordinary witness and
-    are counted. A walked unit whose artifact directory belongs to a
-    [(test ...)]/[(tests ...)] stanza of the scanned [dune] files carries that
-    stanza's ownership ([Roster.Test], the stanza name as library), so a tree
-    with tests stays project-capable; other walked-only units carry no ownership
-    metadata. Dune's generated per-stanza executable alias module
-    ([dune__exe.ml-gen], compilation unit [Dune__exe] for every stanza) is
-    excluded from the roster — described or walked — because its name collides
-    by construction across stanzas and it carries nothing the project rules need
-    (no exports; references only its own stanza's modules, which are roots
-    themselves). Library visibility comes from a tolerant s-expression scan of
-    the workspace's [dune] files for [(public_name ...)], validated against the
-    roster by library name; when the scan cannot answer, the entry carries
-    [Roster.Unknown] — unknown is stated, never guessed private. *)
+    One subprocess per check pass: [dune build --root . @check] (skipped by
+    [--no-build]; [@check] materializes cmt/cmti without linking), with the
+    linted root as working directory and dune's root pinned there, so a
+    workspace nested under another dune project never root-walks to the
+    outer one. The spawn is bounded in memory — at most 8 MiB of transcript
+    is retained for failure classification (beyond it, classification
+    degrades to the generic refusal — the user saw the stream either way) —
+    and deliberately unbounded in time: a legitimate build may be
+    arbitrarily long, streams to the user, and answers to Ctrl-C. Beside a
+    running watch server the build {e forwards}: a secondary dune hands the
+    request to the lock holder instead of fighting it, so a check pass
+    composes with a live [dune build --watch].
+
+    Everything else is read from the build tree dune already materialized —
+    no [dune describe], no lock, no second subprocess. The artifact walk of
+    the default context is the enumeration; each unit's stanza is recovered
+    from its object directory's name ([.NAME.objs] a library, [.NAME.eobjs]
+    an executable-family stanza — dune's own naming, not a guess); a
+    tolerant s-expression scan of the stanza directory's [dune] file
+    classifies it (library visibility from [(public_name ...)], [Test]
+    against [Executable] from the stanza names) — when the scan cannot
+    answer, the entry carries [Roster.Unknown] or no kind: unknown is
+    stated, never guessed. External dependencies' cmi search dirs come from
+    the dune-pkg store beneath [_build/_private]; a workspace without a
+    store contributes none and name resolution degrades per the resolver's
+    contract. After a green [@check] the walk finds exactly what describe
+    used to report, plus the [(test)] stanzas describe always omitted; under
+    [--no-build] on a dirty tree a never-built module is silently absent —
+    the default (forwarded, near-instant beside a watch) build closes that
+    gap. A stale walk costs witness-gated skips, never findings.
+
+    Two dune-generated shapes are excluded from the roster wholesale: units
+    whose stanza directory sits inside a dot directory ([.NAME.inline-tests]
+    runner harnesses — admitting them mints duplicate-source entries), and
+    the per-stanza executable alias module ([dune__exe.ml-gen], compilation
+    unit [Dune__exe] for every executable-family stanza) whose name collides
+    by construction and which carries nothing the project rules need.
+    Library alias modules stay: library names are unique per workspace. *)
 module Dune : sig
   (** The type for dune-adapter refusals. Each maps to exit 2 with the
       documented remedy; nothing runs after one. *)
@@ -122,20 +127,9 @@ module Dune : sig
     | Build_failed
         (** [dune build @check] failed; its errors already streamed through.
             Lint presupposes a building project. *)
-    | Lock_held of int option
-        (** Another dune instance holds the project lock — a watch server, a
-            parallel one-shot build, or a wedged dune — so [dune describe]
-            cannot run beside it; the payload is the holder's pid when dune's
-            own error named one. The refusal is journey (b)'s (design doc §1):
-            lint through the server (the in-build [@lint] rule, with [@lint]
-            among the server's aliases) or capture a roster once and lint beside
-            it ([litany check --no-build --units FILE]). *)
     | No_check_alias of string
         (** The named context is not merlin-enabled, so [@check] does not exist
             there. Remedy: lint the default context. *)
-    | Describe_failed of string
-        (** [dune describe] failed or its reply did not decode; the string is
-            the detail. *)
 
   val roster :
     ?progress:Progress.t ->
@@ -144,16 +138,20 @@ module Dune : sig
     unit ->
     (Roster.t, error) result
   (** [roster ~root ()] is the roster of the dune workspace at [root] —
-      complete, with ownership metadata and cmi search path filled from the
-      describe reply. [build] (defaults to [true]) runs [dune build @check]
-      first; [false] is [--no-build], where stale artifacts surface as skips.
-      Spawns dune; build output streams through to the user before this function
-      returns.
+      complete, with ownership metadata from the build tree's own layout and
+      the cmi search path from the walked object directories plus the
+      dune-pkg store. [build] (defaults to [true]) runs [dune build @check]
+      first; [false] is [--no-build], where stale artifacts surface as
+      skips and never-built modules are absent. Only the build spawns dune;
+      its output streams through to the user before this function returns.
+      The roster read itself takes no lock and asks dune nothing, so it
+      runs beside a live watch server.
 
-      [progress] names each of the three stretches this function spends its time
-      in — the build, the describe, the workspace read — on the caller's meter,
-      and keeps its clock moving while dune runs; dune's own output takes the
-      line back whenever it prints. Defaults to a meter that draws nothing. *)
+      [progress] names each of the two stretches this function spends its
+      time in — the build, the build-tree read — on the caller's meter, and
+      keeps its clock moving while dune runs; dune's own output takes the
+      line back whenever it prints. Defaults to a meter that draws
+      nothing. *)
 
   val pp_error : Format.formatter -> error -> unit
   (** [pp_error ppf e] formats [e]'s refusal message with its remedy. *)
