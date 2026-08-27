@@ -392,7 +392,15 @@ per the resolver's contract. After a green `@check` the walk finds exactly
 what `dune describe` used to report, plus the `(test)` stanzas describe
 always omitted (`_ref/dune/bin/describe/describe_workspace.ml:592-601`
 matches only executables and libraries); a stale walk costs witness-gated
-skips, never findings. (An earlier design asked `dune describe workspace`
+skips, never findings. A wholly missing default context refuses — never an
+empty "complete" roster — and under `--no-build` on a dirty tree a
+never-built module is silently *absent* (not skipped), so project rules
+quantify over the built subset; the default build closes that gap, and the
+green-settle trigger that drives mentat's lane guarantees it. One world is
+consciously narrower than describe was: an opam-switch workspace's
+external `include_dirs` are not discovered (the pkg-store glob is the only
+external source), so external names resolve to match-nothing there —
+store-backed workspaces are unaffected. (An earlier design asked `dune describe workspace`
 for the census. It lost twice over: describe takes dune's global lock, so
 it hard-fails beside the watch server that is litany's primary caller's
 normal state; and in a dune-pkg workspace a cold or config-skewed package
@@ -1078,8 +1086,7 @@ Nothing here is a reason to accept this RFC, nor a commitment.
 - **Baseline/ratchet mode**: record current findings, fail only on new
   ones — absent in every reference linter; would make brownfield adoption
   one command.
-- **Upstream dune asks**: a `(lint (litany))` stanza; `describe workspace`
-  fields for `(test)` stanzas and library visibility.
+- **Upstream dune asks**: a `(lint (litany))` stanza.
 - **Cone-scoped withholding** for project rules (per-finding universes from
   the reverse-dependency graph).
 - **Parsetree combinators in `Pat`**; **`ocaml-index` as a fast path** for

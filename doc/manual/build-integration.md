@@ -231,11 +231,10 @@ $ litany units
 ```
 
 `litany check --units FILE` consumes one from any producer — Bazel, Make,
-or nix rules emit it themselves. No dune is spawned and no build runs, so
-this lane also works beside a running dune watch server: capture the file
-once while the server is stopped, then `litany check --no-build --units
-FILE`. Per-unit witnesses still gate every join; a stale or wrong file
-costs skips, never findings.
+or nix rules emit it themselves. No dune is spawned and no build runs:
+this is the lane for foreign build systems (the default dune lane already
+works beside a running watch server on its own). Per-unit witnesses still
+gate every join; a stale or wrong file costs skips, never findings.
 
 ### Format, for producers
 

@@ -5,7 +5,7 @@
 
 (** The run's progress meter: one rewritten line on standard error.
 
-    A long check is silent otherwise — the dune build, the workspace describe,
+    A long check is silent otherwise — the dune build, the build-tree read,
     then one pass over every unit — and silence reads as a hang. This domain
     draws dune's shape:
 
@@ -39,7 +39,7 @@ val drawing : t -> bool
 val phase : t -> string -> unit
 (** [phase t label] shows [label] and the elapsed clock, with no count:
     [{v building… [3.2s] v}]. For the run's uncounted stretches — the dune
-    build, the workspace describe. Redraws immediately. *)
+    build, the build-tree read. Redraws immediately. *)
 
 val counting : t -> label:string -> total:int -> unit
 (** [counting t ~label ~total] starts a counted phase of [total] items at zero

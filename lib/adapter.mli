@@ -105,10 +105,13 @@ end
     the dune-pkg store beneath [_build/_private]; a workspace without a
     store contributes none and name resolution degrades per the resolver's
     contract. After a green [@check] the walk finds exactly what describe
-    used to report, plus the [(test)] stanzas describe always omitted; under
-    [--no-build] on a dirty tree a never-built module is silently absent —
-    the default (forwarded, near-instant beside a watch) build closes that
-    gap. A stale walk costs witness-gated skips, never findings.
+    used to report, plus the [(test)] stanzas describe always omitted. A
+    wholly missing default context refuses ([No_build_tree]) — never an
+    empty complete roster; under [--no-build] on a dirty but existing tree
+    a never-built module is silently {e absent} (not skipped), so project
+    rules quantify over the built subset — the default (forwarded,
+    near-instant beside a watch) build closes that gap. A stale walk costs
+    witness-gated skips, never findings.
 
     Two dune-generated shapes are excluded from the roster wholesale: units
     whose stanza directory sits inside a dot directory ([.NAME.inline-tests]
@@ -130,6 +133,12 @@ module Dune : sig
     | No_check_alias of string
         (** The named context is not merlin-enabled, so [@check] does not exist
             there. Remedy: lint the default context. *)
+    | No_build_tree of string
+        (** The default context's build tree is missing — a never-built tree
+            under [--no-build], or a workspace that renamed its default
+            context. Refused rather than reported as an empty complete
+            roster: silence would read as cleanliness. Remedy: build first,
+            or drop [--no-build]. *)
 
   val roster :
     ?progress:Progress.t ->

@@ -23,11 +23,12 @@ failure — exit 2, nothing runs after it):
   [2]
 
 --no-build spawns nothing at all: the roster is read straight from the
-build tree, so an empty project is an empty, complete run — and the shim
-records no second argv:
+build tree, so a never-built project is an honest refusal — silence must
+not read as cleanliness — and the shim records no second argv:
 
   $ ARGLOG=$PWD/args.log PATH=$PWD/shim:$PATH env -u INSIDE_DUNE litany check --root proj --no-build
-  30 rules selected · 0 units · 0 findings · 0 skipped
+  litany: no build tree at _build/default: litany reads the default context's artifacts. Build first (or drop --no-build); a workspace that renames its default context is not supported.
+  [2]
 
 The one argv carried --root:
 

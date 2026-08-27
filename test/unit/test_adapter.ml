@@ -53,12 +53,17 @@ let entry_for r source =
 let dune_tests =
   group "Dune"
     [
-      test "an absent build tree is an empty, complete roster" (fun () ->
+      test "an absent build tree refuses, never an empty complete roster"
+        (fun () ->
           let dir, write = craft () in
           write "dune-project" "(lang dune 3.0)\n";
-          let r = dune_roster dir in
-          is_true (Roster.complete r);
-          equal int 0 (List.length (Roster.entries r)));
+          match Dune.roster ~build:false ~root:dir () with
+          | Error (Dune.No_build_tree context) ->
+              equal string "_build/default" context
+          | Error e ->
+              failf "wrong refusal: %s"
+                (Format.asprintf "%a" Dune.pp_error e)
+          | Ok _ -> fail "reported a roster with no build tree");
       test "a library unit carries its stanza's name, kind, and visibility"
         (fun () ->
           let dir, write = craft () in
@@ -150,6 +155,28 @@ let dune_tests =
           equal int 1 (List.length (Roster.entries r));
           equal string "lib/store.ml"
             (Roster.Entry.source (List.hd (Roster.entries r))));
+      test "same-leaf qualified units cannot steal each other's sources"
+        (fun () ->
+          (* [inv__Fs__Types] and [inv__Other__Types] both look up
+             [types.ml]; leaf proximity alone hands both the sorted-first
+             candidate — one wrong pairing (witness-accepted when the
+             bytes coincide) plus a duplicate-source roster. The component
+             path carried by the mangled base scopes each to its own
+             directory; the unit whose true source is missing skips
+             honestly instead of stealing. *)
+          let dir, write = craft () in
+          write "lib/dune" "(library (name inv))\n";
+          write "lib/fs/types.ml" "";
+          write "_build/default/lib/.inv.objs/byte/inv__Fs__Types.cmt" "";
+          write "_build/default/lib/.inv.objs/byte/inv__Other__Types.cmt" "";
+          let r = dune_roster dir in
+          ignore (entry_for r "lib/fs/types.ml");
+          let sources =
+            List.map Roster.Entry.source (Roster.entries r)
+          in
+          equal int ~msg:"no duplicate pairing" 1
+            (List.length
+               (List.filter (String.equal "lib/fs/types.ml") sources)));
       test "qualified subdir units pair through the source index" (fun () ->
           (* Under [(include_subdirs qualified)] the unit's source lives
              deeper than the stanza directory; the leaf convention alone

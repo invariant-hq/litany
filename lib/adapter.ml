@@ -45,7 +45,10 @@ let walk_tree root ~prune ~file =
                     Hashtbl.add visited (st_dev, st_ino) ();
                     go rel
                   end
-              | _ -> file ~rel ~name)
+              | { Unix.st_kind = Unix.S_REG; _ } -> file ~rel ~name
+              (* A FIFO or device wearing an artifact name would block the
+                 loader on open; only regular files are files here. *)
+              | _ -> ())
           names
   in
   go ""
@@ -100,7 +103,10 @@ let strip_trailing drop rel_dir =
   | [] | [ "" ] -> ""
   | segs -> String.concat "/" segs
 
-let mode_seg seg = String.equal seg "byte" || String.equal seg "native"
+let mode_seg seg =
+  String.equal seg "byte"
+  || String.equal seg "native"
+  || String.equal seg "melange"
 
 (* Dune object directories are [.lib.objs/byte] tails under the stanza
    directory; dropping dot-prefixed and mode segments recovers the source
@@ -120,8 +126,8 @@ let objs_rel_dir = strip_trailing mode_seg
    recovers the stanza's source directory, its name, and which family owns
    it from an artifact directory beneath it — the directory name is dune's
    own statement of ownership, not a guess; [None] when [rel_dir] descends
-   through neither. The [.eobjs] suffix also ends in [.objs], so it is
-   tested first. *)
+   through neither. [.eobjs] is tested first so the arms read in claim
+   order; the suffixes cannot actually shadow each other. *)
 type stanza_family = Library_stanza | Executable_family
 
 let stanza_of_rel_dir rel_dir =
@@ -172,12 +178,28 @@ let leaf_of base =
   | at when at = len -> base
   | at -> String.sub base at (len - at)
 
+(* The [__]-separated components of a mangled base: ["lib__Fs__Read_file"]
+   is [["lib"; "Fs"; "Read_file"]]. Under [(include_subdirs qualified)] the
+   components past the stanza prefix are the unit's directory path, so a
+   library unit's source candidate must end with that path — leaf proximity
+   alone lets two same-leaf units of one stanza steal each other's
+   sources (and a byte-identical steal would pass the digest witness). *)
+let base_components base =
+  let len = String.length base in
+  let rec go start i acc =
+    if i + 1 >= len then List.rev (String.sub base start (len - start) :: acc)
+    else if base.[i] = '_' && base.[i + 1] = '_' then
+      go (i + 2) (i + 2) (String.sub base start (i - start) :: acc)
+    else go start (i + 1) acc
+  in
+  go 0 0 []
+
 (* Editable-source index of a source tree: basename -> sorted paths, each
    [mk rel] ([Walk] anchors them under its source root, the dune roster
    keeps them root-relative). Directories starting with ['.'] or ['_']
    never hold editable sources ([_build] copies must not be anchors), so
    they are pruned. *)
-let source_index_with ~mk root =
+let source_index root =
   let tbl = Hashtbl.create 256 in
   walk_tree root
     ~prune:(fun name -> name = "" || name.[0] = '.' || name.[0] = '_')
@@ -185,14 +207,12 @@ let source_index_with ~mk root =
       if Filename.check_suffix name ".ml" || Filename.check_suffix name ".mli"
       then
         Hashtbl.replace tbl name
-          (mk rel :: Option.value (Hashtbl.find_opt tbl name) ~default:[]));
+          (rel :: Option.value (Hashtbl.find_opt tbl name) ~default:[]));
   (* Deterministic buckets: candidates in path order. *)
   Hashtbl.filter_map_inplace
     (fun _ paths -> Some (List.sort String.compare paths))
     tbl;
   tbl
-
-let source_index root = source_index_with ~mk:(fun rel -> root // rel) root
 
 (* [segments p] is [p]'s path components, empty and [.] segments dropped, so
    textual prefix comparison works on relative and absolute paths alike. *)
@@ -464,7 +484,8 @@ module Unit_file = struct
         | None -> err i "unreadable length prefix"
         | Some n ->
             let start = !j + 1 in
-            if start + n > len then err start "atom extends past end of input"
+            if n < 0 || n > len - start then
+              err start "atom extends past end of input"
             else (Atom (i, String.sub bytes start n), start + n)
     in
     let rec forms i acc =
@@ -784,7 +805,11 @@ let executable_stanza_names sexps =
 (* {1 The dune adapter} *)
 
 module Dune = struct
-  type error = Dune_missing | Build_failed | No_check_alias of string
+  type error =
+    | Dune_missing
+    | Build_failed
+    | No_check_alias of string
+    | No_build_tree of string
 
   (* Both the build spawn and dune's root resolution pin dune's root to the
      directory litany was pointed at ([--root .] with the child's cwd
@@ -852,8 +877,9 @@ module Dune = struct
      beneath a package's [target/lib] holding a [.cmi] is a search dir —
      the same set describe's include_dirs used to enumerate. A workspace
      without a store (opam, vendored) contributes nothing here and the
-     name resolver degrades per its own contract: missing means
-     match-nothing, stated. *)
+     name resolver degrades per its own contract: a missing cmi is
+     match-nothing (an opam switch's external dirs are not discovered —
+     the RFC records the trade). *)
   let pkg_store_cmi_dirs ~root ~context =
     let store =
       "_build" // "_private" // Filename.basename context // ".pkg"
@@ -887,65 +913,101 @@ module Dune = struct
      enumeration, never a proof: a walk racing a rebuild costs
      witness-gated skips at join time, never findings. *)
   let build_tree_roster ~root ~context =
-    let units =
-      if is_real_dir (root // context) then
-        group_units (walk_artifacts (root // context))
-      else []
-    in
+    let units = group_units (walk_artifacts (root // context)) in
     let scan = stanza_scan_cache root in
     (* The source index answers layouts the leaf convention cannot — under
        [(include_subdirs qualified)] a unit's source lives deeper than its
        stanza directory — with [pair_source]'s proximity scope deciding, the
-       same way the [Walk] adapter pairs. Lazy: a tree whose every unit
-       pairs by convention never walks its sources. *)
-    let index = lazy (source_index_with ~mk:Fun.id root) in
+       same way the [Walk] adapter pairs (the index holds root-relative
+       paths; this roster's world is root-relative throughout). Lazy: a
+       tree whose every unit pairs by convention never walks its
+       sources. *)
+    let index = lazy (source_index root) in
     let lookup name =
       Option.value (Hashtbl.find_opt (Lazy.force index) name) ~default:[]
     in
     let boundary = project_boundary_probe () in
     let project_boundary dir = boundary (root // dir) in
+    (* Generated harness stanzas (dot-directory stanza dirs) and the
+       per-stanza executable alias module ([dune__exe.ml-gen], compilation
+       unit [Dune__exe] for every executable-family stanza with two or more
+       modules): both dune-generated, both name-colliding by construction.
+       The alias is sound to drop — generated (facts-only), exports no
+       values, references only its own stanza's modules, each already a
+       root via its kind — rather than asking the check for a path-keyed
+       exemption: the check guards name-keyed joins that would stay
+       ambiguous under readmitted duplicate names. A real duplicate — two
+       executables both named [main.ml] — still withholds. Library alias
+       modules stay: library names are unique per workspace. The exclusion
+       reaches [cmi_dirs] too: a harness copy of a real unit's cmi must not
+       shadow it in name resolution. *)
+    let excluded (u : unit_group) =
+      (match stanza_of_rel_dir u.rel_dir with
+      | Some (stanza_dir, _, _) -> generated_stanza_dir stanza_dir
+      | None -> false)
+      || String.equal u.base "dune__exe"
+    in
+    let units = List.filter (fun u -> not (excluded u)) units in
     let entries =
       List.filter_map
         (fun (u : unit_group) ->
           let stanza = stanza_of_rel_dir u.rel_dir in
-          let excluded =
-            (* Generated harness stanzas (dot-directory stanza dirs) and
-               the per-stanza executable alias module ([dune__exe.ml-gen],
-               compilation unit [Dune__exe] for every executable-family
-               stanza with two or more modules): both dune-generated, both
-               name-colliding by construction. The alias is sound to drop —
-               generated (facts-only), exports no values, references only
-               its own stanza's modules, each already a root via its kind —
-               rather than asking the check for a path-keyed exemption:
-               the check guards name-keyed joins that would stay ambiguous
-               under readmitted duplicate names. A real duplicate — two
-               executables both named [main.ml] — still withholds. Library
-               alias modules stay: library names are unique per
-               workspace. *)
-            (match stanza with
-            | Some (stanza_dir, _, _) -> generated_stanza_dir stanza_dir
-            | None -> false)
-            || String.equal u.base "dune__exe"
-          in
-          if excluded then None
-          else
             let cmt = Option.map (fun rel -> context // rel) u.cmt in
             let cmti = Option.map (fun rel -> context // rel) u.cmti in
             let intf_only = Option.is_none cmt in
             let exists p = Sys.file_exists (root // p) in
+            (* A library unit's mangled base carries its component path;
+               the fallback may only offer candidates ending with it. The
+               executable prefix ([dune__exe__Main]) is mangling, not a
+               path, so exe-family units keep the bare-leaf lookup. *)
+            let lookup =
+              match stanza with
+              | Some (_, _, Library_stanza) -> (
+                  match base_components u.base with
+                  | _ :: (_ :: _ :: _ as components)
+                    when List.for_all
+                           (fun c -> not (String.equal c ""))
+                           components ->
+                      let suffix =
+                        "/"
+                        ^ String.concat "/"
+                            (List.map String.uncapitalize_ascii
+                               (List.filteri
+                                  (fun i _ ->
+                                    i < List.length components - 1)
+                                  components))
+                        ^ "/"
+                      in
+                      fun name ->
+                        List.filter
+                          (fun p ->
+                            String.length p > String.length suffix
+                            &&
+                            let dir = "/" ^ Filename.dirname p ^ "/" in
+                            String.length dir >= String.length suffix
+                            && String.equal suffix
+                                 (String.sub dir
+                                    (String.length dir
+                                    - String.length suffix)
+                                    (String.length suffix)))
+                          (lookup name)
+                  | _ -> lookup)
+              | _ -> lookup
+            in
             let pair intf_only =
               pair_source ~exists ~project_boundary ~editable_root:""
                 ~build_root:context ~lookup ~rel_dir:u.rel_dir ~base:u.base
                 ~intf_only
             in
             let source = pair intf_only in
-            (* The text lane's second file: a paired unit's editable mli,
-               named only when it exists — [pair_source]'s default is a
-               path that may not. *)
+            (* The unit's companion mli is its impl's sibling, never a
+               lookup pick: interface sources are the one input joins never
+               witness-gate, so a proximity fallback here could hand a
+               foreign mli to the text lane. *)
             let interface_source =
               if intf_only then None
               else
-                let mli = pair true in
+                let mli = Filename.remove_extension source ^ ".mli" in
                 if exists mli then Some mli else None
             in
             (* Preprocessed modules read a built [<m>.pp.ml]: dune
@@ -1010,7 +1072,14 @@ module Dune = struct
           | Error _ as e -> e
           | Ok () ->
               Progress.phase progress "reading the build tree";
-              Ok (build_tree_roster ~root ~context:"_build/default"))
+              let context = "_build/default" in
+              (* A missing default context is a refusal, never an empty
+                 "complete" roster: a workspace that renamed its default
+                 context (or was never built, under --no-build) builds
+                 nothing here, and silence would read as cleanliness. *)
+              if not (is_real_dir (root // context)) then
+                Error (No_build_tree context)
+              else Ok (build_tree_roster ~root ~context))
 
   let pp_error ppf = function
     | Dune_missing ->
@@ -1026,6 +1095,12 @@ module Dune = struct
           "the %s context is not merlin-enabled, so its @@check alias does not \
            exist. Lint the default context."
           context
+    | No_build_tree context ->
+        Format.fprintf ppf
+          "no build tree at %s: litany reads the default context's \
+           artifacts. Build first (or drop --no-build); a workspace that \
+           renames its default context is not supported."
+          context
 end
 
 (* {1 The artifact walk} *)
@@ -1040,7 +1115,9 @@ module Walk = struct
       let units = group_units (walk_artifacts cmt_root) in
       let index = lazy (source_index source_root) in
       let lookup name =
-        Option.value (Hashtbl.find_opt (Lazy.force index) name) ~default:[]
+        List.map
+          (fun rel -> source_root // rel)
+          (Option.value (Hashtbl.find_opt (Lazy.force index) name) ~default:[])
       in
       let project_boundary = project_boundary_probe () in
       let entries =
@@ -1053,12 +1130,14 @@ module Walk = struct
                 ~rel_dir:u.rel_dir ~base:u.base ~intf_only
             in
             let source = pair intf_only in
-            (* The paired mli for the text lane, named only when it exists
-               — [pair_source]'s default is a path that may not. *)
+            (* The unit's companion mli is its impl's sibling, never a
+               lookup pick: interface sources are the one input joins never
+               witness-gate, so a proximity fallback here could hand a
+               foreign mli to the text lane. *)
             let interface_source =
               if intf_only then None
               else
-                let mli = pair true in
+                let mli = Filename.remove_extension source ^ ".mli" in
                 if Sys.file_exists mli then Some mli else None
             in
             Roster.Entry.v ~source

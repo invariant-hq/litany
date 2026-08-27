@@ -675,7 +675,9 @@ let man =
        is a counted skip, never a stale finding.";
     `P
       "By default the workspace's dune supplies the roster ($(b,dune build \
-       @check), then one $(b,dune describe)). $(b,--cmt-root) walks a \
+       @check), then a lock-free read of the build tree — no $(b,dune \
+       describe), so the check runs beside a watch server). $(b,--cmt-root) \
+       walks a \
        directory of prebuilt artifacts instead, and $(b,--units) consumes a \
        unit file from $(b,litany units --save) or any other build system — no \
        dune spawned, no build run. $(b,--list-units) prints the admission \
