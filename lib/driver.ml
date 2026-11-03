@@ -283,6 +283,40 @@ module Result_cache = struct
         t.misses t.stores sw.Cache.evicted_entries
 end
 
+(* Where the compiler resolves a name the workspace does not build: the
+   standard library, and every directory holding a [.cmi] in the library
+   tree it sits in -- an opam switch's [lib/], [unix] and [eio] among them.
+   dune's package store is the roster's, but a workspace built in an opam
+   switch has none, and a name of its libraries would otherwise resolve to
+   nothing, a forbidden [Unix.sleep] matching no use of it. Sorted, read
+   once a process. *)
+let installed_cmi_dirs =
+  lazy
+    (let rec walk dir acc =
+       match Sys.readdir dir with
+       | exception Sys_error _ -> acc
+       | names ->
+           Array.sort String.compare names;
+           let acc =
+             if Array.exists (fun n -> Filename.check_suffix n ".cmi") names
+             then dir :: acc
+             else acc
+           in
+           Array.fold_left
+             (fun acc name ->
+               let path = Filename.concat dir name in
+               match (Unix.lstat path).st_kind with
+               | S_DIR -> walk path acc
+               | _ -> acc
+               | exception Unix.Unix_error _ -> acc)
+             acc names
+     in
+     let stdlib = Config.standard_library in
+     stdlib
+     :: List.filter
+          (fun d -> not (String.equal d stdlib))
+          (List.rev (walk (Filename.dirname stdlib) [])))
+
 module Parallel = struct
   (* Process workers for [litany check -j N]. The parent forks one child per
    shard; each child runs the real engine over its sub-roster (loading and
@@ -365,7 +399,7 @@ module Parallel = struct
   let run_shard ~progress ~cache ~rules ~catalog ~build_current ~cmi_dirs
       entries =
     let resolver =
-      Naming.Resolver.create ~cmi_dirs:(cmi_dirs @ [ Config.standard_library ])
+      Naming.Resolver.create ~cmi_dirs:(cmi_dirs @ Lazy.force installed_cmi_dirs)
     in
     let roster = Roster.v ~complete:false ~cmi_dirs entries in
     let snapshots = Hashtbl.create 32 in
@@ -678,7 +712,7 @@ end
 
 let resolver_of roster =
   Naming.Resolver.create
-    ~cmi_dirs:(Roster.cmi_dirs roster @ [ Config.standard_library ])
+    ~cmi_dirs:(Roster.cmi_dirs roster @ Lazy.force installed_cmi_dirs)
 
 (* The by-reason grouping key: [Unit.Skip]'s machine slug, sorted by
    its declaration-order rank — the same key the renderer's summary uses. *)

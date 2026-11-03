@@ -104,8 +104,7 @@ let strip_trailing drop rel_dir =
   | segs -> String.concat "/" segs
 
 let mode_seg seg =
-  String.equal seg "byte"
-  || String.equal seg "native"
+  String.equal seg "byte" || String.equal seg "native"
   || String.equal seg "melange"
 
 (* Dune object directories are [.lib.objs/byte] tails under the stanza
@@ -140,8 +139,7 @@ let stanza_of_rel_dir rel_dir =
             ( String.concat "/" (List.rev acc),
               String.sub seg 1 (n - 7),
               Executable_family )
-        else if n > 6 && seg.[0] = '.' && Filename.check_suffix seg ".objs"
-        then
+        else if n > 6 && seg.[0] = '.' && Filename.check_suffix seg ".objs" then
           Some
             ( String.concat "/" (List.rev acc),
               String.sub seg 1 (n - 6),
@@ -400,8 +398,17 @@ let forward_capture_limit = 8 * 1024 * 1024
    never to unbounded memory). *)
 let run_forwarding ~progress ~root argv =
   let r, w = Unix.pipe ~cloexec:true () in
+  (* A child inherits the signal mask of the thread that starts it, and
+     OCaml 5 blocks signals in threads of its own: dune, started with them
+     blocked, cannot handle the signals its watcher waits on. *)
   let pid =
-    with_cwd root (fun () -> Unix.create_process argv.(0) argv Unix.stdin w w)
+    let mask = Unix.sigprocmask Unix.SIG_SETMASK [] in
+    Fun.protect
+      ~finally:(fun () ->
+        ignore (Unix.sigprocmask Unix.SIG_SETMASK mask : int list))
+      (fun () ->
+        with_cwd root (fun () ->
+            Unix.create_process argv.(0) argv Unix.stdin w w))
   in
   Unix.close w;
   let buf = Buffer.create 1024 in
@@ -797,8 +804,7 @@ let executable_stanza_names sexps =
   List.concat_map
     (function
       | List (Atom "executable" :: fields) -> stanza_field_names "name" fields
-      | List (Atom "executables" :: fields) ->
-          stanza_field_names "names" fields
+      | List (Atom "executables" :: fields) -> stanza_field_names "names" fields
       | _ -> [])
     sexps
 
@@ -881,9 +887,7 @@ module Dune = struct
      match-nothing (an opam switch's external dirs are not discovered —
      the RFC records the trade). *)
   let pkg_store_cmi_dirs ~root ~context =
-    let store =
-      "_build" // "_private" // Filename.basename context // ".pkg"
-    in
+    let store = "_build" // "_private" // Filename.basename context // ".pkg" in
     match Sys.readdir (root // store) with
     | exception Sys_error _ -> []
     | pkgs ->
@@ -943,8 +947,8 @@ module Dune = struct
        shadow it in name resolution. *)
     let excluded (u : unit_group) =
       (match stanza_of_rel_dir u.rel_dir with
-      | Some (stanza_dir, _, _) -> generated_stanza_dir stanza_dir
-      | None -> false)
+        | Some (stanza_dir, _, _) -> generated_stanza_dir stanza_dir
+        | None -> false)
       || String.equal u.base "dune__exe"
     in
     let units = List.filter (fun u -> not (excluded u)) units in
@@ -952,100 +956,108 @@ module Dune = struct
       List.filter_map
         (fun (u : unit_group) ->
           let stanza = stanza_of_rel_dir u.rel_dir in
-            let cmt = Option.map (fun rel -> context // rel) u.cmt in
-            let cmti = Option.map (fun rel -> context // rel) u.cmti in
-            let intf_only = Option.is_none cmt in
-            let exists p = Sys.file_exists (root // p) in
-            (* A library unit's mangled base carries its component path;
+          let cmt = Option.map (fun rel -> context // rel) u.cmt in
+          let cmti = Option.map (fun rel -> context // rel) u.cmti in
+          let intf_only = Option.is_none cmt in
+          let exists p = Sys.file_exists (root // p) in
+          (* A library unit's mangled base carries its component path;
                the fallback may only offer candidates ending with it. The
                executable prefix ([dune__exe__Main]) is mangling, not a
                path, so exe-family units keep the bare-leaf lookup. *)
-            let lookup =
-              match stanza with
-              | Some (_, _, Library_stanza) -> (
-                  match base_components u.base with
-                  | _ :: (_ :: _ :: _ as components)
-                    when List.for_all
-                           (fun c -> not (String.equal c ""))
-                           components ->
-                      let suffix =
-                        "/"
-                        ^ String.concat "/"
-                            (List.map String.uncapitalize_ascii
-                               (List.filteri
-                                  (fun i _ ->
-                                    i < List.length components - 1)
-                                  components))
-                        ^ "/"
-                      in
-                      fun name ->
-                        List.filter
-                          (fun p ->
-                            String.length p > String.length suffix
-                            &&
-                            let dir = "/" ^ Filename.dirname p ^ "/" in
-                            String.length dir >= String.length suffix
-                            && String.equal suffix
-                                 (String.sub dir
-                                    (String.length dir
-                                    - String.length suffix)
-                                    (String.length suffix)))
-                          (lookup name)
-                  | _ -> lookup)
-              | _ -> lookup
-            in
-            let pair intf_only =
-              pair_source ~exists ~project_boundary ~editable_root:""
-                ~build_root:context ~lookup ~rel_dir:u.rel_dir ~base:u.base
-                ~intf_only
-            in
-            let source = pair intf_only in
-            (* The unit's companion mli is its impl's sibling, never a
+          let lookup =
+            match stanza with
+            | Some (_, _, Library_stanza) -> (
+                match base_components u.base with
+                | _ :: (_ :: _ :: _ as components)
+                  when List.for_all
+                         (fun c -> not (String.equal c ""))
+                         components ->
+                    let suffix =
+                      "/"
+                      ^ String.concat "/"
+                          (List.map String.uncapitalize_ascii
+                             (List.filteri
+                                (fun i _ -> i < List.length components - 1)
+                                components))
+                      ^ "/"
+                    in
+                    fun name ->
+                      List.filter
+                        (fun p ->
+                          String.length p > String.length suffix
+                          &&
+                          let dir = "/" ^ Filename.dirname p ^ "/" in
+                          String.length dir >= String.length suffix
+                          && String.equal suffix
+                               (String.sub dir
+                                  (String.length dir - String.length suffix)
+                                  (String.length suffix)))
+                        (lookup name)
+                | _ -> lookup)
+            | _ -> lookup
+          in
+          let pair intf_only =
+            pair_source ~exists ~project_boundary ~editable_root:""
+              ~build_root:context ~lookup ~rel_dir:u.rel_dir ~base:u.base
+              ~intf_only
+          in
+          let source = pair intf_only in
+          (* The unit's companion mli is its impl's sibling, never a
                lookup pick: interface sources are the one input joins never
                witness-gate, so a proximity fallback here could hand a
                foreign mli to the text lane. *)
-            let interface_source =
-              if intf_only then None
-              else
-                let mli = Filename.remove_extension source ^ ".mli" in
-                if exists mli then Some mli else None
-            in
-            (* Preprocessed modules read a built [<m>.pp.ml]: dune
+          let interface_source =
+            if intf_only then None
+            else
+              let mli = Filename.remove_extension source ^ ".mli" in
+              if exists mli then Some mli else None
+          in
+          (* Preprocessed modules read a built [<m>.pp.ml]: dune
                materializes it beside the module's build-tree impl. Naming
                it lets such units join Derived instead of skipping stale;
                the witness still decides. *)
-            let preprocessed_source =
-              if intf_only then None
-              else
-                let pp =
-                  context // clean_rel_dir u.rel_dir
-                  // (String.uncapitalize_ascii (leaf_of u.base) ^ ".pp.ml")
-                in
-                if exists pp then Some pp else None
-            in
-            let library, visibility, kind =
-              match stanza with
-              | None -> (None, Roster.Unknown, None)
-              | Some (stanza_dir, name, Library_stanza) ->
-                  (* The [.objs] directory is dune's own statement that a
+          (* A Melange library's modules are compiled from copies dune
+               writes into [.melange_src/], each opening with a line
+               directive, so the compiler records the copy's digest: naming
+               the copy lets them join Derived as a preprocessed module
+               does. *)
+          let preprocessed_source =
+            if intf_only then None
+            else
+              let leaf = String.uncapitalize_ascii (leaf_of u.base) in
+              let dir = context // clean_rel_dir u.rel_dir in
+              let pp = dir // (leaf ^ ".pp.ml") in
+              let melange = dir // ".melange_src" // (leaf ^ ".ml") in
+              let compiled_by_melange =
+                List.mem "melange" (String.split_on_char '/' u.rel_dir)
+              in
+              if exists pp then Some pp
+              else if compiled_by_melange && exists melange then Some melange
+              else None
+          in
+          let library, visibility, kind =
+            match stanza with
+            | None -> (None, Roster.Unknown, None)
+            | Some (stanza_dir, name, Library_stanza) ->
+                (* The [.objs] directory is dune's own statement that a
                      library named [name] owns these units; the scan adds
                      visibility when it finds the stanza. *)
-                  ( Some name,
-                    Option.value
-                      (List.assoc_opt name (scan stanza_dir).libraries)
-                      ~default:Roster.Unknown,
-                    Some Roster.Library )
-              | Some (stanza_dir, name, Executable_family) ->
-                  let claims = scan stanza_dir in
-                  if List.mem name claims.tests then
-                    (Some name, Roster.Unknown, Some Roster.Test)
-                  else if List.mem name claims.executables then
-                    (Some name, Roster.Unknown, Some Roster.Executable)
-                  else (None, Roster.Unknown, None)
-            in
-            Some
-              (Roster.Entry.v ~source ?cmt ?cmti ?preprocessed_source
-                 ?interface_source ?library ~visibility ?kind ()))
+                ( Some name,
+                  Option.value
+                    (List.assoc_opt name (scan stanza_dir).libraries)
+                    ~default:Roster.Unknown,
+                  Some Roster.Library )
+            | Some (stanza_dir, name, Executable_family) ->
+                let claims = scan stanza_dir in
+                if List.mem name claims.tests then
+                  (Some name, Roster.Unknown, Some Roster.Test)
+                else if List.mem name claims.executables then
+                  (Some name, Roster.Unknown, Some Roster.Executable)
+                else (None, Roster.Unknown, None)
+          in
+          Some
+            (Roster.Entry.v ~source ?cmt ?cmti ?preprocessed_source
+               ?interface_source ?library ~visibility ?kind ()))
         units
     in
     let local_cmi_dirs =
@@ -1097,9 +1109,9 @@ module Dune = struct
           context
     | No_build_tree context ->
         Format.fprintf ppf
-          "no build tree at %s: litany reads the default context's \
-           artifacts. Build first (or drop --no-build); a workspace that \
-           renames its default context is not supported."
+          "no build tree at %s: litany reads the default context's artifacts. \
+           Build first (or drop --no-build); a workspace that renames its \
+           default context is not supported."
           context
 end
 

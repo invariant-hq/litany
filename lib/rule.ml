@@ -137,6 +137,7 @@ type callback =
       Typedtree.value_binding list ->
       Finding.t list)
   | Module_binding of (Unit.t -> Module_binding.t -> Finding.t list)
+  | Open of (Unit.t -> Typedtree.open_declaration -> Finding.t list)
   | Export of (Unit.t -> Unit.Export.t -> Finding.t list)
   | Attribute of
       string list option * (Unit.t -> Parsetree.attribute -> Finding.t list)
@@ -173,6 +174,7 @@ let let_group m f = { meta = m; callback = Let_group f; options = None }
 let module_binding m f =
   { meta = m; callback = Module_binding f; options = None }
 
+let open_ m f = { meta = m; callback = Open f; options = None }
 let export m f = { meta = m; callback = Export f; options = None }
 
 let attribute ?names m f =

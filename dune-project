@@ -7,17 +7,17 @@
 (implicit_transitive_deps false)
 
 (source
- (github invariant-hq/litany))
+ (github hyphatech/litany))
 
-(homepage "https://github.com/invariant-hq/litany")
+(homepage "https://github.com/hyphatech/litany")
 
-(documentation "https://github.com/invariant-hq/litany#readme")
+(documentation "https://github.com/hyphatech/litany#readme")
 
-(bug_reports "https://github.com/invariant-hq/litany/issues")
+(bug_reports "https://github.com/hyphatech/litany/issues")
 
 (authors "Thibaut Mattio <thibaut.mattio@gmail.com>")
 
-(maintainers "Thibaut Mattio <thibaut.mattio@gmail.com>")
+(maintainers "Hypha Technologies Ltd <dev@hyphatech.io>")
 
 (maintenance_intent "(latest)")
 

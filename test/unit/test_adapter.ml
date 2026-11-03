@@ -9,7 +9,6 @@
    the compiled fixtures of test/unit and over crafted directory trees. *)
 
 open Windtrap
-
 module Dune = Litany.Adapter.Dune
 module Walk = Litany.Adapter.Walk
 module Roster = Litany.Roster
@@ -40,15 +39,12 @@ let dune_roster dir =
 
 let entry_for r source =
   match
-    List.find_opt
-      (fun e -> Roster.Entry.source e = source)
-      (Roster.entries r)
+    List.find_opt (fun e -> Roster.Entry.source e = source) (Roster.entries r)
   with
   | Some e -> e
   | None ->
       failf "no entry for %s (have: %s)" source
-        (String.concat ", "
-           (List.map Roster.Entry.source (Roster.entries r)))
+        (String.concat ", " (List.map Roster.Entry.source (Roster.entries r)))
 
 let dune_tests =
   group "Dune"
@@ -61,14 +57,12 @@ let dune_tests =
           | Error (Dune.No_build_tree context) ->
               equal string "_build/default" context
           | Error e ->
-              failf "wrong refusal: %s"
-                (Format.asprintf "%a" Dune.pp_error e)
+              failf "wrong refusal: %s" (Format.asprintf "%a" Dune.pp_error e)
           | Ok _ -> fail "reported a roster with no build tree");
       test "a library unit carries its stanza's name, kind, and visibility"
         (fun () ->
           let dir, write = craft () in
-          write "lib/dune"
-            "(library (name inv) (public_name inventory))\n";
+          write "lib/dune" "(library (name inv) (public_name inventory))\n";
           write "lib/store.ml" "let x = 1\n";
           write "_build/default/lib/.inv.objs/byte/inv__Store.cmt" "";
           write "_build/default/lib/.inv.objs/byte/inv.cmt" "";
@@ -105,8 +99,7 @@ let dune_tests =
           write "lib/store.ml" "";
           write "_build/default/lib/.inv.objs/byte/inv__Store.cmt" "";
           write "other/store2.ml" "";
-          write "_build/default/other/.mystery.objs/byte/mystery__Store2.cmt"
-            "";
+          write "_build/default/other/.mystery.objs/byte/mystery__Store2.cmt" "";
           let r = dune_roster dir in
           is_true
             (Roster.Entry.visibility (entry_for r "lib/store.ml")
@@ -127,17 +120,17 @@ let dune_tests =
           write "loose/x.ml" "";
           write "_build/default/loose/.x.eobjs/byte/dune__exe__X.cmt" "";
           let r = dune_roster dir in
-          is_true (Roster.Entry.kind (entry_for r "bin/main.ml")
-                   = Some Roster.Executable);
-          is_true (Roster.Entry.kind (entry_for r "test/t.ml")
-                   = Some Roster.Test);
+          is_true
+            (Roster.Entry.kind (entry_for r "bin/main.ml")
+            = Some Roster.Executable);
+          is_true
+            (Roster.Entry.kind (entry_for r "test/t.ml") = Some Roster.Test);
           (* An eobjs unit whose stanza the scan cannot find stays
              metadata-less: exe-family is known, which stanza is not. *)
           let loose = entry_for r "loose/x.ml" in
           is_true (Roster.Entry.kind loose = None);
           equal (option string) None (Roster.Entry.library loose));
-      test "generated harness stanzas and the exe alias are excluded"
-        (fun () ->
+      test "generated harness stanzas and the exe alias are excluded" (fun () ->
           (* The inline-tests runner mirrors a real stanza's sources under
              a generated dot-directory stanza; admitting it minted
              duplicate-source entries (and crashed the unit-file encoder on
@@ -171,12 +164,9 @@ let dune_tests =
           write "_build/default/lib/.inv.objs/byte/inv__Other__Types.cmt" "";
           let r = dune_roster dir in
           ignore (entry_for r "lib/fs/types.ml");
-          let sources =
-            List.map Roster.Entry.source (Roster.entries r)
-          in
+          let sources = List.map Roster.Entry.source (Roster.entries r) in
           equal int ~msg:"no duplicate pairing" 1
-            (List.length
-               (List.filter (String.equal "lib/fs/types.ml") sources)));
+            (List.length (List.filter (String.equal "lib/fs/types.ml") sources)));
       test "qualified subdir units pair through the source index" (fun () ->
           (* Under [(include_subdirs qualified)] the unit's source lives
              deeper than the stanza directory; the leaf convention alone
@@ -198,16 +188,32 @@ let dune_tests =
           write "_build/default/lib/.inv.objs/byte/inv__Store.cmt" "";
           write "_build/default/lib/store.pp.ml" "";
           let r = dune_roster dir in
-          equal (option string)
-            (Some "_build/default/lib/store.pp.ml")
+          equal (option string) (Some "_build/default/lib/store.pp.ml")
             (Roster.Entry.preprocessed_source (entry_for r "lib/store.ml")));
+      test "a melange unit's source rides its .melange_src copy" (fun () ->
+          let dir, write = craft () in
+          write "web/dune" "(library (name web) (modes melange))\n";
+          write "web/page.ml" "";
+          write "_build/default/web/.web.objs/melange/web__Page.cmt" "";
+          write "_build/default/web/.melange_src/page.ml" "";
+          let r = dune_roster dir in
+          equal (option string) (Some "_build/default/web/.melange_src/page.ml")
+            (Roster.Entry.preprocessed_source (entry_for r "web/page.ml")));
+      test "a native unit beside a melange copy names none" (fun () ->
+          let dir, write = craft () in
+          write "web/dune" "(library (name web) (modes native melange))\n";
+          write "web/page.ml" "";
+          write "_build/default/web/.web.objs/byte/web__Page.cmt" "";
+          write "_build/default/web/.melange_src/page.ml" "";
+          let r = dune_roster dir in
+          equal (option string) None
+            (Roster.Entry.preprocessed_source (entry_for r "web/page.ml")));
       test "cmi dirs are the walked object dirs plus the pkg store" (fun () ->
           let dir, write = craft () in
           write "lib/dune" "(library (name inv))\n";
           write "lib/store.ml" "";
           write "_build/default/lib/.inv.objs/byte/inv__Store.cmt" "";
-          write "_build/_private/default/.pkg/dep.1.0/target/lib/dep/dep.cmi"
-            "";
+          write "_build/_private/default/.pkg/dep.1.0/target/lib/dep/dep.cmi" "";
           write
             "_build/_private/default/.pkg/dep.1.0/target/lib/dep/sub/none.txt"
             "";
@@ -218,8 +224,7 @@ let dune_tests =
             (List.mem "_build/_private/default/.pkg/dep.1.0/target/lib/dep"
                (Roster.cmi_dirs r));
           is_false ~msg:"cmi-less dir excluded"
-            (List.mem
-               "_build/_private/default/.pkg/dep.1.0/target/lib/dep/sub"
+            (List.mem "_build/_private/default/.pkg/dep.1.0/target/lib/dep/sub"
                (Roster.cmi_dirs r)));
       test "is deterministic across runs" (fun () ->
           let dir, write = craft () in

@@ -677,12 +677,11 @@ let man =
       "By default the workspace's dune supplies the roster ($(b,dune build \
        @check), then a lock-free read of the build tree — no $(b,dune \
        describe), so the check runs beside a watch server). $(b,--cmt-root) \
-       walks a \
-       directory of prebuilt artifacts instead, and $(b,--units) consumes a \
-       unit file from $(b,litany units --save) or any other build system — no \
-       dune spawned, no build run. $(b,--list-units) prints the admission \
-       listing without running rules. $(b,--format) selects the report surface \
-       (text, json, github).";
+       walks a directory of prebuilt artifacts instead, and $(b,--units) \
+       consumes a unit file from $(b,litany units --save) or any other build \
+       system — no dune spawned, no build run. $(b,--list-units) prints the \
+       admission listing without running rules. $(b,--format) selects the \
+       report surface (text, json, github).";
     `P
       "Run as a dune action — one user-written rule, typically $(b,(rule \
        (alias lint) (deps (alias_rec check)) (action (run litany check)))) — \

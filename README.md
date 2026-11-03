@@ -1,5 +1,10 @@
 # Litany
 
+This is Hypha's fork of
+[invariant-hq/litany](https://github.com/invariant-hq/litany), released
+into [Hypha's opam repository](https://github.com/hyphatech/opam-repository)
+with rules that hold the rules of Hypha's vault besides upstream's.
+
 Litany is a deterministic, compiler-backed linter for OCaml. It examines
 OCaml sources and reports style and correctness issues, so they can be
 faced and fixed rather than silenced.
@@ -33,11 +38,17 @@ Two properties follow from that design:
 
 ## Install
 
-Litany is not on opam yet. Build from source; the lock directory is
-committed:
+From Hypha's opam repository:
 
 ```sh
-git clone https://github.com/invariant-hq/litany.git
+opam repo add hypha https://github.com/hyphatech/opam-repository.git
+opam install litany
+```
+
+Or from source:
+
+```sh
+git clone https://github.com/hyphatech/litany.git
 cd litany
 dune build @install
 ```
@@ -134,7 +145,7 @@ eta-reducible-forwarding                  style        nursery  never      off  
 suspicious-lost-backtrace                 suspicious   stable   never      on   work between catching and re-raising can overwrite the backtrace
 suspicious-physical-equality              suspicious   stable   never      on   physical comparison with a non-immediate operand
 ...
-80 rules · 30 on by default (stable correctness, suspicious, perf) · 10 restriction (cherry-picked; outside all) · 12 nursery
+84 rules · 30 on by default (stable correctness, suspicious, perf) · 14 restriction (cherry-picked; outside all) · 16 nursery
 ```
 
 The table derives from the same declarations the engine runs, so it

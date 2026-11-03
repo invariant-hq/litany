@@ -111,7 +111,7 @@ because your house said so. The tier is therefore cherry-picked:
   restriction rule is stable, so the token enables all ten at once:
 
 ```
-litany: restriction rules are independent house policies, and some contradict each other — adopt each by exact name; the group token enables 10 of 10 restriction rules (group tokens cover stable rules only; nursery members need "nursery" or their exact name)
+litany: restriction rules are independent house policies, and some contradict each other — adopt each by exact name; the group token enables 10 of 14 restriction rules (group tokens cover stable rules only; nursery members need "nursery" or their exact name)
 ```
 
 Two restriction rules are configured policies with no built-in list:

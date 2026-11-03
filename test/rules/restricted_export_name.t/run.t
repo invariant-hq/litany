@@ -126,9 +126,9 @@ never a regex.
   litany: litany:2:2: unknown option "forbid-regex" (options: forbid-suffix, max-underscores)
   [2]
 
-The policy fires on executables and tests too: an ml-only unit exports
-every root declaration — executables included, their root names surface
-to their own readers — and the tier keeps the rule opt-in.
+An executable exports nothing: since dune's language 3.0 each gets an
+implicit empty interface, so its root names surface to no reader and the
+policy, which reads exports, does not fire on them.
 
   $ cat > litany <<'EOP'
   > (rule restricted-export-name
@@ -143,5 +143,4 @@ to their own readers — and the tier keeps the rule opt-in.
   > let () = print_int helper'
   > EOP
   $ env -u INSIDE_DUNE litany check --select restricted-export-name 2>&1 | grep -A 1 "tool/main"
-  File "tool/main.ml", line 1, characters 4-11:
-  1 | let helper' = 41
+  [1]

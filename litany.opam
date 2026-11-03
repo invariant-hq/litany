@@ -3,15 +3,15 @@ opam-version: "2.0"
 synopsis: "A linter for OCaml"
 description:
   "Litany examines OCaml sources and reports style and correctness issues, so they can be faced and fixed rather than silenced."
-maintainer: ["Thibaut Mattio <thibaut.mattio@gmail.com>"]
+maintainer: ["Hypha Technologies Ltd <dev@hyphatech.io>"]
 authors: ["Thibaut Mattio <thibaut.mattio@gmail.com>"]
 license: "ISC"
 tags: [
   "linter" "static-analysis" "developer-tools" "ocaml" "org:invariant-hq"
 ]
-homepage: "https://github.com/invariant-hq/litany"
-doc: "https://github.com/invariant-hq/litany#readme"
-bug-reports: "https://github.com/invariant-hq/litany/issues"
+homepage: "https://github.com/hyphatech/litany"
+doc: "https://github.com/hyphatech/litany#readme"
+bug-reports: "https://github.com/hyphatech/litany/issues"
 depends: [
   "dune" {>= "3.23"}
   "ocaml" {>= "5.5.0" & < "5.6.0"}
@@ -35,5 +35,5 @@ build: [
     "@doc" {with-doc}
   ]
 ]
-dev-repo: "git+https://github.com/invariant-hq/litany.git"
+dev-repo: "git+https://github.com/hyphatech/litany.git"
 x-maintenance-intent: ["(latest)"]

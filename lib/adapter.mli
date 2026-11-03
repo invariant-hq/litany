@@ -82,44 +82,42 @@ end
     One subprocess per check pass: [dune build --root . @check] (skipped by
     [--no-build]; [@check] materializes cmt/cmti without linking), with the
     linted root as working directory and dune's root pinned there, so a
-    workspace nested under another dune project never root-walks to the
-    outer one. The spawn is bounded in memory — at most 8 MiB of transcript
-    is retained for failure classification (beyond it, classification
-    degrades to the generic refusal — the user saw the stream either way) —
-    and deliberately unbounded in time: a legitimate build may be
-    arbitrarily long, streams to the user, and answers to Ctrl-C. Beside a
-    running watch server the build {e forwards}: a secondary dune hands the
-    request to the lock holder instead of fighting it, so a check pass
-    composes with a live [dune build --watch].
+    workspace nested under another dune project never root-walks to the outer
+    one. The spawn is bounded in memory — at most 8 MiB of transcript is
+    retained for failure classification (beyond it, classification degrades to
+    the generic refusal — the user saw the stream either way) — and deliberately
+    unbounded in time: a legitimate build may be arbitrarily long, streams to
+    the user, and answers to Ctrl-C. Beside a running watch server the build
+    {e forwards}: a secondary dune hands the request to the lock holder instead
+    of fighting it, so a check pass composes with a live [dune build --watch].
 
-    Everything else is read from the build tree dune already materialized —
-    no [dune describe], no lock, no second subprocess. The artifact walk of
-    the default context is the enumeration; each unit's stanza is recovered
-    from its object directory's name ([.NAME.objs] a library, [.NAME.eobjs]
-    an executable-family stanza — dune's own naming, not a guess); a
-    tolerant s-expression scan of the stanza directory's [dune] file
-    classifies it (library visibility from [(public_name ...)], [Test]
-    against [Executable] from the stanza names) — when the scan cannot
-    answer, the entry carries [Roster.Unknown] or no kind: unknown is
-    stated, never guessed. External dependencies' cmi search dirs come from
-    the dune-pkg store beneath [_build/_private]; a workspace without a
-    store contributes none and name resolution degrades per the resolver's
-    contract. After a green [@check] the walk finds exactly what describe
-    used to report, plus the [(test)] stanzas describe always omitted. A
-    wholly missing default context refuses ([No_build_tree]) — never an
-    empty complete roster; under [--no-build] on a dirty but existing tree
-    a never-built module is silently {e absent} (not skipped), so project
-    rules quantify over the built subset — the default (forwarded,
-    near-instant beside a watch) build closes that gap. A stale walk costs
-    witness-gated skips, never findings.
+    Everything else is read from the build tree dune already materialized — no
+    [dune describe], no lock, no second subprocess. The artifact walk of the
+    default context is the enumeration; each unit's stanza is recovered from its
+    object directory's name ([.NAME.objs] a library, [.NAME.eobjs] an
+    executable-family stanza — dune's own naming, not a guess); a tolerant
+    s-expression scan of the stanza directory's [dune] file classifies it
+    (library visibility from [(public_name ...)], [Test] against [Executable]
+    from the stanza names) — when the scan cannot answer, the entry carries
+    [Roster.Unknown] or no kind: unknown is stated, never guessed. External
+    dependencies' cmi search dirs come from the dune-pkg store beneath
+    [_build/_private]; a workspace without a store contributes none and name
+    resolution degrades per the resolver's contract. After a green [@check] the
+    walk finds exactly what describe used to report, plus the [(test)] stanzas
+    describe always omitted. A wholly missing default context refuses
+    ([No_build_tree]) — never an empty complete roster; under [--no-build] on a
+    dirty but existing tree a never-built module is silently {e absent} (not
+    skipped), so project rules quantify over the built subset — the default
+    (forwarded, near-instant beside a watch) build closes that gap. A stale walk
+    costs witness-gated skips, never findings.
 
     Two dune-generated shapes are excluded from the roster wholesale: units
     whose stanza directory sits inside a dot directory ([.NAME.inline-tests]
-    runner harnesses — admitting them mints duplicate-source entries), and
-    the per-stanza executable alias module ([dune__exe.ml-gen], compilation
-    unit [Dune__exe] for every executable-family stanza) whose name collides
-    by construction and which carries nothing the project rules need.
-    Library alias modules stay: library names are unique per workspace. *)
+    runner harnesses — admitting them mints duplicate-source entries), and the
+    per-stanza executable alias module ([dune__exe.ml-gen], compilation unit
+    [Dune__exe] for every executable-family stanza) whose name collides by
+    construction and which carries nothing the project rules need. Library alias
+    modules stay: library names are unique per workspace. *)
 module Dune : sig
   (** The type for dune-adapter refusals. Each maps to exit 2 with the
       documented remedy; nothing runs after one. *)
@@ -135,10 +133,10 @@ module Dune : sig
             there. Remedy: lint the default context. *)
     | No_build_tree of string
         (** The default context's build tree is missing — a never-built tree
-            under [--no-build], or a workspace that renamed its default
-            context. Refused rather than reported as an empty complete
-            roster: silence would read as cleanliness. Remedy: build first,
-            or drop [--no-build]. *)
+            under [--no-build], or a workspace that renamed its default context.
+            Refused rather than reported as an empty complete roster: silence
+            would read as cleanliness. Remedy: build first, or drop
+            [--no-build]. *)
 
   val roster :
     ?progress:Progress.t ->
@@ -147,20 +145,19 @@ module Dune : sig
     unit ->
     (Roster.t, error) result
   (** [roster ~root ()] is the roster of the dune workspace at [root] —
-      complete, with ownership metadata from the build tree's own layout and
-      the cmi search path from the walked object directories plus the
-      dune-pkg store. [build] (defaults to [true]) runs [dune build @check]
-      first; [false] is [--no-build], where stale artifacts surface as
-      skips and never-built modules are absent. Only the build spawns dune;
-      its output streams through to the user before this function returns.
-      The roster read itself takes no lock and asks dune nothing, so it
-      runs beside a live watch server.
+      complete, with ownership metadata from the build tree's own layout and the
+      cmi search path from the walked object directories plus the dune-pkg
+      store. [build] (defaults to [true]) runs [dune build @check] first;
+      [false] is [--no-build], where stale artifacts surface as skips and
+      never-built modules are absent. Only the build spawns dune; its output
+      streams through to the user before this function returns. The roster read
+      itself takes no lock and asks dune nothing, so it runs beside a live watch
+      server.
 
-      [progress] names each of the two stretches this function spends its
-      time in — the build, the build-tree read — on the caller's meter, and
-      keeps its clock moving while dune runs; dune's own output takes the
-      line back whenever it prints. Defaults to a meter that draws
-      nothing. *)
+      [progress] names each of the two stretches this function spends its time
+      in — the build, the build-tree read — on the caller's meter, and keeps its
+      clock moving while dune runs; dune's own output takes the line back
+      whenever it prints. Defaults to a meter that draws nothing. *)
 
   val pp_error : Format.formatter -> error -> unit
   (** [pp_error ppf e] formats [e]'s refusal message with its remedy. *)

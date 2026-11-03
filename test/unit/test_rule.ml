@@ -74,6 +74,7 @@ let query_tests =
             | Rule.Type_decl _ -> "type_decl"
             | Rule.Let_group _ -> "let_group"
             | Rule.Module_binding _ -> "module_binding"
+            | Rule.Open _ -> "open"
             | Rule.Export _ -> "export"
             | Rule.Attribute _ -> "attribute"
             | Rule.Source _ -> "source"

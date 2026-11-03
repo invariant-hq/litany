@@ -268,6 +268,14 @@ val module_binding : meta -> (Unit.t -> Module_binding.t -> Finding.t list) -> t
     groups are not dispatched in this version — in expression position either.
 *)
 
+val open_ :
+  meta -> (Unit.t -> Typedtree.open_declaration -> Finding.t list) -> t
+(** [open_ m f] is the rule [m] dispatched at every [open] that is a structure
+    item ([Tstr_open]), at the unit's root and inside nested structures alike.
+    An [open] local to an expression -- [let open M in e] and [M.(e)] -- is not
+    dispatched: the two are one node, and a local open of a library of
+    combinators is idiomatic where a file-wide one is not. *)
+
 val export : meta -> (Unit.t -> Unit.Export.t -> Finding.t list) -> t
 (** [export m f] is the rule [m] dispatched at every row of the unit's export
     index ([Unit.exports]) — the value, type, module, and exception declarations
@@ -543,6 +551,7 @@ type callback =
       Typedtree.value_binding list ->
       Finding.t list)
   | Module_binding of (Unit.t -> Module_binding.t -> Finding.t list)
+  | Open of (Unit.t -> Typedtree.open_declaration -> Finding.t list)
   | Export of (Unit.t -> Unit.Export.t -> Finding.t list)
   | Attribute of
       string list option * (Unit.t -> Parsetree.attribute -> Finding.t list)

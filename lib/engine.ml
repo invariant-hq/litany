@@ -506,6 +506,8 @@ type kinds = {
           the one [dispatch_all] serves this kind too. *)
   module_bindings :
     (Rule.t * (Unit.t -> Rule.Module_binding.t -> Finding.t list)) list;
+  opens :
+    (Rule.t * (Unit.t -> Typedtree.open_declaration -> Finding.t list)) list;
   exports : (Rule.t * (Unit.t -> Unit.Export.t -> Finding.t list)) list;
   attributes :
     (Rule.t * (Unit.t -> Parsetree.attribute -> Finding.t list)) list;
@@ -535,6 +537,7 @@ let index_kinds rules =
           }
       | Rule.Module_binding f ->
           { k with module_bindings = (r, f) :: k.module_bindings }
+      | Rule.Open f -> { k with opens = (r, f) :: k.opens }
       | Rule.Export f -> { k with exports = (r, f) :: k.exports }
       | Rule.Attribute (names, f) ->
           {
@@ -559,6 +562,7 @@ let index_kinds rules =
       type_decls = [];
       let_groups = [];
       module_bindings = [];
+      opens = [];
       exports = [];
       attributes = [];
       attr_names = Some [];
@@ -769,6 +773,7 @@ let analyze ~kinds ~suppress u =
     kinds.exprs <> [] || kinds.patterns <> [] || kinds.bindings <> []
     || kinds.type_decls <> [] || kinds.let_groups <> []
     || kinds.module_bindings <> []
+    || kinds.opens <> []
   then begin
     let default = Tast_iterator.default_iterator in
     (* [Module_binding.position]'s Toplevel/Nested split: structural, O(1)
@@ -786,6 +791,7 @@ let analyze ~kinds ~suppress u =
     let decl_kinds =
       kinds.type_decls <> [] || kinds.let_groups <> []
       || kinds.module_bindings <> []
+      || kinds.opens <> []
     in
     let iterator =
       {
@@ -836,6 +842,8 @@ let analyze ~kinds ~suppress u =
                      ->
                        dispatch_all ~lane:Typed kinds.let_groups
                          (item.str_loc, rf, vbs)
+                   | Typedtree.Tstr_open od when kinds.opens <> [] ->
+                       dispatch_all ~lane:Typed kinds.opens od
                    | Typedtree.Tstr_module mb when kinds.module_bindings <> []
                      ->
                        (* [Tstr_recmodule] is deliberately not dispatched:

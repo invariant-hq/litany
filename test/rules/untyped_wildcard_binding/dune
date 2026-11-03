@@ -1,0 +1,5 @@
+(test
+ (name test_untyped_wildcard_binding)
+ (modules test_untyped_wildcard_binding)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_uwb.ml fixtures/.fix_uwb.objs/byte/fix_uwb.cmt))

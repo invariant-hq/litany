@@ -331,7 +331,7 @@ staging, and dune promote is the writer.
   $ cat bin/main.ml
   let drained xs = List.length xs = 0
   let () = assert (drained [] && Store.Depot.is_empty [])
-  $ env -u INSIDE_DUNE dune promote --root . 2>&1
+  $ env -u INSIDE_DUNE dune promote 2>&1
   Promoting _build/default/bin/main.ml.corrected to bin/main.ml.
   Promoting _build/default/lib/depot.ml.corrected to lib/depot.ml.
   $ cat bin/main.ml

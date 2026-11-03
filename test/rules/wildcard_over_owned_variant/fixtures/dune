@@ -1,0 +1,4 @@
+(library
+ (name fix_wov)
+ (modules state fix_wov_cases)
+ (libraries fix_wov_other))

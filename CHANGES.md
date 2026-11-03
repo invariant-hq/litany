@@ -1,3 +1,33 @@
+# Unreleased
+
+Hypha's fork, `hyphatech/litany`, released by Hypha into its opam
+repository.
+
+- A Melange library is linted as a native one is. dune compiles each of
+  its modules from a copy in `.melange_src/`, a line directive added, so
+  the digest the compiler records is the copy's; the copy is now named
+  as the unit's derived source, where every unit was skipped as stale.
+- A name of a library installed in an opam switch resolves: the
+  directories of `.cmi` files beside the standard library are searched,
+  where only dune's package store was, so a forbidden `Unix.sleep` or an
+  Eio value is matched in a workspace built with opam.
+- `wildcard-over-owned-variant`, a restriction rule in the nursery: a
+  `_` arm in a match over a variant the code owns -- declared in the
+  same library, or one its `(owned <library> ...)` option names.
+- `untyped-ignore` and `untyped-wildcard-binding`, restriction rules in
+  the nursery: `ignore e` and `let _ = e` whose discarded value names no
+  type.
+- `open-of-ordinary-module`, a restriction rule in the nursery: a
+  file-wide `open` through which the unit takes anything but binding
+  operators. A rule may now be called at every structure-level `open`,
+  `Rule.open_`.
+- dune is started with no signal blocked, as the thread that starts it
+  may have them blocked, so it handles the signals its watcher waits on
+  instead of printing that it failed to.
+- The test suite runs on released dune 3.23: `dune promote` takes no
+  `--root`, and an executable, given an implicit empty interface since
+  dune's language 3.0, exports nothing to `restricted-export-name`.
+
 # 1.0.0 (2026-08-21)
 
 First release.

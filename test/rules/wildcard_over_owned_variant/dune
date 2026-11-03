@@ -1,0 +1,7 @@
+(test
+ (name test_wildcard_over_owned_variant)
+ (modules test_wildcard_over_owned_variant)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps
+  fixtures/fix_wov_cases.ml
+  fixtures/.fix_wov.objs/byte/fix_wov__Fix_wov_cases.cmt))

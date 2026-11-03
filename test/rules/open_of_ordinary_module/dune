@@ -1,0 +1,7 @@
+(test
+ (name test_open_of_ordinary_module)
+ (modules test_open_of_ordinary_module)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps
+  fixtures/fix_oom_cases.ml
+  fixtures/.fix_oom.objs/byte/fix_oom__Fix_oom_cases.cmt))

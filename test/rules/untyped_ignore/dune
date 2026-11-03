@@ -1,0 +1,5 @@
+(test
+ (name test_untyped_ignore)
+ (modules test_untyped_ignore)
+ (libraries windtrap rules_test_support litany litany_rules)
+ (deps fixtures/fix_ui.ml fixtures/.fix_ui.objs/byte/fix_ui.cmt))

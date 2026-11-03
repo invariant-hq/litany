@@ -12,7 +12,7 @@ ignored-result                            restriction  stable   never      off  
 invalid-function-comparison               suspicious   stable   never      on   structural comparison with a function operand
 invalid-hashtable-key                     suspicious   stable   never      on   polymorphic Hashtbl operation on a value proved functional
 ...
-80 rules · 30 on by default (stable correctness, suspicious, perf) · 10 restriction (cherry-picked; outside all) · 12 nursery
+84 rules · 30 on by default (stable correctness, suspicious, perf) · 14 restriction (cherry-picked; outside all) · 16 nursery
 ```
 
 The table derives from the same declarations the engine runs, so it cannot
@@ -58,7 +58,7 @@ catalog is `--select all,restriction,nursery`:
 
 ```
 $ litany check --select all,restriction,nursery 2>&1 | tail -1
-80 rules selected · 1 unit · 5 findings (1 fixable — run `litany check --fix`) · 0 skipped
+84 rules selected · 1 unit · 5 findings (1 fixable — run `litany check --fix`) · 0 skipped
 ```
 
 ## Fix promise

@@ -5,9 +5,9 @@
 
 (** The run's progress meter: one rewritten line on standard error.
 
-    A long check is silent otherwise — the dune build, the build-tree read,
-    then one pass over every unit — and silence reads as a hang. This domain
-    draws dune's shape:
+    A long check is silent otherwise — the dune build, the build-tree read, then
+    one pass over every unit — and silence reads as a hang. This domain draws
+    dune's shape:
 
     {v Done: 36% (4/11, 7 left) (jobs: 8) | [1.4s] [2.9/s] v}
 
