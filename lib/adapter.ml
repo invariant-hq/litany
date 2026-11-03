@@ -266,7 +266,11 @@ let pair_source ~exists ~project_boundary ~editable_root ~build_root ~lookup
   let leaf = String.uncapitalize_ascii (leaf_of base) in
   let ext = if intf_only then ".mli" else ".ml" in
   let editable = editable_root // clean // (leaf ^ ext) in
+  (* An implementation written in mlx's dialect is its .mlx, which dune
+     turns into OCaml before the compiler reads it. *)
+  let mlx = editable_root // clean // (leaf ^ ".mlx") in
   if exists editable then editable
+  else if (not intf_only) && exists mlx then mlx
   else
     let nearest =
       let artifact_dir = segments (editable_root // clean) in
@@ -1026,14 +1030,27 @@ module Dune = struct
             else
               let leaf = String.uncapitalize_ascii (leaf_of u.base) in
               let dir = context // clean_rel_dir u.rel_dir in
-              let pp = dir // (leaf ^ ".pp.ml") in
-              let melange = dir // ".melange_src" // (leaf ^ ".ml") in
               let compiled_by_melange =
                 List.mem "melange" (String.split_on_char '/' u.rel_dir)
               in
-              if exists pp then Some pp
-              else if compiled_by_melange && exists melange then Some melange
-              else None
+              (* What the compiler read, most derived first: a
+                 preprocessor's output over its input, and an mlx file's
+                 OCaml over the .mlx. *)
+              let candidates =
+                (dir // (leaf ^ ".pp.ml"))
+                :: (dir // (leaf ^ ".mlx.pp.ml"))
+                ::
+                (if compiled_by_melange then
+                   let copies = dir // ".melange_src" in
+                   [
+                     copies // (leaf ^ ".pp.ml");
+                     copies // (leaf ^ ".mlx.pp.ml");
+                     copies // (leaf ^ ".mlx.ml");
+                     copies // (leaf ^ ".ml");
+                   ]
+                 else [])
+              in
+              List.find_opt exists candidates
           in
           let library, visibility, kind =
             match stanza with

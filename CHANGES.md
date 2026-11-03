@@ -1,3 +1,13 @@
+# Unreleased
+
+- A Melange library run through a preprocessor -- `melange.ppx`,
+  `ppx_solidtype` -- is linted: dune compiles its modules from the
+  preprocessed copies in `.melange_src/`, which are now named before the
+  plain ones. Every such unit was skipped as stale.
+- An implementation written in mlx's dialect is paired with its `.mlx`,
+  and read from the OCaml dune turns it into; such a unit was skipped as
+  missing its source.
+
 # 1.1.0 (2026-11-03)
 
 Hypha's fork, `hyphatech/litany`, released by Hypha into its opam

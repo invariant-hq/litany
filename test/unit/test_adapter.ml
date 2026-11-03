@@ -199,6 +199,30 @@ let dune_tests =
           let r = dune_roster dir in
           equal (option string) (Some "_build/default/web/.melange_src/page.ml")
             (Roster.Entry.preprocessed_source (entry_for r "web/page.ml")));
+      test "a preprocessed melange unit rides its .pp.ml copy" (fun () ->
+          let dir, write = craft () in
+          write "web/dune"
+            "(library (name web) (modes melange) (preprocess (pps melange.ppx)))\n";
+          write "web/page.ml" "";
+          write "_build/default/web/.web.objs/melange/web__Page.cmt" "";
+          write "_build/default/web/.melange_src/page.ml" "";
+          write "_build/default/web/.melange_src/page.pp.ml" "";
+          let r = dune_roster dir in
+          equal (option string)
+            (Some "_build/default/web/.melange_src/page.pp.ml")
+            (Roster.Entry.preprocessed_source (entry_for r "web/page.ml")));
+      test "an mlx unit is paired with its .mlx and rides its copy" (fun () ->
+          let dir, write = craft () in
+          write "web/dune" "(library (name web) (modes melange))\n";
+          write "web/app.mlx" "";
+          write "_build/default/web/.web.objs/melange/web__App.cmt" "";
+          write "_build/default/web/.melange_src/app.mlx" "";
+          write "_build/default/web/.melange_src/app.mlx.ml" "";
+          write "_build/default/web/.melange_src/app.mlx.pp.ml" "";
+          let r = dune_roster dir in
+          equal (option string)
+            (Some "_build/default/web/.melange_src/app.mlx.pp.ml")
+            (Roster.Entry.preprocessed_source (entry_for r "web/app.mlx")));
       test "a native unit beside a melange copy names none" (fun () ->
           let dir, write = craft () in
           write "web/dune" "(library (name web) (modes native melange))\n";
