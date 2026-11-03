@@ -20,13 +20,12 @@ make fmt     # format in place
 
 ## What is Hypha's here
 
-- **Upstream's code is kept as upstream wrote it.** Its shapes -- its
-  test tools, windtrap and thumper, pinned from invariant-hq, and the
-  `(pin)` stanzas in `dune-project` -- are its, and a change of Hypha's
-  does not rewrite them. Why: a fork that rewrites what it did not need
-  to cannot take upstream's work again. A change of Hypha's follows
-  Hypha's `OCAML.md`, and `upstream` is a remote, merged from when it
-  moves.
+- **It is a library of Hypha Stack like any other.** Its CI, its
+  Makefile, its releases and its tests are Hypha's, held to Hypha's
+  rules, and changed where they need to be -- on Linux, where HAF's
+  gates run it, first. Why: HAF builds every application on it, so it is
+  kept as Hypha keeps its own; upstream's author does not answer.
+  `upstream` stays a remote, its work taken where it helps.
 - **A rule of Hypha's holds a rule of Hypha's vault.** Its doc names
   the file and the rule it holds -- `OCAML.md`, *No `open` of an
   ordinary module* -- and its fixture proves it as upstream's rules are

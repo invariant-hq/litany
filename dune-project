@@ -23,20 +23,8 @@
 
 (license ISC)
 
-(pin
- (url "git+https://github.com/invariant-hq/thumper.git")
- (package
-  (name thumper)))
 
-(pin
- (url "git+https://github.com/invariant-hq/windtrap.git")
- (package
-  (name windtrap)))
 
-(pin
- (url "git+https://github.com/invariant-hq/windtrap.git")
- (package
-  (name ppx_windtrap)))
 
 (package
  (name litany)

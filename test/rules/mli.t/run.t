@@ -56,8 +56,7 @@ implementation's, so fixing the mli stales nothing.
   
   2 rules selected · 2 units · 2 findings (2 fixable) · 2 fixes applied · 0 skipped · 1 facts-only
   [1]
-  $ od -c iface.mli
-  0000000    v   a   l       e   o   f       :       i   n   t  \n        
-  0000016
+  $ cat -e iface.mli
+  val eof : int$
   $ litany check --cmt-root . --select trailing-whitespace,missing-final-newline
   2 rules selected · 2 units · 0 findings · 0 skipped · 1 facts-only
