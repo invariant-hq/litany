@@ -30,11 +30,11 @@ pin: ## pin dune and the test tools
 build: ## build everything
 	$(OPAM) dune build @all
 
-# The tests read litany's page and dune's own output as a colour console
-# writes them, and dune decides what it writes from the console it is in:
-# so every run, here or on CI, is given the same one.
+# The tests read litany's page plain -- a parser and a grep over it -- and
+# dune decides from the console it runs in whether to colour what its
+# actions write: so every run, here or on CI, is given one with no colour.
 test: ## run every test
-	env -u CI -u TERM -u GITHUB_ACTIONS CLICOLOR_FORCE=1 $(OPAM) dune runtest test
+	env -u CI -u TERM -u GITHUB_ACTIONS -u CLICOLOR_FORCE NO_COLOR=1 $(OPAM) dune runtest test
 
 # Release is the profile opam installs with.
 lint: ## check formatting and the release build
