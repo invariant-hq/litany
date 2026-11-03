@@ -1,4 +1,4 @@
-# Unreleased
+# 1.1.0 (2026-11-03)
 
 Hypha's fork, `hyphatech/litany`, released by Hypha into its opam
 repository.
