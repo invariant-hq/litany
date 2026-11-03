@@ -1,4 +1,4 @@
-# Unreleased
+# 1.1.1 (2026-11-03)
 
 - A Melange library run through a preprocessor -- `melange.ppx`,
   `ppx_solidtype` -- is linted: dune compiles its modules from the
