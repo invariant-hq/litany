@@ -471,6 +471,10 @@ val suggest : candidates:string list -> string -> string option
     declare nothing: {!configure} then refuses any payload with "takes no
     options". *)
 
+module Glob = Config_file.Glob
+(** The workspace-relative globs of [per-path]'s [paths], for an option that
+    scopes what a rule holds to some files ({!Config_file.Glob}). *)
+
 module Sexp = Sexp
 (** The neutral option payload: the configuration file's positioned
     s-expressions ({!Sexp}), re-exported so a rule's option schema imports

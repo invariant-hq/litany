@@ -56,7 +56,11 @@ Fires once per value reference resolving to a forbidden declaration —
 forbids are tried in configured order, the first match reports — with
 the forbid's `use` replacement verbatim in the message (`... is a
 restricted module; use ...` for a module forbid, `... is a restricted
-value; use ...` for a value forbid). Without a
+value; use ...` for a value forbid). A forbid may be scoped after its
+remedy: `(only <glob> ...)` applies it in those files alone, `(except
+<glob> ...)` in every file but those, both in `per-path`'s glob grammar
+against the workspace-relative path -- a library's ban that a test may
+break, or a clock call one module alone may make. Without a
 `(rule restricted-dependency ...)` form, or with one holding no forbids,
 the rule is inert: nothing is forbidden, nothing fires. Project-local
 modules or values shadowing a forbidden spelling, same-named wrapper
@@ -85,17 +89,30 @@ let noun spelled =
     "module"
   else "value"
 
+module Glob = Rule.Glob
+
 type forbid = {
   spelled : string;
   pat : (Typedtree.expression, unit, unit) Pat.t;
   message : string;
+  only : Glob.t list;  (** the files it applies in; every file when none *)
+  except : Glob.t list;  (** the files it does not apply in *)
 }
+
+(* A forbid's scope: the files [only] names, or every file, less those
+   [except] names. *)
+let applies f path =
+  (match f.only with
+    | [] -> true
+    | only -> List.exists (fun g -> Glob.matches g path) only)
+  && not (List.exists (fun g -> Glob.matches g path) f.except)
 
 (* Reference-level matching is the outdated-str-module mechanism; the
    deny-list is configuration where unsafe-partial-stdlib's is code.
    First match reports, so overlapping forbids (a module and one of its
    values) yield one finding per reference, in configured order. *)
 let check forbids u (e : Typedtree.expression) =
+  let forbids = List.filter (fun f -> applies f (Unit.path u)) forbids in
   let rec first = function
     | [] -> []
     | f :: rest -> (
@@ -142,6 +159,55 @@ and schema payload =
           {|forbid %s wants a (use "<replacement>") remedy — every ban names its replacement|}
           spelled
   in
+  (* After the remedy, at most one (only <glob> ...) and one
+     (except <glob> ...), each with a glob or more. *)
+  let parse_scopes spelled forms =
+    let globs key at atoms =
+      match atoms with
+      | [] -> err at "%s in forbid %s wants a glob or more" key spelled
+      | _ :: _ ->
+          List.fold_left
+            (fun acc (a : Rule.Sexp.t) ->
+              Result.bind acc (fun acc ->
+                  match a.desc with
+                  | Rule.Sexp.Atom g -> (
+                      match Glob.of_string g with
+                      | Ok glob -> Ok (glob :: acc)
+                      | Error why -> err a "%s glob %S: %s" key g why)
+                  | Rule.Sexp.List _ ->
+                      err a "%s in forbid %s wants glob atoms" key spelled))
+            (Ok []) atoms
+          |> Result.map List.rev
+    in
+    List.fold_left
+      (fun acc (form : Rule.Sexp.t) ->
+        Result.bind acc (fun (only, except) ->
+            match form.desc with
+            | Rule.Sexp.List ({ Rule.Sexp.desc = Atom "only"; _ } :: atoms) -> (
+                match only with
+                | Some _ -> err form "forbid %s has only twice" spelled
+                | None ->
+                    Result.map
+                      (fun g -> (Some g, except))
+                      (globs "only" form atoms))
+            | Rule.Sexp.List ({ Rule.Sexp.desc = Atom "except"; _ } :: atoms)
+              -> (
+                match except with
+                | Some _ -> err form "forbid %s has except twice" spelled
+                | None ->
+                    Result.map
+                      (fun g -> (only, Some g))
+                      (globs "except" form atoms))
+            | _ ->
+                err form
+                  "expected (only <glob> ...) or (except <glob> ...) after the \
+                   remedy of forbid %s"
+                  spelled))
+      (Ok (None, None))
+      forms
+    |> Result.map (fun (only, except) ->
+        (Option.value only ~default:[], Option.value except ~default:[]))
+  in
   let parse_forbid acc form =
     match form.Rule.Sexp.desc with
     | Rule.Sexp.List ({ Rule.Sexp.desc = Atom "forbid"; _ } :: rest) -> (
@@ -160,14 +226,14 @@ and schema payload =
                        {| (operator paths must be quoted: "Stdlib.(=)")|}
                      else "")
               | Ok pat -> (
-                  let use_form, extra =
+                  let use_form, scopes =
                     match use_forms with
-                    | [] -> (None, None)
-                    | u :: extra -> (Some u, List.nth_opt extra 0)
+                    | [] -> (None, [])
+                    | u :: scopes -> (Some u, scopes)
                   in
-                  match extra with
-                  | Some x -> err x "expected %s and nothing more" shape
-                  | None ->
+                  match parse_scopes spelled scopes with
+                  | Error _ as e -> e
+                  | Ok (only, except) ->
                       Result.map
                         (fun replacement ->
                           {
@@ -176,6 +242,8 @@ and schema payload =
                             message =
                               Printf.sprintf "%s is a restricted %s; use %s"
                                 spelled (noun spelled) replacement;
+                            only;
+                            except;
                           }
                           :: acc)
                         (parse_use form spelled use_form)))

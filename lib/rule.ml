@@ -148,6 +148,7 @@ type callback =
     }
 
 module Sexp = Sexp
+module Glob = Config_file.Glob
 
 module Options = struct
   type error = Sexp.Error.t = { line : int; col : int; message : string }

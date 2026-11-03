@@ -6,9 +6,8 @@
 open Litany
 
 let meta =
-  Rule.meta ~name:"untyped-ignore" ~group:Rule.Restriction
-    ~stability:Rule.Stability.Nursery ~since:"1.1" ~fix:Rule.Never
-    ~summary:"ignore discards a value without naming its type"
+  Rule.meta ~name:"untyped-ignore" ~group:Rule.Restriction ~since:"1.1"
+    ~fix:Rule.Never ~summary:"ignore discards a value without naming its type"
     ~doc:
       {|`ignore` throws a value away; naming its type keeps the throw
 honest. A function later given one more argument is then a partial

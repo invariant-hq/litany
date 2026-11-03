@@ -145,7 +145,7 @@ eta-reducible-forwarding                  style        nursery  never      off  
 suspicious-lost-backtrace                 suspicious   stable   never      on   work between catching and re-raising can overwrite the backtrace
 suspicious-physical-equality              suspicious   stable   never      on   physical comparison with a non-immediate operand
 ...
-84 rules · 30 on by default (stable correctness, suspicious, perf) · 14 restriction (cherry-picked; outside all) · 16 nursery
+84 rules · 30 on by default (stable correctness, suspicious, perf) · 14 restriction (cherry-picked; outside all) · 12 nursery
 ```
 
 The table derives from the same declarations the engine runs, so it

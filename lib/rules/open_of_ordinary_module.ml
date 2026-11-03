@@ -6,9 +6,8 @@
 open Litany
 
 let meta =
-  Rule.meta ~name:"open-of-ordinary-module" ~group:Rule.Restriction
-    ~stability:Rule.Stability.Nursery ~since:"1.1" ~fix:Rule.Never
-    ~summary:"an open of a module that is not made to be opened"
+  Rule.meta ~name:"open-of-ordinary-module" ~group:Rule.Restriction ~since:"1.1"
+    ~fix:Rule.Never ~summary:"an open of a module that is not made to be opened"
     ~doc:
       {|An `open` of an ordinary module makes every name of the file a
 question -- where did it come from? -- and a name the module gains later

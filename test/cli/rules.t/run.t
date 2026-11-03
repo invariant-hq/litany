@@ -29,7 +29,7 @@ The summary counts the whole catalog, names the default-set law, and
 names the cherry-picked tier (restriction is outside all):
 
   $ litany rules | tail -1
-  84 rules · 30 on by default (stable correctness, suspicious, perf) · 14 restriction (cherry-picked; outside all) · 16 nursery
+  84 rules · 30 on by default (stable correctness, suspicious, perf) · 14 restriction (cherry-picked; outside all) · 12 nursery
 
 One line per rule plus the summary — the table and the count cannot
 disagree:

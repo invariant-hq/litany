@@ -7,7 +7,7 @@ open Litany
 
 let meta =
   Rule.meta ~name:"untyped-wildcard-binding" ~group:Rule.Restriction
-    ~stability:Rule.Stability.Nursery ~since:"1.1" ~fix:Rule.Never
+    ~since:"1.1" ~fix:Rule.Never
     ~summary:"let _ discards a value without naming its type"
     ~doc:
       {|`let _ = e` throws a value away; naming its type keeps the throw

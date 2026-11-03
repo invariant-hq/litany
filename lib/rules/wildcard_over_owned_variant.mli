@@ -10,7 +10,7 @@
     library, or a library its [(owned <library> ...)] option names. Holds
     Hypha's [OCAML.md],
     {i A match over a variant the code owns names every case}. House policy
-    ([Restriction], Nursery). No fix. *)
+    ([Restriction]). No fix. *)
 
 val rule : Litany.Rule.t
 (** [rule] is [wildcard-over-owned-variant]. *)

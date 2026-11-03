@@ -7,7 +7,7 @@ open Litany
 
 let meta =
   Rule.meta ~name:"wildcard-over-owned-variant" ~group:Rule.Restriction
-    ~stability:Rule.Stability.Nursery ~since:"1.1" ~fix:Rule.Never
+    ~since:"1.1" ~fix:Rule.Never
     ~summary:"a wildcard arm in a match over a variant the code owns"
     ~doc:
       {|A match over a variant the code owns names every case, so a

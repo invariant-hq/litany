@@ -122,3 +122,64 @@ config serves workspaces that lack the library entirely.
   > EOP
   $ env -u INSIDE_DUNE litany check --select restricted-dependency 2>&1 | head -1
   1 rule selected · 3 units · 0 findings · 0 skipped · 1 facts-only
+
+A forbid may be scoped: (only ...) applies it in the files its globs
+name, (except ...) everywhere but there. Printing is a library's to
+refuse and an executable's to do; a clock call is one module's alone.
+
+  $ mkdir -p tool
+  $ cat > tool/dune <<'EOP'
+  > (executable (name main))
+  > EOP
+  $ cat > tool/main.ml <<'EOP'
+  > let () = print_endline (string_of_float (Unix.gettimeofday ()))
+  > EOP
+  $ cat > instant.ml <<'EOP'
+  > let now () = Unix.gettimeofday ()
+  > EOP
+  $ cat > dune <<'EOP'
+  > (library (name rd_cram) (libraries legacylib unix))
+  > EOP
+  $ cat > tool/dune <<'EOP'
+  > (executable (name main) (libraries unix))
+  > EOP
+  $ cat > app.ml <<'EOP'
+  > let shout () = print_endline "loud"
+  > let elapsed () = Unix.gettimeofday ()
+  > EOP
+  $ cat > litany <<'EOP'
+  > (rule restricted-dependency
+  >  (forbid Stdlib.print_endline
+  >   (use "a log source")
+  >   (except tool/**))
+  >  (forbid Unix.gettimeofday
+  >   (use "the clock module")
+  >   (except instant.ml)))
+  > EOP
+  $ env -u INSIDE_DUNE litany check --select restricted-dependency 2>&1 | grep -E '^File|Warning'
+  File "app.ml", line 1, characters 15-28:
+  Warning 0 [restricted-dependency]: Stdlib.print_endline is a restricted value; use a log source
+  File "app.ml", line 2, characters 17-34:
+  Warning 0 [restricted-dependency]: Unix.gettimeofday is a restricted value; use the clock module
+  File "tool/main.ml", line 1, characters 41-58:
+  Warning 0 [restricted-dependency]: Unix.gettimeofday is a restricted value; use the clock module
+
+A scope's glob is held to the grammar, and a scope says itself once.
+
+  $ cat > litany <<'EOP'
+  > (rule restricted-dependency
+  >  (forbid Stdlib.print_endline
+  >   (use "a log source")
+  >   (only /abs)))
+  > EOP
+  $ env -u INSIDE_DUNE litany check --select restricted-dependency 2>&1 | head -1
+  litany: litany:4:9: only glob "/abs": absolute glob
+  $ cat > litany <<'EOP'
+  > (rule restricted-dependency
+  >  (forbid Stdlib.print_endline
+  >   (use "a log source")
+  >   (only a/**)
+  >   (only b/**)))
+  > EOP
+  $ env -u INSIDE_DUNE litany check --select restricted-dependency 2>&1 | head -1
+  litany: litany:5:3: forbid Stdlib.print_endline has only twice

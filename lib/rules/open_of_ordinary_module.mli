@@ -8,7 +8,7 @@
     Reports an [open] at a unit's root or in a nested structure through which
     the unit takes anything but binding operators, or nothing. Holds Hypha's
     [OCAML.md], {i No [open] of an ordinary module}. House policy
-    ([Restriction], Nursery). No fix. *)
+    ([Restriction]). No fix. *)
 
 val rule : Litany.Rule.t
 (** [rule] is [open-of-ordinary-module]. *)

@@ -11,16 +11,19 @@ repository.
   directories of `.cmi` files beside the standard library are searched,
   where only dune's package store was, so a forbidden `Unix.sleep` or an
   Eio value is matched in a workspace built with opam.
-- `wildcard-over-owned-variant`, a restriction rule in the nursery: a
+- `wildcard-over-owned-variant`, a restriction rule: a
   `_` arm in a match over a variant the code owns -- declared in the
   same library, or one its `(owned <library> ...)` option names.
-- `untyped-ignore` and `untyped-wildcard-binding`, restriction rules in
-  the nursery: `ignore e` and `let _ = e` whose discarded value names no
+- `untyped-ignore` and `untyped-wildcard-binding`, restriction rules: `ignore e` and `let _ = e` whose discarded value names no
   type.
-- `open-of-ordinary-module`, a restriction rule in the nursery: a
+- `open-of-ordinary-module`, a restriction rule: a
   file-wide `open` through which the unit takes anything but binding
   operators. A rule may now be called at every structure-level `open`,
   `Rule.open_`.
+- A forbid of `restricted-dependency` may be scoped after its remedy:
+  `(only <glob> ...)` applies it in those files alone, and `(except
+  <glob> ...)` in every file but those -- a library's ban a test may
+  break, a clock call one module may make.
 - dune is started with no signal blocked, as the thread that starts it
   may have them blocked, so it handles the signals its watcher waits on
   instead of printing that it failed to.

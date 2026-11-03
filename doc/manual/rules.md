@@ -12,7 +12,7 @@ ignored-result                            restriction  stable   never      off  
 invalid-function-comparison               suspicious   stable   never      on   structural comparison with a function operand
 invalid-hashtable-key                     suspicious   stable   never      on   polymorphic Hashtbl operation on a value proved functional
 ...
-84 rules · 30 on by default (stable correctness, suspicious, perf) · 14 restriction (cherry-picked; outside all) · 16 nursery
+84 rules · 30 on by default (stable correctness, suspicious, perf) · 14 restriction (cherry-picked; outside all) · 12 nursery
 ```
 
 The table derives from the same declarations the engine runs, so it cannot
