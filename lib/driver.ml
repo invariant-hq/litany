@@ -511,6 +511,12 @@ module Parallel = struct
   type child = { pid : int; read_fd : Unix.file_descr }
 
   let fork_shard ~idx f =
+    (* Undocumented and test-only, as the crash knobs below: what a system at
+       its limit does, on any host. *)
+    (match Sys.getenv_opt "LITANY_TEST_LOSE_SHARD" with
+    | Some v when String.equal v (string_of_int idx ^ ":refuse") ->
+        raise (Unix.Unix_error (Unix.EAGAIN, "fork", ""))
+    | Some _ | None -> ());
     let read_fd, write_fd = Unix.pipe ~cloexec:false () in
     (* Anything buffered would otherwise flush twice, once per process. *)
     flush stdout;
