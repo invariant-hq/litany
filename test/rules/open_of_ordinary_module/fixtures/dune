@@ -1,3 +1,5 @@
 (library
  (name fix_oom)
- (modules store syntax fix_oom_cases))
+ (modules store syntax mixed fix_oom_cases)
+ (flags
+  (:standard -w -33)))

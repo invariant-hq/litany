@@ -29,3 +29,8 @@ let scoped () =
 module Inner = struct
   let nested' = go' 1
 end
+
+(* Every variable a root pattern binds is an export, each at its own name. *)
+let tuple_left', _ = (1, 2) (* FIRE *)
+let { contents = field' } = ref 1 (* FIRE *)
+let (aliased' as _alias) = 1 (* FIRE *)

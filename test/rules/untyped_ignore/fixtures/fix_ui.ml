@@ -23,3 +23,18 @@ let as_value q = List.iter ignore [ pop q ]
 let shadowed q =
   let ignore _ = () in
   ignore (pop q)
+
+(* Every spelling of the application. *)
+let piped q = pop q |> ignore (* FIRE *)
+let applied q = ignore @@ pop q (* FIRE *)
+
+module Aliased = Stdlib
+
+let through_alias q = Aliased.ignore (pop q) (* FIRE *)
+
+(* A hole names no type: it would take a partial application as gladly. *)
+let hole q = ignore (pop q : _) (* FIRE *)
+let variable q = ignore (pop q : 'a) (* FIRE *)
+
+(* A coercion names the type it coerces to. *)
+let coerced (q : int Queue.t) = ignore (pop q :> int)

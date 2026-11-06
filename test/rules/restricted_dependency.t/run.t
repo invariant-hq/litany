@@ -183,3 +183,28 @@ A scope's glob is held to the grammar, and a scope says itself once.
   > EOP
   $ env -u INSIDE_DUNE litany check --select restricted-dependency 2>&1 | head -1
   litany: litany:5:3: forbid Stdlib.print_endline has only twice
+
+(only ...) applies a forbid in the files its globs name, and nowhere else.
+
+  $ mkdir -p scoped/lib scoped/app
+  $ cat > scoped/dune-project <<'EOP'
+  > (lang dune 3.20)
+  > EOP
+  $ cat > scoped/lib/dune <<'EOP'
+  > (library (name scoped_lib))
+  > EOP
+  $ cat > scoped/app/dune <<'EOP'
+  > (executable (name main))
+  > EOP
+  $ cat > scoped/lib/quiet.ml <<'EOP'
+  > let say () = print_endline "library"
+  > EOP
+  $ cat > scoped/app/main.ml <<'EOP'
+  > let () = print_endline "application"
+  > EOP
+  $ cat > scoped/litany <<'EOP'
+  > (rule restricted-dependency
+  >  (forbid Stdlib.print_endline (use "a logger") (only lib/**)))
+  > EOP
+  $ env -u INSIDE_DUNE litany check --root scoped --select restricted-dependency 2>&1 | grep '^File'
+  File "lib/quiet.ml", line 1, characters 13-26:

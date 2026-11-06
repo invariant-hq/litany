@@ -138,7 +138,7 @@ once; exact-name selection warns nothing.
   $ printf '(lint (extend restriction))\n' > litany
   $ env -u INSIDE_DUNE litany check > /dev/null 2> warn; echo "exit=$?"; cat warn
   exit=1
-  litany: restriction rules are independent house policies, and some contradict each other — adopt each by exact name; the group token enables 14 of 14 restriction rules (group tokens cover stable rules only; nursery members need "nursery" or their exact name)
+  litany: restriction rules are independent house policies, and some contradict each other — adopt each by exact name; the group token enables 10 of 14 restriction rules (group tokens cover stable rules only; nursery members need "nursery" or their exact name)
   litany: rule "restricted-dependency" is selected but not configured; it reports nothing without a (rule restricted-dependency ...) form
   litany: rule "restricted-export-name" is selected but not configured; it reports nothing without a (rule restricted-export-name ...) form
   $ printf '(lint (extend unsafe-obj-magic))\n' > litany
@@ -155,7 +155,7 @@ audit runs with no (rule ...) form:
   $ env -u INSIDE_DUNE litany check --select all,restriction,nursery > page 2> warn; echo "exit=$?"
   exit=1
   $ cat warn
-  litany: restriction rules are independent house policies, and some contradict each other — adopt each by exact name; the group token enables 14 of 14 restriction rules (group tokens cover stable rules only; nursery members need "nursery" or their exact name)
+  litany: restriction rules are independent house policies, and some contradict each other — adopt each by exact name; the group token enables 10 of 14 restriction rules (group tokens cover stable rules only; nursery members need "nursery" or their exact name)
   litany: rule "restricted-dependency" is selected but not configured; it reports nothing without a (rule restricted-dependency ...) form
   litany: rule "restricted-export-name" is selected but not configured; it reports nothing without a (rule restricted-export-name ...) form
   $ grep -oE "[0-9]+ rules selected" page

@@ -28,3 +28,10 @@ let () = ignore (write "f" : (unit, string) result)
 let pair () =
   let a, _ = (1, 2) in
   a
+
+(* The spellings of a named type, and of none. *)
+let (_ : (unit, string) result) = write "g"
+let _ : (unit, string) result = write "h"
+let _ (* FIRE *) = write "i"
+let (_ : _) (* FIRE *) = write "j"
+let (_ : 'a) (* FIRE *) = write "k"

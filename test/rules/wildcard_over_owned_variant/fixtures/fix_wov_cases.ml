@@ -39,3 +39,29 @@ module Inner = struct
 end
 
 let inner (s : Inner.t) = match s with Inner.Open -> 1 | _ -> 0 (* FIRE *)
+
+(* An alias names the module it aliases: another library's variant stays
+   another library's, and this unit's stays this unit's. *)
+module Aliased_other = Fix_wov_other.Color
+
+let aliased_other (c : Aliased_other.t) =
+  match c with Aliased_other.Red -> 1 | _ -> 0
+
+module Aliased_stdlib = Either
+
+let aliased_stdlib x = match x with Aliased_stdlib.Left _ -> 1 | _ -> 0
+
+module Aliased_inner = Inner
+
+let aliased_inner (s : Aliased_inner.t) =
+  match s with Aliased_inner.Open -> 1 | _ -> 0 (* FIRE *)
+
+(* An extensible variant has no last case to name: its wildcard is required. *)
+type open_ended = ..
+type open_ended += First | Second
+
+let extensible x = match x with First -> 1 | _ -> 0
+let (_ : open_ended) = Second
+
+(* A match whose arms name no constructor names no variant. *)
+let no_constructor n = match n with 0 -> 1 | _ -> 0

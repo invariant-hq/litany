@@ -7,7 +7,7 @@ open Litany
 
 let meta =
   Rule.meta ~name:"untyped-wildcard-binding" ~group:Rule.Restriction
-    ~since:"1.1" ~fix:Rule.Never
+    ~stability:Rule.Stability.Nursery ~since:"1.1" ~fix:Rule.Never
     ~summary:"let _ discards a value without naming its type"
     ~doc:
       {|`let _ = e` throws a value away; naming its type keeps the throw
@@ -22,15 +22,23 @@ Why restrict this? Discarding is legitimate OCaml; naming the type of
 every discard is a discipline a house adopts.
 
 Fires at a wildcard binding, at any depth, whose pattern carries no
-type constraint. `let (_ : t) = e`, a named binding (`let _x = e`
+type constraint, or one that names no type (`let (_ : _) = e`, `let (_ :
+'a) = e`). `let (_ : t) = e`, a named binding (`let _x = e`
 included), `let () = e`, and a wildcard nested in a pattern deliberately
 do not fire. No fix: only the author knows the type meant.|}
     ()
 
+(* A hole or a variable names no type: it takes a partial application as
+   gladly as no annotation does. *)
+let names_a_type (t : Typedtree.core_type) =
+  match t.ctyp_desc with Ttyp_any | Ttyp_var _ -> false | _ -> true
+
 let constrained (p : Typedtree.pattern) =
   List.exists
     (fun (extra, _, _) ->
-      match extra with Typedtree.Tpat_constraint _ -> true | _ -> false)
+      match extra with
+      | Typedtree.Tpat_constraint t -> names_a_type t
+      | _ -> false)
     p.pat_extra
 
 let rule =

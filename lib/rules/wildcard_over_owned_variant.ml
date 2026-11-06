@@ -7,7 +7,7 @@ open Litany
 
 let meta =
   Rule.meta ~name:"wildcard-over-owned-variant" ~group:Rule.Restriction
-    ~since:"1.1" ~fix:Rule.Never
+    ~stability:Rule.Stability.Nursery ~since:"1.1" ~fix:Rule.Never
     ~summary:"a wildcard arm in a match over a variant the code owns"
     ~doc:
       {|A match over a variant the code owns names every case, so a
@@ -29,9 +29,11 @@ Fires at a guard-less `_` value arm of a `match` whose other arms name a
 constructor of a variant declared in the same compilation unit, in
 another module of the same wrapped library, or in a library the
 `(owned <library> ...)` option names. A variant of any other library,
-the predefined ones (`option`, `list`, `bool`), a guarded wildcard, a
-wildcard nested in a pattern (`Some _`), an `exception _` arm, and a
-match whose arms name no constructor deliberately do not fire. Recorded
+the predefined ones (`option`, `list`, `bool`), an extensible variant,
+which has no last case to name, a guarded wildcard, a wildcard nested in
+a pattern (`Some _`), an `exception _` arm, and a match whose arms name
+no constructor deliberately do not fire. A module alias names the module
+it aliases: `module E = Either` owns nothing. Recorded
 false negatives, in the safe direction: `function` matches, and a
 library built unwrapped. No fix: only the author knows what each case
 should do.|}
@@ -49,9 +51,31 @@ let wrapper unit_name =
   in
   find 0
 
-let owned ~libraries u path =
+(* What a module of this unit is an alias of, if it is one. *)
+let aliased u id =
+  let found = ref None in
+  let default = Tast_iterator.default_iterator in
+  let iterator =
+    {
+      default with
+      module_binding =
+        (fun sub (mb : Typedtree.module_binding) ->
+          (match (mb.mb_id, mb.mb_expr.mod_desc) with
+          | Some bound, Tmod_ident (target, _) when Ident.same bound id ->
+              found := Some target
+          | _ -> ());
+          default.module_binding sub mb);
+    }
+  in
+  iterator.structure iterator (Unit.implementation u);
+  !found
+
+let rec owned ~libraries u path =
   match Path.head path with
-  | id when not (Ident.global id) -> true
+  | id when not (Ident.global id) -> (
+      match aliased u id with
+      | Some target -> owned ~libraries u target
+      | None -> true)
   | id ->
       let head = wrapper (Ident.name id) in
       String.equal head (wrapper (Unit.name u))
@@ -65,8 +89,9 @@ let owned ~libraries u path =
 let rec variant (p : Typedtree.value Typedtree.general_pattern) =
   match p.pat_desc with
   | Tpat_construct (_, cd, _, _) -> (
-      match Types.get_desc cd.cstr_res with
-      | Tconstr (path, _, _) -> Some path
+      match (cd.cstr_tag, Types.get_desc cd.cstr_res) with
+      | Cstr_extension _, _ -> None
+      | _, Tconstr (path, _, _) -> Some path
       | _ -> None)
   | Tpat_or (a, b, _) -> (
       match variant a with Some _ as v -> v | None -> variant b)

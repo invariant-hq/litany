@@ -7,7 +7,7 @@ open Litany
 
 let meta =
   Rule.meta ~name:"suspicious-str-formatter" ~group:Rule.Suspicious ~since:"1.0"
-    ~fix:Rule.Sometimes
+    ~fix:Rule.Never
     ~summary:"reference to the process-global Format.str_formatter"
     ~doc:
       {|`Format.str_formatter` is one process-global buffer formatter. Two
@@ -31,12 +31,7 @@ stay silent — the library boundary is where the value's process-global
 sharing meets unknown callers. No body-shape analysis. The `ifprintf`
 sink shape (`Format.ifprintf Format.str_formatter fmt`) is the known
 benign case and still fires: suppress it with `[@litany.allow]` where a
-sink formatter is deliberate. The declared `Sometimes` fix — the adjacent
-print-then-flush pair rewriting to `Format.asprintf` — is not emitted
-in this version: the pair spans two findings' nodes and attaching the
-rewrite needs either an enclosing-context capability or a
-carrier-finding decision (recorded gap); the promise stays
-`Sometimes`, promising nothing per-finding.|}
+sink formatter is deliberate.|}
     ~kind_gated:true ()
 
 let message =

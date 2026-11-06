@@ -58,7 +58,7 @@ let () =
           equal string "wildcard-over-owned-variant" (Rule.name rule);
           is_true ~msg:"group is Restriction"
             (Rule.group rule = Rule.Restriction);
-          is_true ~msg:"stable" (Rule.stability rule = Rule.Stability.Stable);
+          is_true ~msg:"nursery" (Rule.stability rule = Rule.Stability.Nursery);
           is_true ~msg:"fix promise is Never" (Rule.fix rule = Rule.Never);
           is_true ~msg:"local rule" (not (Rule.is_project rule));
           equal string "1.1" (Rule.since rule));
@@ -73,8 +73,11 @@ let () =
               (fun l -> not (List.mem l (Support.fire_lines ~source)))
               (lines owning)
           in
-          equal (list int) ~msg:"other_library's wildcard fires"
-            [ line_containing "match c with Red" ]
+          equal (list int) ~msg:"other_library's wildcards fire, aliased too"
+            [
+              line_containing "match c with Red";
+              line_containing "match c with Aliased_other.Red";
+            ]
             other);
       test "the schema refuses what it cannot read" (fun () ->
           is_true ~msg:"empty owned"

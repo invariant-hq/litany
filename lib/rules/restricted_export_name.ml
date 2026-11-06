@@ -97,10 +97,12 @@ let anchor u kind name =
       | Unit.Export.Value, Typedtree.Tstr_value (_, vbs) ->
           List.fold_left
             (fun acc (vb : Typedtree.value_binding) ->
-              match Pat.bound_var vb.Typedtree.vb_pat with
-              | Some (n, _) when String.equal n.Location.txt name ->
-                  Some n.Location.loc
-              | Some _ | None -> acc)
+              (* Every variable the pattern binds is an export. *)
+              List.fold_left
+                (fun acc (_, (n : string Location.loc), _, _) ->
+                  if String.equal n.txt name then Some n.loc else acc)
+                acc
+                (Typedtree.pat_bound_idents_full vb.Typedtree.vb_pat))
             acc vbs
       | Unit.Export.Value, Typedtree.Tstr_primitive vd
         when String.equal vd.Typedtree.val_name.Location.txt name ->

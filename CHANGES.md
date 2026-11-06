@@ -24,6 +24,19 @@
   where it failed with an internal error.
 - An executable or library named only by its `public_name` is described to the
   project rules, which were withheld from the whole project.
+- `wildcard-over-owned-variant` no longer fires on another library's variant
+  reached through a module alias, or on an extensible variant.
+- `open-of-ordinary-module` fires on an open that supplies a constructor in a
+  pattern, a record field or a submodule's member beside its operators, and on
+  one whose every name is written out in full, and no longer on an open that
+  supplies only operators beside a name written out in full.
+- `untyped-ignore` and `untyped-wildcard-binding` fire on `(e : _)` and `(e :
+  'a)`, which name no type; `untyped-ignore` takes a coercion, which does.
+- `restricted-export-name` reads every variable a root pattern binds.
+- `wildcard-over-owned-variant`, `open-of-ordinary-module`, `untyped-ignore` and
+  `untyped-wildcard-binding` are `nursery`, as a new rule is until it has been
+  reviewed: naming one still runs it, and `--select restriction` no longer does.
+- `suspicious-str-formatter` promises no fix, as it has never emitted one.
 - The documentation is a site, `hyphatech.github.io/litany`, built by
   `make docs`, replacing `doc/`. Its rule pages are written from `litany
   rules` and `litany explain`, and every program it shows is a file of
