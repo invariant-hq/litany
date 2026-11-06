@@ -11,7 +11,9 @@
    at join time, never a finding. *)
 
 let ( // ) a b =
-  if b = "" then a else if a = "" || a = "." then b else Filename.concat a b
+  if String.equal b "" then a
+  else if String.equal a "" || a = "." then b
+  else Filename.concat a b
 
 let is_real_dir path =
   match Sys.is_directory path with
@@ -200,7 +202,8 @@ let base_components base =
 let source_index root =
   let tbl = Hashtbl.create 256 in
   walk_tree root
-    ~prune:(fun name -> name = "" || name.[0] = '.' || name.[0] = '_')
+    ~prune:(fun name ->
+      String.equal name "" || name.[0] = '.' || name.[0] = '_')
     ~file:(fun ~rel ~name ->
       if Filename.check_suffix name ".ml" || Filename.check_suffix name ".mli"
       then
@@ -215,7 +218,9 @@ let source_index root =
 (* [segments p] is [p]'s path components, empty and [.] segments dropped, so
    textual prefix comparison works on relative and absolute paths alike. *)
 let segments p =
-  List.filter (fun s -> s <> "" && s <> ".") (String.split_on_char '/' p)
+  List.filter
+    (fun s -> (not (String.equal s "")) && s <> ".")
+    (String.split_on_char '/' p)
 
 let rec shared_prefix n a b =
   match (a, b) with
@@ -285,7 +290,8 @@ let pair_source ~exists ~project_boundary ~editable_root ~build_root ~lookup
           else deepest_marked (Filename.dirname dir)
         in
         match
-          if clean = "" then None else deepest_marked (editable_root // clean)
+          if String.equal clean "" then None
+          else deepest_marked (editable_root // clean)
         with
         | Some marked -> marked
         | None -> root_len + 1
@@ -301,7 +307,7 @@ let pair_source ~exists ~project_boundary ~editable_root ~build_root ~lookup
           (lookup (leaf ^ ext))
       in
       match best with
-      | Some (s, p) when s >= floor || clean = "" -> Some p
+      | Some (s, p) when s >= floor || String.equal clean "" -> Some p
       | Some _ | None -> None
     in
     match nearest with
@@ -561,7 +567,7 @@ module Unit_file = struct
       | None -> err offset "unit form missing its source field"
     in
     let cmt = get "cmt" and cmti = get "cmti" in
-    if cmt = None && cmti = None then
+    if Option.is_none cmt && Option.is_none cmti then
       err offset "unit form for %S names neither cmt nor cmti" source;
     if Hashtbl.mem seen_sources source then
       err offset "duplicate unit for source %S" source;
@@ -585,7 +591,8 @@ module Unit_file = struct
       let seen_sources = Hashtbl.create 16 in
       let entries = ref [] in
       let preamble_only what o =
-        if !entries <> [] then err o "(%s ...) must precede unit forms" what
+        if not (List.is_empty !entries) then
+          err o "(%s ...) must precede unit forms" what
       in
       List.iter
         (fun form ->

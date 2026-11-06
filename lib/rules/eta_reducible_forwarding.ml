@@ -99,7 +99,8 @@ let rule =
       | Some (ps, callee, path, args) -> (
           match params_idents u ps with
           | Some pids
-            when pids <> [] && forwards u pids args
+            when (not (List.is_empty pids))
+                 && forwards u pids args
                  && (match path with
                    | Path.Pident c ->
                        (not (Ident.same c self))

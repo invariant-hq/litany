@@ -63,7 +63,7 @@ module Glob = struct
     go 0
 
   let of_string spelling =
-    if spelling = "" then Error "empty glob"
+    if String.equal spelling "" then Error "empty glob"
     else if String.contains spelling '\000' then Error "NUL byte"
     else if String.contains spelling '\\' then Error "backslash"
     else
@@ -102,7 +102,8 @@ module Glob = struct
     match (comps, parts) with
     | [], [] -> true
     | [], _ :: _ | Pieces _ :: _, [] -> false
-    | [ Doublestar ], parts -> parts <> [] (* a final ** matches one or more *)
+    | [ Doublestar ], parts ->
+        not (List.is_empty parts) (* a final ** matches one or more *)
     | Doublestar :: rest, parts -> (
         (* non-final: zero or more complete components *)
         match_components rest parts
@@ -111,10 +112,11 @@ module Glob = struct
         match_pieces ps part 0 && match_components rest tl
 
   let canonical_parts path =
-    if path = "" || String.contains path '\000' then None
+    if String.equal path "" || String.contains path '\000' then None
     else
       let parts = String.split_on_char '/' path in
-      if List.exists (fun p -> p = "" || p = "." || p = "..") parts then None
+      if List.exists (fun p -> String.equal p "" || p = "." || p = "..") parts
+      then None
       else Some parts
 
   let matches g path =
@@ -343,7 +345,7 @@ let parse_per_path ~line ~col items =
     (fun ~key ~line:kline ~col:kcol args ->
       match key with
       | "paths" ->
-          if args = [] then
+          if List.is_empty args then
             fail kline kcol "(paths ...) expects at least one glob";
           let globs =
             List.map
@@ -357,7 +359,7 @@ let parse_per_path ~line ~col items =
           in
           set_once ~context paths ~key ~line:kline ~col:kcol globs
       | "ignore" ->
-          if args = [] then
+          if List.is_empty args then
             fail kline kcol
               "(ignore ...) expects at least one rule or group name";
           set_once ~context ignored ~key ~line:kline ~col:kcol

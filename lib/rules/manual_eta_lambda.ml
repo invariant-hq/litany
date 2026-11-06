@@ -103,7 +103,8 @@ let params_idents u (ps : Typedtree.function_param list) =
   go [] ps
 
 (* Plain: no annotation, coercion, newtype, or attribute on the node. *)
-let plain (e : Typedtree.expression) = e.exp_extra = [] && e.exp_attributes = []
+let plain (e : Typedtree.expression) =
+  e.exp_extra = [] && List.is_empty e.exp_attributes
 
 (* Positional identity: argument [i] is exactly parameter [i]'s ident,
    bare — a coerced or annotated argument ([f (env :> t)]) forwards a
@@ -231,7 +232,8 @@ let rule =
       else
         match (params_idents u ps, spelling callee) with
         | Some pids, Some name
-          when pids <> [] && forwards u pids args && identifier_spelling name
+          when (not (List.is_empty pids))
+               && forwards u pids args && identifier_spelling name
                && (match path with
                  | Path.Pident c -> not (List.exists (Ident.same c) pids)
                  | _ -> true)

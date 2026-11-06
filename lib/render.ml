@@ -192,7 +192,7 @@ let text ?(color = false) ?(fixes = `Hint) ?(notes_detail = false)
         | [] -> ("", [])
         | first :: rest -> (first, rest)
       in
-      let first = if first = "" then "" else " " ^ first in
+      let first = if String.equal first "" then "" else " " ^ first in
       (match severity with
       | Rule.Severity.Warning ->
           add "%s 0 [%s]:%s" (paint (sev_color severity) "Warning") rule first

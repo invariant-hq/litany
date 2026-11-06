@@ -85,8 +85,10 @@ let noun spelled =
     | Some i -> String.sub spelled (i + 1) (String.length spelled - i - 1)
     | None -> spelled
   in
-  if last <> "" && match last.[0] with 'A' .. 'Z' -> true | _ -> false then
-    "module"
+  if
+    (not (String.equal last ""))
+    && match last.[0] with 'A' .. 'Z' -> true | _ -> false
+  then "module"
   else "value"
 
 module Glob = Rule.Glob
@@ -143,7 +145,7 @@ and schema payload =
               { Rule.Sexp.desc = Atom "use"; _ };
               { Rule.Sexp.desc = Atom replacement; _ };
             ] ->
-            if replacement = "" then
+            if String.equal replacement "" then
               err use_form "forbid %s wants a non-empty replacement in (use …)"
                 spelled
             else Ok replacement

@@ -57,7 +57,7 @@ module Name = struct
             if j < len && input.[j] = '.' then
               go (String.sub input i (j - i) :: acc) (j + 1)
             else if j < len then err j "expected '.' after a module name"
-            else if acc = [] then
+            else if List.is_empty acc then
               err i "expected at least two components, e.g. Stdlib.length"
             else
               err i
@@ -140,7 +140,7 @@ module Ref = struct
     &&
     match String.rindex_opt s '.' with
     | Some i -> i + 1 < String.length s && Name.is_uident_start s.[i + 1]
-    | None -> s <> "" && Name.is_uident_start s.[0]
+    | None -> (not (String.equal s "")) && Name.is_uident_start s.[0]
 
   let of_string input =
     if module_shaped input then
@@ -690,7 +690,7 @@ module Scope = struct
     | Path.Pident id -> (
         match predef with Some pid -> Ident.same pid id | None -> false)
     | Path.Pdot _ | Path.Papply _ | Path.Pextra_ty _ -> (
-        uids <> []
+        (not (List.is_empty uids))
         &&
         match Resolver.type_uid_of_path sc.resolver ~local:sc.local path with
         | Some uid -> List.exists (Shape.Uid.equal uid) uids

@@ -146,8 +146,8 @@ let parse_payload s =
       let reason =
         trim_horizontal (String.sub s (colon + 1) (String.length s - colon - 1))
       in
-      if rule = "" then Error Malformed.Missing_rule
-      else if reason = "" then Error Malformed.Missing_reason
+      if String.equal rule "" then Error Malformed.Missing_rule
+      else if String.equal reason "" then Error Malformed.Missing_reason
       else
         match String.for_all (fun c -> c >= ' ' && c <> '\x7f') reason with
         | true -> Ok (rule, reason)

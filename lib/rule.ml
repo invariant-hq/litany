@@ -73,7 +73,7 @@ let is_kebab name =
   && (match name.[0] with 'a' .. 'z' -> true | _ -> false)
   && List.for_all
        (fun seg ->
-         seg <> ""
+         (not (String.equal seg ""))
          && String.for_all
               (function 'a' .. 'z' | '0' .. '9' -> true | _ -> false)
               seg)
@@ -89,7 +89,7 @@ let meta ~name ?(renamed_from = []) ~group ?(stability = Stability.Stable)
   in
   check_name name;
   List.iter check_name renamed_from;
-  if summary = "" then
+  if String.equal summary "" then
     invalid_arg (Printf.sprintf "Rule.meta: rule %s has an empty summary" name);
   {
     name;
@@ -307,7 +307,7 @@ let select ~catalog ~select ~ignore =
       ([], []) tokens
   in
   match
-    let select = if select = [] then [ "default" ] else select in
+    let select = if List.is_empty select then [ "default" ] else select in
     let sel, sel_warnings = resolve_all select in
     let ign, ign_warnings = resolve_all ignore in
     (* A bare whole-group [restriction] on the enabling side warns

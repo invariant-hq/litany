@@ -350,7 +350,7 @@ module Report = struct
   let rules_selected rep = rep.rules_selected
 
   let exit_code rep =
-    if rep.failures <> [] then 3
+    if not (List.is_empty rep.failures) then 3
     else if (Lazy.force rep.view).v_findings <> [] then 1
     else 0
 
@@ -802,10 +802,13 @@ let analyze ~kinds ~suppress u =
      ([Expr_item] is the seam), and reading [str_items] keeps such
      items off the structure-level dispatch without a context flag. *)
   if
-    kinds.exprs <> [] || kinds.patterns <> [] || kinds.bindings <> []
-    || kinds.type_decls <> [] || kinds.let_groups <> []
-    || kinds.module_bindings <> []
-    || kinds.opens <> []
+    (not (List.is_empty kinds.exprs))
+    || (not (List.is_empty kinds.patterns))
+    || (not (List.is_empty kinds.bindings))
+    || (not (List.is_empty kinds.type_decls))
+    || (not (List.is_empty kinds.let_groups))
+    || (not (List.is_empty kinds.module_bindings))
+    || not (List.is_empty kinds.opens)
   then begin
     let default = Tast_iterator.default_iterator in
     (* [Module_binding.position]'s Toplevel/Nested split: structural, O(1)
@@ -821,9 +824,10 @@ let analyze ~kinds ~suppress u =
       at_root := saved
     in
     let decl_kinds =
-      kinds.type_decls <> [] || kinds.let_groups <> []
-      || kinds.module_bindings <> []
-      || kinds.opens <> []
+      kinds.type_decls <> []
+      || (not (List.is_empty kinds.let_groups))
+      || (not (List.is_empty kinds.module_bindings))
+      || not (List.is_empty kinds.opens)
     in
     let iterator =
       {
@@ -831,19 +835,19 @@ let analyze ~kinds ~suppress u =
         Tast_iterator.expr =
           (fun sub e ->
             dispatch_all ~lane:Typed kinds.exprs e;
-            (if kinds.let_groups <> [] then
+            (if not (List.is_empty kinds.let_groups) then
                match e.exp_desc with
                | Typedtree.Texp_let (rf, vbs, _) ->
                    dispatch_all ~lane:Typed kinds.let_groups (e.exp_loc, rf, vbs)
                | _ -> ());
-            (if kinds.module_bindings <> [] then
+            (if not (List.is_empty kinds.module_bindings) then
                match Expr_item.local_module e with
                | Some (id, name_loc) ->
                    dispatch_all ~lane:Typed kinds.module_bindings
                      (Rule.Module_binding.v ~id ~name_loc ~loc:e.exp_loc
                         ~position:Rule.Module_binding.Local)
                | None -> ());
-            (if kinds.type_decls <> [] then
+            (if not (List.is_empty kinds.type_decls) then
                (* An expression-local [type … in e] group dispatches as an
                   ordinary [type_decl] group. *)
                match Expr_item.type_group e with
@@ -867,16 +871,18 @@ let analyze ~kinds ~suppress u =
                List.iter
                  (fun (item : Typedtree.structure_item) ->
                    match item.str_desc with
-                   | Typedtree.Tstr_type (_, ds) when kinds.type_decls <> [] ->
+                   | Typedtree.Tstr_type (_, ds)
+                     when not (List.is_empty kinds.type_decls) ->
                        dispatch_all ~lane:Typed kinds.type_decls ds
-                   | Typedtree.Tstr_value (rf, vbs) when kinds.let_groups <> []
-                     ->
+                   | Typedtree.Tstr_value (rf, vbs)
+                     when not (List.is_empty kinds.let_groups) ->
                        dispatch_all ~lane:Typed kinds.let_groups
                          (item.str_loc, rf, vbs)
-                   | Typedtree.Tstr_open od when kinds.opens <> [] ->
-                       dispatch_all ~lane:Typed kinds.opens od
-                   | Typedtree.Tstr_module mb when kinds.module_bindings <> []
+                   | Typedtree.Tstr_open od when not (List.is_empty kinds.opens)
                      ->
+                       dispatch_all ~lane:Typed kinds.opens od
+                   | Typedtree.Tstr_module mb
+                     when not (List.is_empty kinds.module_bindings) ->
                        (* [Tstr_recmodule] is deliberately not dispatched:
                           self- and cross-references are its point. *)
                        dispatch_all ~lane:Typed kinds.module_bindings
@@ -901,7 +907,7 @@ let analyze ~kinds ~suppress u =
      interface decode); findings answer to the Typed lane's full emit
      contract — export rules anchor in the editable source like every
      typed rule. *)
-  if kinds.exports <> [] then
+  if not (List.is_empty kinds.exports) then
     List.iter
       (fun x -> dispatch_all ~lane:Typed kinds.exports x)
       (Unit.exports u);
@@ -1070,8 +1076,12 @@ let analyze ~kinds ~suppress u =
                 if (not cons) || (typed && Option.is_none (Lazy.force spans))
                 then Some (Fix.with_applicability Fix.Display fx)
                 else if
-                  lane <> Intf && Unit.preprocessed u
-                  && Fix.applicability fx = Fix.Safe
+                  (match lane with Intf -> false | Typed | Untyped -> true)
+                  && Unit.preprocessed u
+                  &&
+                  match Fix.applicability fx with
+                  | Fix.Safe -> true
+                  | Fix.Unsafe | Fix.Display -> false
                 then Some (Fix.with_applicability Fix.Unsafe fx)
                 else Some fx
           in

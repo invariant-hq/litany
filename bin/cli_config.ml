@@ -140,9 +140,12 @@ let tokens { cfg; _ } ~cli_select ~cli_ignore =
     | [], extend -> "default" :: extend
     | select, extend -> select @ extend
   in
-  let select = if cli_select <> [] then cli_select else file_select in
+  let select =
+    if not (List.is_empty cli_select) then cli_select else file_select
+  in
   let ignore =
-    if cli_ignore <> [] then cli_ignore else values (Config.ignored cfg)
+    if not (List.is_empty cli_ignore) then cli_ignore
+    else values (Config.ignored cfg)
   in
   (select, ignore)
 

@@ -50,7 +50,8 @@ let explain name =
       print_string doc;
       (* The doc contract does not require a trailing newline; the page
          always ends with one. *)
-      if doc = "" || doc.[String.length doc - 1] <> '\n' then print_newline ();
+      if String.equal doc "" || doc.[String.length doc - 1] <> '\n' then
+        print_newline ();
       Cli_common.exit_ok
 
 let name_arg =

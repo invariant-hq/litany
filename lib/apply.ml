@@ -183,7 +183,7 @@ let correct ?unsafe ~path bytes cands =
            unchanged is the ordinary nothing-to-correct answer, not a
            bug. Checked before the reparse — equal bytes parse iff the
            original did. *)
-        if p.selected <> [] && String.equal fixed bytes then
+        if (not (List.is_empty p.selected)) && String.equal fixed bytes then
           Error
             (`Fixer_bug
                "the corrected result equals the input — the fixes change \

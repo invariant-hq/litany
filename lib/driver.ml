@@ -797,7 +797,7 @@ let listing roster ~build_current =
   in
   Printf.printf "summary: %d entries, %d admitted, %d skipped%s\n" total
     !admitted skipped
-    (if by_reason = [] then ""
+    (if List.is_empty by_reason then ""
      else Printf.sprintf " (%s)" (String.concat ", " by_reason));
   if Roster.project_capable roster then print_string "roster: complete\n"
   else print_string "roster: none (project rules unavailable)\n"
@@ -1198,7 +1198,7 @@ let explain_withheld_page report ~roster =
     kind_withheld;
   match Engine.Report.project_rules report with
   | [] ->
-      if kind_withheld = [] then
+      if List.is_empty kind_withheld then
         print_string "withheld: no project rules selected; nothing withheld\n"
   | dispositions -> (
       let blocked =
@@ -1208,7 +1208,8 @@ let explain_withheld_page report ~roster =
       in
       let ran =
         List.filter_map
-          (fun (rule, block) -> if block = None then Some rule else None)
+          (fun (rule, block) ->
+            if Option.is_none block then Some rule else None)
           dispositions
       in
       match blocked with
@@ -1285,7 +1286,7 @@ let explain_withheld_page report ~roster =
           match ran with
           | [] -> ()
           | ran ->
-              if blocked = [] then
+              if List.is_empty blocked then
                 Printf.printf
                   "withheld: nothing — %s ran over the complete universe\n"
                   (String.concat ", " ran)
@@ -1541,7 +1542,7 @@ let run_check ~progress ~rebuild ~format ~jobs ~cache roster ~build_current
             in
             pass_line n result
               ~clean:(Engine.Report.exit_code report = 0)
-              ~proposed:(corrections <> None);
+              ~proposed:(Option.is_some corrections);
             (* The pass lines are stdout, the rebuild streams on stderr:
                flush at the boundary so a captured transcript interleaves
                determinately. *)

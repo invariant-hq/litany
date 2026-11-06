@@ -58,7 +58,7 @@ let[@litany.allow "suspicious-wall-clock-elapsed: only a meter line reads it"] e
 
 let line t =
   let secs = elapsed t in
-  let prefix = if t.label = "" then "" else t.label ^ ": " in
+  let prefix = if String.equal t.label "" then "" else t.label ^ ": " in
   if t.total = 0 then Printf.sprintf "%s[%.1fs]" prefix secs
   else
     let left = t.total - t.done_ in

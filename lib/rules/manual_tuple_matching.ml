@@ -70,7 +70,7 @@ let rec irrefutable u (p : Typedtree.pattern) =
 
 let tokens s =
   List.filter
-    (fun t -> t <> "")
+    (fun t -> not (String.equal t ""))
     (String.split_on_char ' '
        (String.map (function '\t' | '\n' | '\r' -> ' ' | c -> c) s))
 

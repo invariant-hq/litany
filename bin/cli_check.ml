@@ -100,7 +100,7 @@ let vantage () =
           | p -> p
         in
         match List.filteri (fun i _ -> i > at) segs with
-        | ".sandbox" :: hash :: ctx :: rest when ctx <> "" ->
+        | ".sandbox" :: hash :: ctx :: rest when not (String.equal ctx "") ->
             Sandboxed
               {
                 source_root;
@@ -108,7 +108,7 @@ let vantage () =
                 sandbox = "_build/.sandbox/" ^ hash ^ "/" ^ ctx;
                 subdir = String.concat "/" rest;
               }
-        | ctx :: rest when ctx <> "" && ctx <> ".sandbox" ->
+        | ctx :: rest when (not (String.equal ctx "")) && ctx <> ".sandbox" ->
             Action
               {
                 source_root;
@@ -271,7 +271,7 @@ let check root cmt_root units no_build trust_build list_units select ignore fix
   else
     let vantage = vantage () in
     match (fix, vantage) with
-    | true, Sandboxed _ when cmt_root <> None || units <> None ->
+    | true, Sandboxed _ when Option.is_some cmt_root || Option.is_some units ->
         (* The sandboxed vantage's --fix is the corrections lane — no
            source is ever written; fixes become [.corrected] files dune
            diffs against the sources and applies on [dune promote]. That
@@ -355,10 +355,10 @@ let check root cmt_root units no_build trust_build list_units select ignore fix
             match
               match vantage with
               | Action { source_root; context; subdir }
-                when cmt_root = None && units = None ->
+                when Option.is_none cmt_root && Option.is_none units ->
                   rebase source_root (context, subdir, None)
               | Sandboxed { source_root; context; sandbox; subdir }
-                when cmt_root = None && units = None ->
+                when Option.is_none cmt_root && Option.is_none units ->
                   rebase source_root (context, subdir, Some sandbox)
               | Action _ | Sandboxed _ | Shell | Exec -> Ok None
             with
@@ -514,7 +514,8 @@ let check root cmt_root units no_build trust_build list_units select ignore fix
                              driver's too. *)
                                       let rebuild =
                                         if
-                                          cmt_root = None && units = None
+                                          cmt_root = None
+                                          && Option.is_none units
                                           && (not no_build)
                                           && not (Cli_common.inside_dune ())
                                         then
