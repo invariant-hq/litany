@@ -13,13 +13,3 @@
 (library
  (name fix_rni_fixed)
  (modules fix_rni_fixed))
-
-; The fixes that name an operator or a module, whose spelling the rule never
-; resolved at the fix site, are unsafe: their golden is --fix --unsafe's.
-
-(rule
- (copy fix_rni.unsafe.ml fix_rni_unsafe.ml))
-
-(library
- (name fix_rni_unsafe)
- (modules fix_rni_unsafe))

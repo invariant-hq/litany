@@ -29,10 +29,10 @@ territory) deliberately do not fire. The fix rewrites the match form to
 exactly `f x` for an identifier `f` other than `x`, and the scrutinee
 alone for the degenerate rebuild — where the sources slice cleanly; the
 `function` form has no scrutinee to name and ships none. The `Option.map`
-rewrites are unsafe, applied only under `--unsafe`: `Option` resolves in
-the fix site's scope, which the rule never checked, and a constructor in
-`E` chosen by its expected type may not typecheck inside the lambda. The
-scrutinee alone names nothing, and is safe.|}
+rewrite is safe where `Option` is the standard library's and `E` names no
+constructor or field the checker may have chosen by its expected type, and
+unsafe, applied only under `--unsafe`, otherwise. The scrutinee alone names
+nothing, and is safe.|}
     ()
 
 let map_message =
@@ -114,7 +114,14 @@ let build_fix u (e : Typedtree.expression) ~scrut ~pat ~x ~ee ~identity =
         in
         Option.map
           (fun text ->
-            Fix.unsafe_replace loc (Unit.delimited u e text)
+            let replace =
+              if
+                Unit.stdlib_in_scope u e.exp_env "Option"
+                && not (Unit.type_directed ee)
+              then Fix.safe_replace
+              else Fix.unsafe_replace
+            in
+            replace loc (Unit.delimited u e text)
               ~title:"rewrite with Option.map")
           rewrite
 

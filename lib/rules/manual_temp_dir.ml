@@ -38,7 +38,8 @@ is an integer literal (carried as `~perms:` unless it is `0o700`,
 `temp_dir`'s default), the mkdir is followed by further statements
 (so the binding still binds a path the rest uses), and no comment sits
 in the deleted region. Any refused gate refuses the fix, never the
-finding. The sequence split across helper functions is a documented
+finding. The fix is safe where `Filename` is the standard library's, and unsafe,
+applied only under `--unsafe`, otherwise. The sequence split across helper functions is a documented
 false negative.|}
     ()
 
@@ -159,7 +160,12 @@ let temp_dir_fix u (callee : Typedtree.expression) (pre : Typedtree.expression)
         match (span_of c0 c1, span_of rm0 tl0) with
         | Some callee_span, Some deleted_span ->
             Some
-              (Fix.v ~applicability:Fix.Safe ~title:"use Filename.temp_dir"
+              (Fix.v
+                 ~applicability:
+                   (if Unit.stdlib_in_scope u callee.exp_env "Filename" then
+                      Fix.Safe
+                    else Fix.Unsafe)
+                 ~title:"use Filename.temp_dir"
                  ({ Fix.span = callee_span; text = "Filename.temp_dir" }
                  :: { Fix.span = deleted_span; text = "" }
                  :: perms))

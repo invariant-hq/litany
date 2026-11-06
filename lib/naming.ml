@@ -626,6 +626,17 @@ module Scope = struct
       accepted_modules = Hashtbl.create 16;
     }
 
+  let module_binds sc path name =
+    match Resolver.signature_of_path sc.resolver ~ctx:(Local sc.local) path with
+    | None -> `Unknown
+    | Some tagged ->
+        let binds = function
+          | Types.Sig_value (id, _, _) | Types.Sig_module (id, _, _, _, _) ->
+              String.equal (Ident.name id) name
+          | _ -> false
+        in
+        if List.exists binds (Resolver.ctx_sig tagged) then `Yes else `No
+
   let read_failures sc = Resolver.read_failures sc.resolver
 
   let accepted_uids sc n =

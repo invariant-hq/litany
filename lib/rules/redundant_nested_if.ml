@@ -27,9 +27,9 @@ deliberately does not fire. Deeper nests report once per level. The
 fix rewrites the head to `c1 && c2`, parenthesizing each condition
 unless atomic; it ships only when the text between the conditions is
 exactly `then` `if` with whitespace — a parenthesis, `begin`, or
-comment in the gap withholds the fix, not the finding. The fix splices
-`&&`, a spelling that resolves in the fix site's scope, which the rule
-never checked, so it is unsafe, applied only under `--unsafe`.|}
+comment in the gap withholds the fix, not the finding. The fix writes
+`&&`, so it is safe where that is the standard library's, and unsafe, applied
+only under `--unsafe`, where something else in scope may bind it.|}
     ()
 
 let message = "if c1 then if c2 then e is longhand for if c1 && c2 then e"
@@ -69,7 +69,11 @@ let fix u (c1 : Typedtree.expression) (c2 : Typedtree.expression) =
           (fun bytes ->
             if gap_ok bytes then
               Some
-                (Fix.v ~applicability:Fix.Unsafe ~title:"collapse to c1 && c2"
+                (Fix.v
+                   ~applicability:
+                     (if Unit.stdlib_in_scope u c1.exp_env "&&" then Fix.Safe
+                      else Fix.Unsafe)
+                   ~title:"collapse to c1 && c2"
                    [
                      { Fix.span = s1; text = a1 };
                      { Fix.span = gap; text = " && " };

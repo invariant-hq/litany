@@ -6,10 +6,10 @@ let parse s = int_of_string s
 let wrap e = "w:" ^ e
 
 (* The map form. *)
-let p1 r = match r with Ok x -> Ok (parse x) | Error e -> Error e (* FIRE *)
+let p1 r = Result.map (fun x -> (parse x)) r (* FIRE *)
 
 (* Reversed case order. *)
-let p2 r = match r with Error e -> Error e | Ok x -> Ok (x * 2) (* FIRE *)
+let p2 r = Result.map (fun x -> (x * 2)) r (* FIRE *)
 
 (* The map_error form, function form: report only. *)
 let p3 = function Ok x -> Ok x | Error e -> Error (`Msg e) (* FIRE *)
@@ -18,7 +18,7 @@ let p3 = function Ok x -> Ok x | Error e -> Error (`Msg e) (* FIRE *)
 let p4 r = r (* FIRE *)
 
 (* The map_error form, match form. *)
-let p5 r = match r with Ok x -> Ok x | Error e -> Error (wrap e) (* FIRE *)
+let p5 r = Result.map_error (fun e -> (wrap e)) r (* FIRE *)
 
 (* negative: the error payload is not the bound rebuild *)
 let default_err = "bad"
@@ -51,11 +51,11 @@ let n6 r = match r with Ok _ as v -> v | Error e -> Error e
    body includes the author's parentheses, and the splice must not add a
    second pair: the raw body keeps the author's bytes, [(fun e -> (wrap e))],
    never [((wrap e))]. *)
-let paren_body r = match r with Ok v -> Ok v | Error e -> Error (wrap e) (* FIRE *)
+let paren_body r = Result.map_error (fun e -> (wrap e)) r (* FIRE *)
 
 (* Argument position: the parenthesized match's location includes the
    parentheses, and the application replacement is not self-delimiting —
    the fix restores the pair or the call re-associates as
    [(Result.is_ok Result.map) ...]. *)
 let p_arg r =
-  ignore (match r (* FIRE *) with Ok x -> Ok (parse x) | Error e -> Error e)
+  ignore (Result.map (fun x -> (parse x)) r)

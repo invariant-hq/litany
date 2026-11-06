@@ -359,6 +359,19 @@ val scope : t -> Naming.Scope.t
 (** [scope u] is the identity view [Pat] matches [u] under: the run's resolver
     extended with [u]'s intra-unit equivalence (see {!Naming.Scope}). *)
 
+val stdlib_in_scope : t -> Env.t -> string -> bool
+(** [stdlib_in_scope u env name] is [true] iff [name], a top-level value or
+    module of the standard library such as [Option] or [(&&)], means the
+    standard library's at a node whose environment is [env]: nothing binds it
+    there, and no open between that node and the standard library's can supply
+    it. An open whose signature can't be read answers [false]. A rule that
+    writes such a name into a fix asks this before it calls the fix safe. *)
+
+val type_directed : Typedtree.expression -> bool
+(** [type_directed e] is [true] iff [e] holds a constructor of a non-predefined
+    type, or a record or a field: names the type checker may have chosen by the
+    expected type, which moving [e] under a lambda can lose. *)
+
 (** {1:uses Use index} *)
 
 val uses : t -> Shape.Uid.t -> Location.t list

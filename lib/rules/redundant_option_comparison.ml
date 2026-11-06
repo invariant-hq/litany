@@ -31,9 +31,8 @@ shadowed operators deliberately do not fire. The fix rewrites the whole
 comparison to the predicate applied to the other operand — structural
 comparison against the immediate `None` decides on the tag without
 traversing the payload, so the predicate computes the same answer, even
-for payloads whose comparison would raise. `Option` resolves in the fix
-site's scope, which the rule never checked, so the fix is unsafe, applied
-only under `--unsafe`.
+for payloads whose comparison would raise. The fix is safe where `Option` is the
+standard library's, and unsafe, applied only under `--unsafe`, otherwise.
 
 The reporting unit is the boolean chain, not the comparison: when two
 or more such comparisons are direct operands of one `Stdlib` `&&`/`||`
@@ -136,7 +135,9 @@ let single u (e : Typedtree.expression) x predicate =
   let fix =
     Option.map
       (fun src ->
-        Fix.unsafe_replace e.exp_loc
+        (if Unit.stdlib_in_scope u e.exp_env "Option" then Fix.safe_replace
+         else Fix.unsafe_replace)
+          e.exp_loc
           (Unit.delimited u e (predicate ^ " " ^ src))
           ~title:("use " ^ predicate))
       (Unit.splice u x)
@@ -164,7 +165,11 @@ let chain u (e : Typedtree.expression) ms =
   let fix =
     if List.for_all Option.is_some edits then
       Some
-        (Fix.v ~applicability:Fix.Unsafe ~title:"use Option predicates"
+        (Fix.v
+           ~applicability:
+             (if Unit.stdlib_in_scope u e.exp_env "Option" then Fix.Safe
+              else Fix.Unsafe)
+           ~title:"use Option predicates"
            (List.filter_map Fun.id edits))
     else None
   in

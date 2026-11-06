@@ -45,10 +45,7 @@ let () =
                (List.map
                   (fun (_, f) -> Litany.Finding.message f)
                   (Litany.Engine.Report.findings rep)));
-         test "--fix alone applies only the fixes that name nothing" (fun () ->
+         test "fixes round-trip to the compiled golden" (fun () ->
              Support.check_fixed rule ~source ~cmt
                ~golden:"fixtures/fix_mom.fixed.ml");
-         test "--fix --unsafe round-trips to the compiled golden" (fun () ->
-             Support.check_fixed ~unsafe:true rule ~source ~cmt
-               ~golden:"fixtures/fix_mom.unsafe.ml");
        ]

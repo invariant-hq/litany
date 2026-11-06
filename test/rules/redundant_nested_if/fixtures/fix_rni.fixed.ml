@@ -7,10 +7,10 @@ let draw _ _ = ()
 let act () = ()
 
 (* Both ifs else-less, immediately nested: finding and fix. *)
-let p1 ok ready = if ok then if ready then launch () (* FIRE *)
+let p1 ok ready = if ok && ready then launch () (* FIRE *)
 
 (* Non-atomic conditions re-atomize: (a || b) && (c > 0). *)
-let p2 a b c = if a || b then if c > 0 then act () (* FIRE *)
+let p2 a b c = if (a || b) && (c > 0) then act () (* FIRE *)
 
 (* begin/end is transparent in the tree: the finding fires, the gap
    slice refuses the fix. *)

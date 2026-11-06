@@ -5,17 +5,17 @@
 let default_name = "anon"
 
 (* Literal default. *)
-let p1 o = match o with Some x -> x | None -> 0 (* FIRE *)
+let p1 o = Option.value o ~default:0 (* FIRE *)
 
 (* Reversed order, identifier default. *)
-let p2 name = match name with None -> default_name | Some n -> n (* FIRE *)
+let p2 name = Option.value name ~default:default_name (* FIRE *)
 
 (* Function form, nullary-constructor default: report only. *)
 let p3 = function Some x -> x | None -> [] (* FIRE *)
 
 (* Argument position: the parenthesized match's location includes the
    parentheses; the application replacement restores them. *)
-let p4 o = succ (match o with Some x -> x | None -> 0) (* FIRE *)
+let p4 o = succ (Option.value o ~default:0) (* FIRE *)
 
 (* negative: an effectful default — the eager rewrite would change
    behavior (recorded deliberate false negative) *)

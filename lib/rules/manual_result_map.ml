@@ -32,11 +32,10 @@ spelling `Ok`/`Error` deliberately do not fire. The fix rewrites the
 match form to `Result.map (fun x -> E) r` / `Result.map_error (fun e ->
 E) r` (the scrutinee alone for the double identity) where the sources
 slice cleanly; the `function` form has no scrutinee to name and ships
-none. The `Result` rewrites are unsafe, applied only under `--unsafe`:
-`Result` resolves in the fix site's scope, which the rule never checked,
-and a constructor or field in `E` chosen by its expected type may not
-typecheck inside the lambda. The scrutinee alone names nothing, and is
-safe.|}
+none. The `Result` rewrites are safe
+where `Result` is the standard library's and `E` names no constructor or field
+the checker may have chosen by its expected type, and unsafe, applied only under
+`--unsafe`, otherwise. The scrutinee alone names nothing, and is safe.|}
     ()
 
 let map_message =
@@ -99,7 +98,12 @@ let lambda_fix u (m : Typedtree.expression) ~fn ~pat ~ee ~scrut =
   match (Pat.bound_var pat, Unit.text u ee, Unit.splice u scrut) with
   | Some (name, _), Some body, Some r ->
       Some
-        (Fix.unsafe_replace m.exp_loc
+        ((if
+            Unit.stdlib_in_scope u m.exp_env "Result"
+            && not (Unit.type_directed ee)
+          then Fix.safe_replace
+          else Fix.unsafe_replace)
+           m.exp_loc
            (Unit.delimited u m
               (String.concat ""
                  [ fn; " (fun "; name.Location.txt; " -> "; body; ") "; r ]))

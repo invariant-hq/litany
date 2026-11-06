@@ -488,6 +488,55 @@ let kind u = u.kind
 let implementation u = u.implementation
 let scope u = u.scope
 
+let stdlib_in_scope u env name =
+  let bound id = String.equal (Ident.name id) name in
+  let rec walk (summary : Env.summary) =
+    match summary with
+    | Env_value (rest, id, _) | Env_module (rest, id, _, _) ->
+        (not (bound id)) && walk rest
+    | Env_open (_, Path.Pident id) when String.equal (Ident.name id) "Stdlib" ->
+        true
+    | Env_open (rest, path) -> (
+        match Naming.Scope.module_binds u.scope path name with
+        | `No -> walk rest
+        | `Yes | `Unknown -> false)
+    | Env_type (rest, _, _)
+    | Env_extension (rest, _, _)
+    | Env_modtype (rest, _, _)
+    | Env_class (rest, _, _)
+    | Env_cltype (rest, _, _)
+    | Env_not_aliasable (rest, _)
+    | Env_constraints (rest, _)
+    | Env_copy_types rest
+    | Env_persistent (rest, _)
+    | Env_value_unbound (rest, _, _)
+    | Env_module_unbound (rest, _, _) ->
+        walk rest
+    | Env_empty -> false
+  in
+  walk (Env.summary env)
+
+let type_directed e =
+  let found = ref false in
+  let default = Tast_iterator.default_iterator in
+  let iterator =
+    {
+      default with
+      expr =
+        (fun sub (x : Typedtree.expression) ->
+          (match x.exp_desc with
+          | Texp_construct (_, cd, _) -> (
+              match Types.get_desc cd.cstr_res with
+              | Tconstr (Path.Pident id, _, _) when Ident.is_predef id -> ()
+              | _ -> found := true)
+          | Texp_record _ | Texp_field _ | Texp_setfield _ -> found := true
+          | _ -> ());
+          default.expr sub x);
+    }
+  in
+  iterator.expr iterator e;
+  !found
+
 (* {1 Demand-gated substrates} *)
 
 let interface u =

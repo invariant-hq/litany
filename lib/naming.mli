@@ -302,6 +302,11 @@ module Scope : sig
       Per call after the first for [p]: UID and unit-name equalities against the
       memoized boundary. *)
 
+  val module_binds : t -> Path.t -> string -> [ `Yes | `No | `Unknown ]
+  (** [module_binds sc p name] says whether the module at [p] binds a value or a
+      module called [name]: [`Unknown] when its signature can't be read. Same IO
+      and memoization as {!matches_type}. *)
+
   val read_failures : t -> (string * string) list
   (** [read_failures sc] is {!Resolver.read_failures} of the scope's resolver —
       the engine's channel: after analyzing a unit it reads the failures its

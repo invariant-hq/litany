@@ -8,11 +8,14 @@
 - A safe fix no longer breaks the build when a character literal or a comment
   in its operand holds a bracket.
 - The fixes of `redundant-nested-if`, `manual-option-map`,
-  `manual-option-value`, `manual-result-map` and `redundant-option-comparison`
-  are unsafe, applied only under `--unsafe`: the name they write may be
-  shadowed where they write it, which changed what the program computed, and a
-  constructor chosen by its expected type may stop compiling. Replacing a match
-  with its own scrutinee stays safe.
+  `manual-option-value`, `manual-result-map`, `redundant-option-comparison` and
+  `manual-temp-dir` are safe only where the name they write is the standard
+  library's, and for the two `map` rules and `manual-option-value` where a
+  constructor can't have been chosen by its expected type; otherwise they need
+  `--unsafe`. A shadowed `&&` or `Option` silently changed what the program
+  computed, and such a constructor stopped it compiling.
+- `trailing-whitespace` no longer fires inside a string literal, where its fix
+  changed the string.
 - `litany check --root DIR` works from any directory: it enters DIR, so paths
   print and globs match as they do at the root. A `(only ...)` or `(except ...)`
   scope failed the rule under an absolute root, and the default lane found no
