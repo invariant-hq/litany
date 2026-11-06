@@ -32,7 +32,7 @@ export default defineConfig({
     starlight({
       title: "litany",
       description: "A linter for OCaml that reads what the compiler wrote.",
-      logo: { src: "starlight-theme-hypha/assets/hypha.webp" },
+      logo: { dark: "starlight-theme-hypha/assets/hypha.webp", light: "starlight-theme-hypha/assets/hypha-day.webp" },
       favicon: "/favicon-32.png",
       head: [
         { tag: "link", attrs: { rel: "icon", type: "image/png", sizes: "16x16", href: "/litany/favicon-16.png" } },
