@@ -1,4 +1,4 @@
-## Unreleased
+## 1.2.0 (2026-11-06)
 
 - `--fix` keeps a file's permission bits, whatever the umask, as it always
   said it did.
@@ -49,8 +49,8 @@
   nothing.
 - The documentation is a site, `hyphatech.github.io/litany`, built by
   `make docs`, replacing `doc/`. Its rule pages are written from `litany
-  rules` and `litany explain`, and every program it shows is a file of
-  `examples/`, built with the repository and linted by the tests.
+  rules` and `litany explain`, and the whole programs it shows are files of
+  `examples/`, built with the repository.
 
 ## 1.1.1 (2026-11-03)
 
