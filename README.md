@@ -65,5 +65,4 @@ See [AGENTS.md](AGENTS.md).
 
 ## Licence
 
-ISC: upstream's, copyright Invariant Systems, and Hypha's additions,
-copyright Hypha Technologies Ltd. See [LICENSE](LICENSE).
+ISC, copyright Invariant Systems and Hypha Technologies Ltd. See [LICENSE](LICENSE).
