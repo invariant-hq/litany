@@ -90,7 +90,8 @@ let roster_of_flags ~root ~cmt_root ~build =
   | Some cmt_root -> (
       match Litany.Adapter.Walk.roster ~cmt_root ~source_root:root with
       | Ok roster -> Ok roster
-      | Error e -> Error (Cli_common.refuse "%a" Litany.Adapter.Walk.pp_error e)
+      | Error e ->
+          Error (Cli_common.refuse "%s" (Litany.Adapter.Walk.error_to_string e))
       )
   | None -> (
       if Cli_common.inside_dune () then
@@ -102,7 +103,8 @@ let roster_of_flags ~root ~cmt_root ~build =
         match Litany.Adapter.Dune.roster ~build ~root () with
         | Ok roster -> Ok roster
         | Error e ->
-            Error (Cli_common.refuse "%a" Litany.Adapter.Dune.pp_error e))
+            Error
+              (Cli_common.refuse "%s" (Litany.Adapter.Dune.error_to_string e)))
 
 let units root cmt_root no_build save do_dump =
   match roster_of_flags ~root ~cmt_root ~build:(not no_build) with

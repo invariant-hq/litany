@@ -94,6 +94,8 @@ module Name = struct
   let pp_error ppf (Malformed { input; at; reason }) =
     Format.fprintf ppf "malformed canonical name %S at offset %d: %s" input at
       reason
+
+  let error_to_string e = Format.asprintf "%a" pp_error e
 end
 
 module Module_path = struct

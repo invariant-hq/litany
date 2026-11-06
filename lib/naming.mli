@@ -89,6 +89,9 @@ module Name : sig
   val pp_error : Format.formatter -> error -> unit
   (** [pp_error ppf e] formats [e] for rule authors, quoting the input and
       pointing at the offending offset. *)
+
+  val error_to_string : error -> string
+  (** [error_to_string e] is what {!pp_error} prints. *)
 end
 
 (** Module paths — the module-shaped complement of {!Name}.

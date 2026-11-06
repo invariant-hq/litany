@@ -689,6 +689,8 @@ module Unit_file = struct
         end)
       (Roster.entries r);
     Buffer.contents b
+
+  let error_to_string e = Format.asprintf "%a" pp_error e
 end
 
 (* {1 Tolerant dune-file scan}
@@ -1166,6 +1168,8 @@ module Dune = struct
            Build first (or drop --no-build); a workspace that renames its \
            default context is not supported."
           context
+
+  let error_to_string e = Format.asprintf "%a" pp_error e
 end
 
 (* {1 The artifact walk} *)
@@ -1221,4 +1225,6 @@ module Walk = struct
       "%s does not exist or cannot be read. Pass --cmt-root a directory \
        holding .cmt artifacts."
       dir
+
+  let error_to_string e = Format.asprintf "%a" pp_error e
 end

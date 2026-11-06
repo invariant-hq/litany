@@ -1138,7 +1138,7 @@ let findings_fingerprint findings =
    for; the tree is deliberately left modified. The exit is the caller's,
    through [exit_of Refused] — the precedence law's home. *)
 let stop_after_build_failure err ~log =
-  Format.eprintf "litany: %a@." Adapter.Dune.pp_error err;
+  Format.eprintf "litany: %s@." (Adapter.Dune.error_to_string err);
   List.iter
     (fun (path, rule, title) ->
       Format.eprintf "applied fix: %s [%s]: %s@." path rule title)

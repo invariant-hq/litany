@@ -150,7 +150,8 @@ let roster_of_flags ~progress ~in_action_ctx ~root ~cmt_root ~units ~build
   | Some cmt_root, None -> (
       match Litany.Adapter.Walk.roster ~cmt_root ~source_root:root with
       | Ok roster -> Ok (roster, trust_build)
-      | Error e -> Error (Cli_common.refuse "%a" Litany.Adapter.Walk.pp_error e)
+      | Error e ->
+          Error (Cli_common.refuse "%s" (Litany.Adapter.Walk.error_to_string e))
       )
   | None, None -> (
       match in_action_ctx with
@@ -236,7 +237,9 @@ let roster_of_flags ~progress ~in_action_ctx ~root ~cmt_root ~units ~build
           match Litany.Adapter.Dune.roster ~progress ~build ~root () with
           | Ok roster -> Ok (roster, build || trust_build)
           | Error e ->
-              Error (Cli_common.refuse "%a" Litany.Adapter.Dune.pp_error e)))
+              Error
+                (Cli_common.refuse "%s" (Litany.Adapter.Dune.error_to_string e))
+          ))
 
 (* The workspace is the working directory from here on, so a path resolves and
    prints as it does from the root, and a glob, anchored there, can match it.

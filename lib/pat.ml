@@ -87,8 +87,7 @@ let ident_of_name n =
 
 let ident name =
   match Naming.Name.of_string name with
-  | Error e ->
-      invalid_arg (Format.asprintf "Pat.ident: %a" Naming.Name.pp_error e)
+  | Error e -> invalid_arg ("Pat.ident: " ^ Naming.Name.error_to_string e)
   | Ok n ->
       Registry.record Registry.values n;
       ident_of_name n
@@ -144,8 +143,7 @@ let apply_opt pf pargs =
    itself binds by alias or functor application resolves too. *)
 let typ name =
   match Naming.Name.of_string name with
-  | Error e ->
-      invalid_arg (Format.asprintf "Pat.typ: %a" Naming.Name.pp_error e)
+  | Error e -> invalid_arg ("Pat.typ: " ^ Naming.Name.error_to_string e)
   | Ok n ->
       Registry.record Registry.types n;
       {

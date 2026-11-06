@@ -71,6 +71,9 @@ module Unit_file : sig
   val pp_error : Format.formatter -> error -> unit
   (** [pp_error ppf e] formats [e] with its byte offset for the refusal message.
   *)
+
+  val error_to_string : error -> string
+  (** [error_to_string e] is what {!pp_error} prints. *)
 end
 
 (** {1:dune The dune adapter} *)
@@ -161,6 +164,9 @@ module Dune : sig
 
   val pp_error : Format.formatter -> error -> unit
   (** [pp_error ppf e] formats [e]'s refusal message with its remedy. *)
+
+  val error_to_string : error -> string
+  (** [error_to_string e] is what {!pp_error} prints. *)
 end
 
 (** {1:walk The artifact walk} *)
@@ -199,4 +205,7 @@ module Walk : sig
 
   val pp_error : Format.formatter -> error -> unit
   (** [pp_error ppf e] formats [e]'s refusal message with its remedy. *)
+
+  val error_to_string : error -> string
+  (** [error_to_string e] is what {!pp_error} prints. *)
 end
