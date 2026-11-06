@@ -57,7 +57,7 @@ val message : t -> string
 
 val fix : t -> Fix.t option
 (** [fix f] is [f]'s suggested fix, if any, with any engine downgrade already
-    applied (see {!Fix.applicability}). *)
+    applied (see {!val:Fix.applicability}). *)
 
 (** {1:fmt Formatting and comparing} *)
 

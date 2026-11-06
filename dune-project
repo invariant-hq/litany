@@ -11,7 +11,7 @@
 
 (homepage "https://github.com/hyphatech/litany")
 
-(documentation "https://github.com/hyphatech/litany#readme")
+(documentation "https://hyphatech.github.io/litany/")
 
 (bug_reports "https://github.com/hyphatech/litany/issues")
 

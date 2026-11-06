@@ -13,7 +13,6 @@ let meta =
 question -- where did it come from? -- and a name the module gains later
 silently shadows one of the file's own. A module made to be opened is
 one of binding operators and nothing else (`open Spindle.Syntax`).
-Holds Hypha's `OCAML.md`, *No `open` of an ordinary module*.
 
     (* bad *)  open Store
     (* good *) module S = Store

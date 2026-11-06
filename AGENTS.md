@@ -2,12 +2,13 @@
 
 litany is an OCaml library of Hypha Stack: Hypha's fork of
 [invariant-hq/litany](https://github.com/invariant-hq/litany), a linter
-that reads the compiler's typed tree, with Hypha's rules added and
-released by Hypha. HAF runs it as a gate on the code a model writes, so
-the rules of Hypha's vault are held, not only told. This file is for
-anyone changing it, human or agent. Users start at
-[README.md](README.md); how a rule is written is
-[doc/dev/rule-authoring.md](doc/dev/rule-authoring.md).
+that reads the compiler's typed tree, with rules added and released by
+Hypha. It stands on its own: it lints any OCaml project, and
+knows nothing of who runs it or what they hold their code to. This file
+is for anyone changing it, human or agent. Users start at
+[README.md](README.md), then the documentation site, whose pages are in
+[docs/](docs/); how a rule is written is
+[Writing a rule](https://hyphatech.github.io/litany/guide/writing-a-rule/).
 
 ## Commands
 
@@ -16,26 +17,35 @@ make setup   # once: the switch hypha-litany, litany's test tools pinned
 make test    # every test
 make lint    # formatting and the release build
 make fmt     # format in place
+make docs    # the documentation site, into _build/docs; make docs-serve
 ```
+
+A change that makes a sentence of the site false edits that sentence in
+the same commit, as it does the README's. The rule catalog on the site is
+written by `make docs` from `litany rules` and `litany explain`, never by
+hand, and every program a page shows is a file of `examples/`, which
+`test/cli/examples.t` lints.
 
 ## What is Hypha's here
 
 - **It is a library of Hypha Stack like any other.** Its CI, its
   Makefile, its releases and its tests are Hypha's, held to Hypha's
-  rules, and changed where they need to be -- on Linux, where HAF's
-  gates run it, first. Why: HAF builds every application on it, so it is
-  kept as Hypha keeps its own; upstream's author does not answer.
+  rules, and changed where they need to be -- on Linux first. Why: Hypha
+  builds on it, so it is kept as Hypha keeps its own; upstream's author
+  does not answer.
   `upstream` stays a remote, its work taken where it helps.
-- **A rule of Hypha's holds a rule of Hypha's vault.** Its doc names
-  the file and the rule it holds -- `OCAML.md`, *No `open` of an
-  ordinary module* -- and its fixture proves it as upstream's rules are
-  proven. Why: HAF counts a refusal by the rule it holds, and a lint
-  that names no rule cannot be weighed.
-- **What a rule is configured with is the vault's, not the rule's.**
-  `OCAML.md`'s refused names reach litany through
-  `restricted-dependency`'s options, which HAF writes from the vault;
-  no list of the vault's is copied into a rule. Why: the vault stays the
-  one source, and a name it adds is refused with no release of this
+- **A rule stands on its own.** Its doc says what it refuses and why,
+  and its fixture proves it, as upstream's rules are proven. Why: litany
+  lints any project, so a rule cannot lean on one project's conventions.
+- **What users read names nothing of Hypha's insides.** The site, the
+  README, `CHANGES.md`, an `.mli` and a rule's `~doc`, which `litany
+  explain` prints, say what litany does in their own words: never a file
+  or a system of Hypha's, which their readers never see. Why: they are
+  published, and a reader cannot follow them there.
+- **What a project refuses is its configuration, not a rule's.** A list
+  of names reaches litany through a rule's options, such as
+  `restricted-dependency`'s; no project's list is copied into a rule.
+  Why: a project changes what it refuses with no release of this
   repository.
 
 ## Releases

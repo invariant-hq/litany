@@ -5,8 +5,8 @@
 
 (* End-to-end benchmark of the M8 check lane: the shipped [litany] binary
    over a corpus at -j 1/2/4/8 (byte-comparing every page), then the cache
-   lane cold vs warm. The M8 acceptance numbers live in doc/m8-notes.md,
-   against the prototype evidence of doc/m8-workers-evidence.md.
+   lane cold vs warm. The M8 acceptance numbers, and the prototype evidence
+   they were held to, are in upstream's git history.
 
    Plain executable, spawning the binary — the worker fork and the cache IO
    are exactly what is being measured, so nothing here goes through the

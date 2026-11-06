@@ -1,0 +1,5 @@
+; The rule pack: [litany] is its only dependency.
+
+(library
+ (name my_rules)
+ (libraries litany))

@@ -13,7 +13,7 @@
     never a user-supplied regex — and each finding's message names the
     condemning option.
 
-    The export surface is the seam's ({!Litany.Unit.exports}): the unit's
+    The export surface is the seam's ({!val:Litany.Unit.exports}): the unit's
     interface when it has one — a name the [.mli] hides never fires — and the
     implementation's own inferred signature when it does not, so an ml-only unit
     exports every root declaration — executables and tests included: their root

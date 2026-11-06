@@ -296,13 +296,14 @@ val interface : t -> Typedtree.signature option
     decode is witness-checked against the paired interface source — the cmti's
     recorded source digest must match the {!interface_source} bytes read at load
     — so a cmti that no longer describes the [.mli] on disk degrades rather than
-    feeding fabricated rows into interface-sourced analysis ({!exports}). The
-    check needs both halves in hand: when the entry names no interface source,
-    or the cmti records no source digest, the decode is accepted unchecked —
-    stated here, not guessed around. Typed findings cannot anchor in the [.mli]
-    (the emit contract owns them to the editable source; only the text lane's
-    {!interface_source} findings anchor there, and those never read the cmti —
-    the text lane lints the exact bytes it read, witness or no witness). *)
+    feeding fabricated rows into interface-sourced analysis ({!val:exports}).
+    The check needs both halves in hand: when the entry names no interface
+    source, or the cmti records no source digest, the decode is accepted
+    unchecked — stated here, not guessed around. Typed findings cannot anchor in
+    the [.mli] (the emit contract owns them to the editable source; only the
+    text lane's {!interface_source} findings anchor there, and those never read
+    the cmti — the text lane lints the exact bytes it read, witness or no
+    witness). *)
 
 val parsetree : t -> Parsetree.structure option
 (** [parsetree u] is the engine's own pre-PPX parse of {!source}, or [None] when
@@ -386,9 +387,9 @@ val implementations : t -> Shape.Uid.t -> Shape.Uid.t list
     intra-unit definition-to-declaration bridge ([cmt_declaration_dependencies]
     under the admission filter [Naming.Scope] documents, the same table {!scope}
     extends matching with). [[]] for units without an [.mli] and for
-    declarations [u] does not implement. The {!uses} index is keyed by the UIDs
-    use sites carry — inside the defining unit those are definition UIDs — so
-    "is this interface-sourced export used in its own unit" is [uses u uid]
+    declarations [u] does not implement. The {!val:uses} index is keyed by the
+    UIDs use sites carry — inside the defining unit those are definition UIDs —
+    so "is this interface-sourced export used in its own unit" is [uses u uid]
     joined with [implementations u uid] — the project-rule [collect] query. O(1)
     after load; the bridge is retained from the load-time decode. *)
 
@@ -415,8 +416,8 @@ val module_uses : t -> Ident.t -> Location.t list
     a missed carrier manufactures a false positive — the inverse of the
     catalog's usual FN-safe direction. The fixture contract demands one use per
     carrier form above. Ghost locations count — a synthesized use is still a
-    use. Demand-gated and cached like {!uses}; keyed by [Ident] rather than UID
-    because module idents are unit-local and paths carry them directly. *)
+    use. Demand-gated and cached like {!val:uses}; keyed by [Ident] rather than
+    UID because module idents are unit-local and paths carry them directly. *)
 
 (** {1:exports Export index} *)
 
@@ -435,9 +436,9 @@ module Export : sig
 
   val uid : t -> Shape.Uid.t
   (** [uid x] is the declaration UID of [x] — the identity use sites in other
-      units carry, so the join key against {!Unit.uses} queries and {!Unit.deps}
-      rows. Whose UID it is depends on the unit's source case, stated at
-      {!Unit.exports}. *)
+      units carry, so the join key against {!val:Unit.uses} queries and
+      {!val:Unit.deps} rows. Whose UID it is depends on the unit's source case,
+      stated at {!val:Unit.exports}. *)
 
   val name : t -> string
   (** [name x] is [x]'s dotted path from the unit's top level — ["shout"],
@@ -521,7 +522,7 @@ val deps : t -> Dep.t list
       belongs to another unit — the foreign interface items an [.mli] [include]
       declares through, the foreign definition a module ascription binds.
     - {e The use index}: the value identifiers of the implementation whose
-      declaration UID belongs to another unit — {!uses}' own keys, the
+      declaration UID belongs to another unit — {!val:uses}' own keys, the
       item-level rows a dead-code join matches against the target unit's
       exports.
     - {e Ident occurrences}: occurrence reductions the compiler resolved to
@@ -533,19 +534,19 @@ val deps : t -> Dep.t list
 
     Demand-gated and cached: the first call scans the two tables retained from
     the load-time decode — released once the rows are built — and builds the
-    {!uses} index if no call has yet; later calls return the cached rows.
+    {!val:uses} index if no call has yet; later calls return the cached rows.
     Deterministic by the sort above, whoever ran the build. *)
 
 val unit_refs : t -> string list
 (** [unit_refs u] is the names of the compilation units [u]'s artifact records
     it referencing {e without pinning a declaration}, deduplicated and sorted —
-    the unit-level residue of the {!deps} scan. Two sources: a reference the
+    the unit-level residue of the {!val:deps} scan. Two sources: a reference the
     compiler resolved to a unit's own [Compilation_unit] identity, and each unit
     an {e unresolved} occurrence shape names — the compiler's own reduction is
     local, so a cross-unit projection like [List.length] stays unresolved in the
     artifact, naming its head unit ([Stdlib]) and no declaration. These names
-    keep such references honest: a consumer reporting absence over {!deps} joins
-    must treat a unit named here as touched. "Which units does [u] touch" is
-    this list unioned with the {!deps} rows' {!Dep.unit_name}s. Same-unit names
-    never appear; demand-gated and cached with {!deps} (one scan computes both).
-*)
+    keep such references honest: a consumer reporting absence over {!val:deps}
+    joins must treat a unit named here as touched. "Which units does [u] touch"
+    is this list unioned with the {!val:deps} rows' {!Dep.unit_name}s. Same-unit
+    names never appear; demand-gated and cached with {!val:deps} (one scan
+    computes both). *)

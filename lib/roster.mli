@@ -146,8 +146,8 @@ val entries : t -> Entry.t list
 (** [entries r] is [r]'s entries, in the order given to {!v}. *)
 
 val complete : t -> bool
-(** [complete r] is [true] iff the producing adapter asserted that {!entries} is
-    the whole unit universe. *)
+(** [complete r] is [true] iff the producing adapter asserted that
+    {!val:entries} is the whole unit universe. *)
 
 val cmi_dirs : t -> string list
 (** [cmi_dirs r] is the resolver search path as supplied to {!v} — without the

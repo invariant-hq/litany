@@ -72,9 +72,8 @@
 ; from 5.4); ppx_optcomp is not in the lock, so the seam is a
 ; version-selected copy of one of two hand-written legs — the same pattern
 ; as the unit dep_kind seam. The 5.3 legs have no local build evidence (no
-; 5.3 toolchain in the lock) and their CI lane is still pending — the
-; standing deviation recorded in doc/dev/compiler-support.md (Window
-; movement).
+; 5.3 toolchain in the lock) and their CI lane is still pending — a
+; standing deviation.
 
 (rule
  (action

@@ -21,19 +21,19 @@
     policy constructors ([Rule.Perf], [Rule.Never]) and tree labels. The
     compiler-libs pin is Litany's, stated once.
 
-    A rule is one value in one file: declare {!Rule.meta}, build the match with
-    {!Pat}, return {!Finding} values, attach a {!Fix} when the edit is provable.
-    See [doc/dev/design.md] (Domains) for the domain map behind this facade. The
-    built-in catalog lives beside it in [Litany_rules] — one module per rule
-    plus [Litany_rules.all], each rule a client of exactly this facade.
+    A rule is one value in one file: declare {!val:Rule.meta}, build the match
+    with {!Pat}, return {!Finding} values, attach a {!Fix} when the edit is
+    provable. The built-in catalog lives beside it in [Litany_rules] — one
+    module per rule plus [Litany_rules.all], each rule a client of exactly this
+    facade.
 
     Third parties extend by recompiling: a custom [bin/] that passes
     [Litany_rules.all @ My_rules.all] where the stock composition root passes
     the catalog is the whole extension model — no dynlink, which keeps the
     cache's binary-digest key honest. The packaged recipe is the documented thin
     composition root — some 25 lines against [Driver] and a stock adapter, in
-    [doc/manual/build-integration.md] (A custom binary). There is deliberately
-    no cli library: the recipe serves the need. *)
+    {{:https://hyphatech.github.io/litany/guide/custom-binary/} A custom binary}.
+    There is deliberately no cli library: the recipe serves the need. *)
 
 (** {1:sdk Litany modules}
 

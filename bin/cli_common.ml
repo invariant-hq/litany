@@ -40,7 +40,7 @@ let root =
 
 (* Any value counts as set and is never parsed — dune's own declared
    contract for "you are running as an action" (the single-writer model's
-   ownership signal, doc/dev/design.md, Fixes). *)
+   ownership signal). *)
 let inside_dune () = Sys.getenv_opt "INSIDE_DUNE" <> None
 
 (* The two [Rule.meta]-vocabulary helpers more than one command renders:

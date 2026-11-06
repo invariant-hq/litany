@@ -13,8 +13,7 @@ let meta =
       {|A match over a variant the code owns names every case, so a
 constructor added later is a compile error at every match that should
 handle it -- warning 8 asks for it -- where a `_` arm takes it silently
-into whatever the arm does. Holds Hypha's `OCAML.md`, *A match over a
-variant the code owns names every case*.
+into whatever the arm does.
 
     (* bad *)  match s with Open -> "open" | _ -> "closed"
     (* good *) match s with Open -> "open" | Done | Dropped -> "closed"

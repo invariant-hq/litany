@@ -10,7 +10,7 @@ tags: [
   "linter" "static-analysis" "developer-tools" "ocaml" "org:invariant-hq"
 ]
 homepage: "https://github.com/hyphatech/litany"
-doc: "https://github.com/hyphatech/litany#readme"
+doc: "https://hyphatech.github.io/litany/"
 bug-reports: "https://github.com/hyphatech/litany/issues"
 depends: [
   "dune" {>= "3.23"}

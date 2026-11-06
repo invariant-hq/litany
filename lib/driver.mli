@@ -10,8 +10,7 @@
     This is driver machinery, not SDK vocabulary — reachable as [Driver], never
     re-exported by [open Litany]: [bin/] is thin composition — cmdliner terms,
     flag validation, adapter selection — while the run itself lives here with
-    the library. Behavior is governed by [doc/dev/design.md] (Fixes); the exit
-    codes are the stable contract of {!section:exit}. *)
+    the library. The exit codes are the stable contract of {!section:exit}. *)
 
 (** {1:exit Exit contract and refusals}
 
@@ -152,13 +151,12 @@ end
     children, wire per-unit payloads back, and replay them through one parent
     assembly pass.
 
-    Mechanism (chosen by benchmark — [doc/dev/design.md] (Result_cache and
-    parallelism)): worker processes, never domains — the compiler's parser front
-    end ([Lexer]/[Docstrings]) is module-global state and crashes
-    deterministically under concurrent parse, which the emit contract's
-    corroboration demands on nearly every unit. Fork + pipe: a child is the same
-    binary image, so the Marshal wire cannot decode across layouts; results
-    cross once per shard.
+    Mechanism (chosen by benchmark): worker processes, never domains — the
+    compiler's parser front end ([Lexer]/[Docstrings]) is module-global state
+    and crashes deterministically under concurrent parse, which the emit
+    contract's corroboration demands on nearly every unit. Fork + pipe: a child
+    is the same binary image, so the Marshal wire cannot decode across layouts;
+    results cross once per shard.
 
     Sharding is size-weighted (each entry goes to the least-loaded shard by
     accumulated cmt bytes — a benchmarked refinement over round-robin, whose

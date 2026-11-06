@@ -7,7 +7,7 @@
 
     The applier takes one file's fix candidates — findings' fixes paired with
     their emitting rules' names — and applies them to the file in one pass:
-    {!plan} filters by applicability and drops conflicting fixes
+    {!val:plan} filters by applicability and drops conflicting fixes
     deterministically, {!patch} rewrites the bytes, and {!file} is the IO shell
     that re-checks the write baseline, verifies the patched bytes still parse,
     and writes atomically (temp file + rename in the file's directory). The
@@ -69,8 +69,9 @@ val excluded : plan -> candidate list
 val patch : string -> Fix.edit list -> string
 (** [patch s edits] is [s] with every edit applied — each [span] replaced by its
     [text], all spans in [s]'s coordinates. [edits] may arrive in any order but
-    must be pairwise conflict-free (see {!plan}); insertions at the same point
-    land in list order. Pure: callers slice and verify, [patch] only rewrites.
+    must be pairwise conflict-free (see {!val:plan}); insertions at the same
+    point land in list order. Pure: callers slice and verify, [patch] only
+    rewrites.
 
     Raises [Invalid_argument] if an edit's span exceeds [s]'s length or two
     edits conflict — both mean the edits were not computed against [s], a
@@ -87,8 +88,8 @@ val correct :
     pure function — one home for plan → patch → reparse-verify, used by
     {!file}'s disk mode and available to any worker proposing corrections
     without touching disk: [bytes] with [cands]'s planned fixes applied (as
-    {!plan}, under [unsafe]), provided the original parses and the result parses
-    again.
+    {!val:plan}, under [unsafe]), provided the original parses and the result
+    parses again.
 
     [`Unverifiable] when [bytes] does not parse — checked first: the applier
     never verifies what it cannot reparse, and no fix is blamed for bytes the
@@ -136,8 +137,8 @@ val file :
   baseline:string ->
   candidate list ->
   plan * outcome
-(** [file ~path ~baseline cands] plans [cands] (as {!plan}, under [unsafe]) and
-    applies the selected fixes to [path]: read the bytes, check them against
+(** [file ~path ~baseline cands] plans [cands] (as {!val:plan}, under [unsafe])
+    and applies the selected fixes to [path]: read the bytes, check them against
     [baseline] — the 16-byte digest of the editable source captured at admission
     ([Unit.Witness.source_digest]), matched under either digest algorithm
     exactly as admission matches — patch, verify the result parses, then write

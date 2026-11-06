@@ -1,0 +1,107 @@
+---
+title: Getting Started
+description: A linter for OCaml that reads what the compiler wrote.
+---
+
+import { Code } from "@astrojs/starlight/components";
+import inventory from "@examples/inventory/inventory.ml?raw";
+
+litany is a linter for OCaml that reads what the compiler wrote. Its rules
+run over the typed tree and match what a name is, never how it is spelt: an
+alias or an `open` fires, and a local name that shadows one never does. A
+source is linted only when its `.cmt` was compiled from those exact bytes, so
+a stale artifact is a counted skip, never a stale finding.
+
+## Install
+
+```sh
+opam repo add hypha https://github.com/hyphatech/opam-repository.git
+opam install litany
+```
+
+Install it in the switch of the project it lints, on OCaml 5.5: litany reads
+only the artifacts of the compiler it was built with, and refuses any other,
+naming both versions.
+
+## Lint a project
+
+A dune project needs no configuration; any other build system reaches litany
+through [a unit file](/litany/guide/build-integration/#unit-files). Given this
+library:
+
+<Code code={inventory} lang="ocaml" title="lib/inventory.ml" />
+
+Run `litany check` at the project's root. It builds with `dune build @check`
+and runs the default rules:
+
+```console
+$ litany check
+File "lib/inventory.ml", line 4, characters 17-40:
+4 | let check t = if List.length t.stock = 0 then restock t else t
+                     ^^^^^^^^^^^^^^^^^^^^^^^
+Warning 0 [needless-list-length]: comparison through List.length is a needless emptiness test
+  fix (safe): compare with []
+
+File "lib/inventory.ml", line 5, characters 43-52:
+5 | let find t name = List.find (fun (n, _) -> n == name) t.stock
+                                               ^^^^^^^^^
+Warning 0 [suspicious-physical-equality]: physical comparison has a non-immediate operand
+
+30 rules selected · 1 unit · 2 findings (1 fixable — run `litany check --fix`) · 0 skipped
+```
+
+A finding has the shape of a compiler diagnostic, so editors jump to it. The
+name in brackets is the rule: `litany explain needless-list-length` prints
+[its documentation](/litany/reference/rules/needless-list-length/).
+
+The exit code is the verdict:
+
+| Exit | Meaning |
+| --- | --- |
+| 0 | no findings |
+| 1 | findings |
+| 2 | litany could not run: a failed build, a bad configuration, a version mismatch |
+| 3 | internal error: a rule failed, and everything else completed |
+
+## Fix
+
+`litany check --fix` applies every safe fix, then rebuilds and lints again:
+
+```console
+$ litany check --fix
+fix lib/inventory.ml: 1 applied
+pass 1: 1 fix applied (1 file)
+pass 2 (rebuild + re-lint): findings remain
+File "lib/inventory.ml", line 5, characters 43-52:
+5 | let find t name = List.find (fun (n, _) -> n == name) t.stock
+                                               ^^^^^^^^^
+Warning 0 [suspicious-physical-equality]: physical comparison has a non-immediate operand
+
+30 rules selected · 1 unit · 1 finding · 1 fix applied · 0 skipped
+```
+
+The comparison is now `t.stock = []`. The physical equality has no fix: that
+judgement is yours.
+
+## Silence a finding
+
+Annotate the code, with a reason:
+
+```ocaml
+let check t =
+  (if List.length t.stock = 0 then restock t else t)
+  [@litany.allow "needless-list-length: benchmarking the walk itself"]
+```
+
+An `allow` that no longer hides anything is itself a finding, so suppressions
+cannot rot.
+
+## Next
+
+- [Selecting rules](/litany/guide/selecting-rules/) -- what runs by default,
+  and what you can add.
+- [Configuration](/litany/guide/configuration/) -- the `litany` file.
+- [Build integration](/litany/guide/build-integration/) -- findings in your
+  editor, and other build systems.
+- [CI](/litany/guide/ci/) -- annotations on GitHub, and JSON.
+- [The rules](/litany/reference/rules/) -- every rule litany has.

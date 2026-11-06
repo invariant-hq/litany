@@ -462,7 +462,7 @@ let check root cmt_root units no_build trust_build list_units select ignore fix
                                   in
                                   (* The build capability: how litany re-runs this
                              roster's build, when it can — the shell dune
-                             lane only (the design doc's lane table; the
+                             lane only (the
                              in-action lane never spawns dune, so it is a
                              one-pass lane whose convergence spans dune's
                              own rebuilds). The driver converges iff it

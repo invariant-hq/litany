@@ -5,7 +5,7 @@
 
 (* The check driver — the convergence loop and its supporting lanes: bin/
    is thin composition (cmdliner terms and wiring), the run's machinery
-   lives here. Behavior is governed by doc/dev/design.md (Fixes). *)
+   lives here. *)
 
 (* {1 Exit contract}
 
@@ -1105,7 +1105,7 @@ let findings_fingerprint findings =
   Digest.BLAKE128.string
     (String.concat "\x01" (List.sort String.compare (List.map entry findings)))
 
-(* The specced stop contract (doc/dev/design.md, Fixes): a post-fix
+(* The stop contract: a post-fix
    build failure stops the run — build error first (it already streamed),
    then the applied-fix list, then the exact stderr line scripts may grep
    for; the tree is deliberately left modified. The exit is the caller's,
@@ -1398,8 +1398,7 @@ let run_check ~progress ~rebuild ~format ~jobs ~cache roster ~build_current
     match (fix, jobs) with
     | Some _, given ->
         (* [--fix] stays single-process this release: the write lane and
-           build-spanning convergence are serial by design
-           (doc/dev/design.md, Result_cache and parallelism). An explicit worker
+           build-spanning convergence are serial by design. An explicit worker
            count is noted and ignored, never a silent no-op. *)
         (match given with
         | Some n when n > 1 ->
@@ -1529,7 +1528,7 @@ let run_check ~progress ~rebuild ~format ~jobs ~cache roster ~build_current
                      the tree is dune's to change, through the diffs this
                      rule's corrected files become at teardown. One line,
                      one instruction; the (corrections produce) requirement
-                     is the stanza's documentation (build-integration.md),
+                     is the stanza's documentation (the build integration guide),
                      not a per-run warning — litany cannot see the invoking
                      stanza, so a warning here would be a guess printed to
                      every correctly configured user. *)

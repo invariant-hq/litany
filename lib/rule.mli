@@ -258,8 +258,8 @@ module Module_binding : sig
     position:position ->
     t
   (** [v ~id ~name_loc ~loc ~position] is a module-binding view. This is the
-      engine's constructor — dispatch plumbing like {!callback}, not rule-author
-      surface: rules receive views, they never build them. *)
+      engine's constructor — dispatch plumbing like {!val:callback}, not
+      rule-author surface: rules receive views, they never build them. *)
 end
 
 val module_binding : meta -> (Unit.t -> Module_binding.t -> Finding.t list) -> t
@@ -372,7 +372,7 @@ val is_project : t -> bool
 (** [is_project r] is [true] iff [r] was built with {!project}. The withheld
     summary, [litany rules], and the project-rules-unavailable judgment read it;
     the only other constructor distinction any consumer reads is the engine's
-    {!callback} view. *)
+    {!val:callback} view. *)
 
 val stability : t -> Stability.t
 (** [stability r] is the rule's stability tier. *)
@@ -391,12 +391,12 @@ val doc : t -> string
 
 val requires_options : t -> bool
 (** [requires_options r] is [true] iff [r] declared that it is inert until
-    configured (see {!meta}). The check driver's selected-but-unconfigured
+    configured (see {!val:meta}). The check driver's selected-but-unconfigured
     warning reads it. *)
 
 val kind_gated : t -> bool
 (** [kind_gated r] is [true] iff [r] declared that its callback gates on the
-    roster's kind/visibility metadata (see {!meta}). The engine's
+    roster's kind/visibility metadata (see {!val:meta}). The engine's
     kind-gated-inactive enumeration reads it. *)
 
 val on_by_default : t -> bool

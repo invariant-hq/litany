@@ -9,14 +9,14 @@
     warm run skips the work whose inputs have not changed. This domain is pure
     policy over caller-supplied bytes with a thin IO edge: it derives
     {{!Key}keys} from digests the caller already holds, stores and loads opaque
-    payloads under them, and runs the {{!sweep}read-stamp + eviction sweep} when
-    — and only when — the driver asks. It computes nothing about cmts, configs,
-    or rules itself, and it never does implicit background work.
+    payloads under them, and runs the {{!val:sweep}read-stamp + eviction sweep}
+    when — and only when — the driver asks. It computes nothing about cmts,
+    configs, or rules itself, and it never does implicit background work.
 
     {b The cache is advisory.} Every semantic input is part of the key, so a
     stale hit is structurally impossible and a miss only costs recomputation.
     Accordingly, no function here raises: an IO failure degrades to a miss
-    ({!load}), a dropped write ({!store}), or a partial sweep ({!sweep}) — a
+    ({!load}), a dropped write ({!store}), or a partial sweep ({!val:sweep}) — a
     broken cache must never break a lint run. A successful {!load} returns
     exactly the bytes {!store} was given, so a warm result is byte-identical to
     a cold one by construction.
@@ -47,9 +47,9 @@
 (** Cache keys.
 
     A key names one unit's result under one exact configuration of every
-    semantic input. The components — {!v}'s labeled arguments, and nothing else
-    — determine it; the argument list {e is} the inventory of what the cache
-    keys on. *)
+    semantic input. The components — {!Key.v}'s labeled arguments, and nothing
+    else — determine it; the argument list {e is} the inventory of what the
+    cache keys on. *)
 module Key : sig
   type t
   (** The type for cache keys — a BLAKE128 digest over {!v}'s components. *)
@@ -120,7 +120,7 @@ end
 
 type t
 (** The type for cache handles — one workspace's cache directory under one cache
-    root. A handle performs no IO until {!store} or {!sweep}; a workspace
+    root. A handle performs no IO until {!store} or {!val:sweep}; a workspace
     directory (and its [marker] file) is created on first write. *)
 
 val create : root:string -> workspace_root:string -> t
@@ -155,17 +155,18 @@ val load : t -> Key.t -> string option
     recorded, byte-identical — iff a well-formed entry for [key] exists whose
     frame names [key] itself, and [None] otherwise. A missing, truncated,
     corrupted, or wrong-key entry is a miss, never an error; such entries are
-    left for {!sweep} to age out.
+    left for {!val:sweep} to age out.
 
     [load] writes nothing — workers can load in parallel with no write
-    contention. Read stamps are updated by the driver's end-of-run {!sweep}, not
-    here. *)
+    contention. Read stamps are updated by the driver's end-of-run {!val:sweep},
+    not here. *)
 
 (** {1:sweeping Read stamps and eviction} *)
 
 val max_age : float
 (** [max_age] is the eviction horizon in seconds: 30 days. An entry whose
-    last-read stamp is older than [now -. max_age] is deleted by {!sweep}. *)
+    last-read stamp is older than [now -. max_age] is deleted by {!val:sweep}.
+*)
 
 type sweep = { evicted_entries : int; removed_workspaces : int }
 (** The type for sweep results: how many entries {!max_age} evicted from this

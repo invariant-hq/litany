@@ -21,7 +21,7 @@
     nothing of rule registries. Whether a directive's rule name is known,
     selected, renamed, engine-owned, or attribute-suppressible at all is the
     engine's judgment, made through the [rule] predicate of {!covering} and over
-    {!directives} when it emits the audit findings ([unused-allow],
+    {!val:directives} when it emits the audit findings ([unused-allow],
     [unfulfilled-expect]).
 
     {b Payload grammar.} One string literal, ["rule-name: reason"]: a rule name,

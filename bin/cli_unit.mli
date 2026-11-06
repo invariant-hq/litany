@@ -15,7 +15,9 @@
     skipped would read as clean.
 
     Under dune the whole-workspace in-build lane is one user-written
-    [litany check] rule ([doc/manual/build-integration.md]); this command is the
-    per-module gate for build systems that wire one rule per unit. *)
+    [litany check] rule
+    ({{:https://hyphatech.github.io/litany/guide/build-integration/} Build
+      integration}); this command is the per-module gate for build systems that
+    wire one rule per unit. *)
 
 val cmd : int Cmdliner.Cmd.t

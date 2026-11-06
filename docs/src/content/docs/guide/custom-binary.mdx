@@ -1,0 +1,32 @@
+---
+title: A custom binary
+description: "The rules extended with your own, by recompiling."
+---
+
+import { Code } from "@astrojs/starlight/components";
+import main from "@examples/custom-binary/main.ml?raw";
+import mainDune from "@examples/custom-binary/dune?raw";
+import rules from "@examples/custom-binary/my_rules/my_rules.ml?raw";
+import rulesDune from "@examples/custom-binary/my_rules/dune?raw";
+
+litany is extended by recompiling, with no plugins. Its libraries aren't
+installed, so a custom binary is built in a checkout of litany, beside `bin/`.
+
+## The rule pack
+
+An ordinary library ([writing a rule](/litany/guide/writing-a-rule/)):
+
+<Code code={rulesDune} lang="lisp" title="my_rules/dune" />
+<Code code={rules} lang="ocaml" title="my_rules/my_rules.ml" />
+
+## The binary
+
+<Code code={main} lang="ocaml" title="main.ml" />
+<Code code={mainDune} lang="lisp" title="dune" />
+
+`Litany.Driver.run_check` is the whole run. To lint artifacts without dune, use
+`Litany.Adapter.Walk.roster ~cmt_root ~source_root` and pass `~rebuild:None
+~build_current:false`.
+
+To keep the full command line instead, change `bin/`: the rules are named in one
+place, `Cli_common.catalog`.

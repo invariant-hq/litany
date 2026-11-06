@@ -12,8 +12,8 @@ let meta =
     ~doc:
       {|`let _ = e` throws a value away; naming its type keeps the throw
 honest, so the day `e` returns a partial application, a promise or a
-`result` the discard no longer compiles. Holds Hypha's `OCAML.md`,
-*Nothing is discarded unseen*; `untyped-ignore` holds it for `ignore`.
+`result` the discard no longer compiles. `untyped-ignore` is the same
+rule for `ignore`.
 
     (* bad *)  let _ = write path text in ...
     (* good *) let (_ : (unit, error) result) = write path text in ...

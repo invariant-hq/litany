@@ -9,3 +9,9 @@ dune.lock/
 _*/
 .claude/
 .litany-cache/
+# The documentation site's dependencies and Astro's cache, the reference
+# copied into it, and the rule catalog `make docs` writes from the binary.
+node_modules/
+.astro/
+docs/public/reference/
+docs/src/content/docs/reference/rules/

@@ -4,10 +4,12 @@
 ;
 ; The fixture trees under test/ hold
 ; deliberately bad code (FIRE-marked rule provocations) and compiled
-; goldens; findings there are the suites' subject, never defects.
+; goldens; findings there are the suites' subject, never defects. So is
+; the documentation's example under examples/inventory/.
 (per-path
  (paths test/rules/**/fixtures/** test/rules/fixture/** test/rules/fixture_allow/**
         test/unit/fixtures/**
-        bench/**/fixtures/** _build/**/fixtures/**)
+        bench/**/fixtures/** _build/**/fixtures/**
+        examples/inventory/**)
  (ignore all)
  (reason "rule fixtures are deliberate provocations; the suites own them"))

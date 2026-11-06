@@ -40,8 +40,8 @@ val root : string Cmdliner.Term.t
 val inside_dune : unit -> bool
 (** [inside_dune ()] is [true] iff [INSIDE_DUNE] is set — dune's own declared
     contract for "this process runs as a dune action" and the single-writer
-    model's ownership signal (doc/dev/design.md, Fixes). Any value counts as
-    set; the value is never parsed. *)
+    model's ownership signal. Any value counts as set; the value is never
+    parsed. *)
 
 val fix_word : Litany.Rule.t -> string
 (** [fix_word r] is the fix promise as the table word: [never], [sometimes], or

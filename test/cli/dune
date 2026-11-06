@@ -127,3 +127,12 @@
   fixture/.fix_cli.objs/byte/fix_cli__Beta.cmt
   fixture/.fix_cli.objs/byte/fix_cli__Beta.cmti
   fixture/.fix_cli.objs/byte/fix_cli__Gamma.cmti))
+
+; The documentation's examples, linted in nested projects of their own: what
+; the pages say litany reports there.
+
+(cram
+ (applies_to examples)
+ (deps
+  %{bin:litany}
+  (source_tree %{project_root}/examples)))

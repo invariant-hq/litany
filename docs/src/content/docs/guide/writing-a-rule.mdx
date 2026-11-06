@@ -1,0 +1,164 @@
+---
+title: Writing a rule
+description: "A rule is one value in one file, a registry entry and a fixture."
+---
+
+import { Code } from "@astrojs/starlight/components";
+import objMagic from "@lib/rules/unsafe_obj_magic.ml?raw";
+
+A rule is one OCaml value in one file, a registry entry and a fixture.
+
+<Code code={objMagic} lang="ocaml" title="lib/rules/unsafe_obj_magic.ml" />
+
+## The spec
+
+- **Name**: kebab-case, defect first (`needless-`, `suspicious-`, `redundant-`,
+  `unsafe-`, `manual-`, `quadratic-`, `invalid-`, `restricted-`). A name is
+  forever; a rename keeps the old one as an alias.
+- **Group**: what the rule detects, not how confident you are
+  ([groups](/litany/guide/selecting-rules/#groups)).
+- **Stability**: every new rule is `Nursery`.
+- **Doc**: why, a `(* bad *)` and `(* good *)` block, what it fires on, and what
+  it deliberately doesn't. A `Restriction` rule also says *why restrict this?*
+- **Negatives**: at least as many as positives, each a fixture line. Always
+  include a shadowing (`let length`, `module List`) that must not match and an
+  alias (`module L = List`) that must.
+
+## The match
+
+`Rule.meta` is the one declaration `litany rules`, `litany explain` and
+selection read. `~fix` is a promise: a `Never` rule that returns a fix fails.
+Declare `?requires_options` on a rule that does nothing until configured, and
+`?kind_gated` on one that needs to know a unit's kind or visibility.
+
+A constructor fixes the node a callback sees: `Rule.expr`, `pattern`, `binding`,
+`type_decl`, `let_group`, `module_binding`, `open_`, `export`, `attribute`,
+`source` or `project`. Callbacks are pure, and run at every node of their kind,
+so keep a miss cheap.
+
+`Pat.ident "Stdlib.List.length"` matches by resolved declaration, so an alias
+matches and a shadowing name doesn't. There is no comparison of spellings. A
+name that doesn't resolve in a linted workspace matches nothing, and fails the
+rule's own fixture, so a typo is a failing test.
+
+## The fix
+
+```ocaml
+let rule =
+  Rule.expr meta @@ fun u e ->
+  match Pat.run shape u e Fun.id with
+  | None -> []
+  | Some x ->
+      let fix =
+        Option.map
+          (fun src ->
+            Fix.safe_replace e.exp_loc src ~title:"drop the double negation")
+          (Unit.splice u x)
+      in
+      [ Finding.v ?fix ~loc:e.exp_loc message ]
+```
+
+`Unit.splice` is the captured expression's source, parenthesised unless atomic,
+or `None` when it can't be sliced. Wrap a replacement you build yourself in
+`Unit.delimited u e`. Use `Fix.unsafe_*` whenever a rewrite could change
+behaviour.
+
+## Options
+
+A rule that takes options declares a schema: a function from the s-expressions
+after its name in `(rule <name> ...)` to the rule reconfigured.
+
+```ocaml
+let rec with_max max_segments =
+  Rule.with_options schema (Rule.expr meta (check ~max_segments))
+
+and schema payload = (* ... *)
+
+let rule = with_max max_segments_default
+```
+
+Building the rule again re-attaches the schema, so it can be configured twice.
+The schema must be total: an unknown key, a duplicate or a bad value is an
+`Error (Rule.Options.v ~at message)`, positioned at the form, with `Rule.suggest`
+for a near miss. Test it through `Rule.configure`, the good payloads and the bad.
+`lib/rules/quadratic_string_concat_chain.ml` has it whole.
+
+Show a config block in the `~doc`, and add the rule to
+[the table of rule options](/litany/guide/configuration/#rule-options). A rule
+without a schema refuses any payload.
+
+## Registering it
+
+In `lib/rules/`:
+
+1. `my_rule.ml` and `my_rule.mli`, exposing `val rule : Litany.Rule.t`;
+2. `module My_rule = My_rule` in `litany_rules.ml` and `.mli`;
+3. `My_rule.rule` in `Litany_rules.all`.
+
+## The fixture
+
+`test/rules/<rule>/` holds a real compiled library, read through the production
+loader. A positive carries `(* FIRE *)` on the finding's line, so the fixture is
+its own expectation:
+
+```ocaml
+let p1 = List.length xs = 0 (* FIRE *)
+
+(* Shadowed identities never match. *)
+let n11 =
+  let module List = struct
+    let length _ = 0
+  end in
+  List.length xs = 0
+```
+
+`Support.check_markers` fails on any unmarked finding or unfired marker.
+`Support.check_fixed` compares the fixes with a `.fixed.ml` golden, which
+`fixtures/dune` also compiles; a rule with unsafe fixes adds a second golden
+under `~unsafe:true`. Copy `test/rules/needless_list_length/`, and run it with
+`dune runtest test/rules/needless_list_length`.
+
+ocamlformat can move a trailing comment off its line after `=`, `with` or
+`function`; put the marker in the binding's head instead
+(`let rec map4 (* FIRE *) f l = ...`).
+
+## Pitfalls
+
+- **Ghost nodes.** `let f x = match x with ...` marks its `Texp_function` ghost,
+  and ghost findings are dropped: anchor at the match.
+- **Sugar.** `let lift f = function ...` folds the parameter into one node, and
+  `let () = e in body` is a one-case `Texp_match`.
+- **Elaboration.** `?(x = default)` is a match the user never wrote. Guard
+  match-shaped rules against `*opt*` scrutinees.
+- **A safe fix may only splice what the match resolved.** With `let ( <> ) _ _ =
+  false` in scope, rewriting `List.length xs > 0` to `xs <> []` compiles and
+  computes the opposite.
+- **Delimiters.** A location includes the author's parentheses. Replacing it with
+  a bare application turns `check (o = None)` into `check Option.is_none o`,
+  which parses and doesn't compile. Use `Unit.delimited`, and keep every fix in
+  argument position in the fixture.
+- **Trailing operands.** `a && if c then true else e` rewritten to `c || e`
+  becomes `(a && c) || e`, and compiles. Add the parentheses there, and only
+  there.
+- **Predefined constructors.** Match `[]`, `(::)`, `true` and `Some` through the
+  constructor's result type, never its spelling.
+- **One site, one finding.** Report the outermost node of a chain, and decide the
+  reporting unit in the spec.
+- **A zero proves nothing.** A rule can be silent because its names didn't
+  resolve or its shape never occurs. Check the shape is present before trusting
+  it.
+- **Correct but worthless.** A rule can have no false positives and no finding
+  anyone would act on. Write the spec with a real accepted change in mind.
+
+## Compiler warnings
+
+A rule stays silent wherever a compiler warning that is on by default fires. It
+may repeat a warning that is off by default only if its doc names what it adds,
+such as a fix.
+
+## Graduating
+
+A rule becomes `Stable` after a review over real code: sample at least 30
+findings, read each in its source, and ask whether its maintainer would take the
+change. Apply its fixes to a real tree. A clean run alone proves nothing. Each
+narrowing the review asks for lands as a fixture line.

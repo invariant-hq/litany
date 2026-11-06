@@ -13,8 +13,7 @@ let meta =
 honest. A function later given one more argument is then a partial
 application discarded in silence, and a promise or a `result` the same:
 a type named at the discard is a compile error the day the value
-changes. Holds Hypha's `OCAML.md`, *Nothing is discarded unseen*;
-`untyped-wildcard-binding` holds it for `let _ =`.
+changes. `untyped-wildcard-binding` is the same rule for `let _ =`.
 
     (* bad *)  ignore (Queue.pop q)
     (* good *) ignore (Queue.pop q : int)
