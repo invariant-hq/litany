@@ -539,6 +539,15 @@ module Parallel = struct
     | pid ->
         Unix.close write_fd;
         { pid; read_fd }
+    | exception (Unix.Unix_error _ as e) ->
+        Unix.close read_fd;
+        Unix.close write_fd;
+        raise e
+
+  let abandon child =
+    (try Unix.kill child.pid Sys.sigkill with Unix.Unix_error _ -> ());
+    Unix.close child.read_fd;
+    ignore (Unix.waitpid [] child.pid : int * Unix.process_status)
 
   (* {1 The workers' progress channel}
 
@@ -615,98 +624,114 @@ module Parallel = struct
     else begin
       let shards = split ~shards:jobs entries in
       let cmi_dirs = Roster.cmi_dirs roster in
-      let ticks, tick_w = Unix.pipe ~cloexec:true () in
-      Unix.set_nonblock ticks;
-      Unix.set_nonblock tick_w;
-      let children =
-        List.mapi
-          (fun idx shard ->
-            fork_shard ~idx (fun () ->
-                run_shard ~progress:(tick tick_w) ~cache ~rules ~catalog
-                  ~build_current ~cmi_dirs shard))
-          shards
-      in
-      let outcomes = List.map (drain ~progress ~ticks) children in
-      Unix.close tick_w;
-      Unix.close ticks;
-      (* One result per entry — payload bytes ([Left]) or a skip ([Right]).
+      (* A pipe or a fork the system refuses, at its limit of files or
+         processes, costs the workers and not the run: the caller runs the
+         units itself. *)
+      match
+        let ticks, tick_w = Unix.pipe ~cloexec:true () in
+        Unix.set_nonblock ticks;
+        Unix.set_nonblock tick_w;
+        let rec start idx started = function
+          | [] -> Ok (ticks, tick_w, List.rev started)
+          | shard :: rest -> (
+              match
+                fork_shard ~idx (fun () ->
+                    run_shard ~progress:(tick tick_w) ~cache ~rules ~catalog
+                      ~build_current ~cmi_dirs shard)
+              with
+              | child -> start (idx + 1) (child :: started) rest
+              | exception Unix.Unix_error _ ->
+                  List.iter abandon started;
+                  Unix.close ticks;
+                  Unix.close tick_w;
+                  Error ())
+        in
+        start 0 [] shards
+      with
+      | (exception Unix.Unix_error _) | Error () -> None
+      | Ok (ticks, tick_w, children) ->
+          let outcomes = List.map (drain ~progress ~ticks) children in
+          Unix.close tick_w;
+          Unix.close ticks;
+          (* One result per entry — payload bytes ([Left]) or a skip ([Right]).
        "Every entry has exactly one row" is a property of this one table:
        every arm below (a wire row, a lost shard) writes it, so the
        defensive arms of the two engine callbacks are visibly unreachable.
        [snapshots] stays separate: keyed by path, the renderer's interface. *)
-      let results : (Roster.Entry.t, (string, Unit.Skip.t) Either.t) Hashtbl.t =
-        Hashtbl.create 256
-      in
-      let snapshots : (string, Source.t) Hashtbl.t = Hashtbl.create 256 in
-      let lose shard describe =
-        (* One lost shard: reported, counted as skips, run continues. *)
-        Format.eprintf
-          "litany: worker lost (%s); %d unit%s of its shard skipped@." describe
-          (List.length shard)
-          (if List.length shard = 1 then "" else "s");
-        List.iter
-          (fun entry ->
-            Hashtbl.replace results entry
-              (Either.Right
-                 (Unit.Skip.Unreadable ("worker lost (" ^ describe ^ ")"))))
-          shard
-      in
-      List.iter2
-        (fun shard outcome ->
-          match outcome with
-          | Error describe -> lose shard describe
-          | Ok wire when List.length wire.rows <> List.length shard ->
-              lose shard "garbled result"
-          | Ok wire ->
-              Option.iter
-                (fun c ->
-                  Result_cache.absorb_counts c ~hits:wire.cache_hits
-                    ~misses:wire.cache_misses ~stores:wire.cache_stores
-                    wire.cache_hit_keys)
-                cache;
-              List.iter2
-                (fun entry row ->
-                  match row with
-                  | Skipped sk ->
-                      Hashtbl.replace results entry (Either.Right sk)
-                  | Admitted { payload; source; intf } ->
-                      Hashtbl.replace results entry (Either.Left payload);
-                      let path = Roster.Entry.source entry in
-                      Hashtbl.replace snapshots path (Source.v ~path source);
-                      Option.iter
-                        (fun (ipath, bytes) ->
-                          Hashtbl.replace snapshots ipath
-                            (Source.v ~path:ipath bytes))
-                        intf)
-                shard wire.rows)
-        shards outcomes;
-      (* One assembly pass over the full roster: payloads replay through the
+          let results :
+              (Roster.Entry.t, (string, Unit.Skip.t) Either.t) Hashtbl.t =
+            Hashtbl.create 256
+          in
+          let snapshots : (string, Source.t) Hashtbl.t = Hashtbl.create 256 in
+          let lose shard describe =
+            (* One lost shard: reported, counted as skips, run continues. *)
+            Format.eprintf
+              "litany: worker lost (%s); %d unit%s of its shard skipped@."
+              describe (List.length shard)
+              (if List.length shard = 1 then "" else "s");
+            List.iter
+              (fun entry ->
+                Hashtbl.replace results entry
+                  (Either.Right
+                     (Unit.Skip.Unreadable ("worker lost (" ^ describe ^ ")"))))
+              shard
+          in
+          List.iter2
+            (fun shard outcome ->
+              match outcome with
+              | Error describe -> lose shard describe
+              | Ok wire when List.length wire.rows <> List.length shard ->
+                  lose shard "garbled result"
+              | Ok wire ->
+                  Option.iter
+                    (fun c ->
+                      Result_cache.absorb_counts c ~hits:wire.cache_hits
+                        ~misses:wire.cache_misses ~stores:wire.cache_stores
+                        wire.cache_hit_keys)
+                    cache;
+                  List.iter2
+                    (fun entry row ->
+                      match row with
+                      | Skipped sk ->
+                          Hashtbl.replace results entry (Either.Right sk)
+                      | Admitted { payload; source; intf } ->
+                          Hashtbl.replace results entry (Either.Left payload);
+                          let path = Roster.Entry.source entry in
+                          Hashtbl.replace snapshots path (Source.v ~path source);
+                          Option.iter
+                            (fun (ipath, bytes) ->
+                              Hashtbl.replace snapshots ipath
+                                (Source.v ~path:ipath bytes))
+                            intf)
+                    shard wire.rows)
+            shards outcomes;
+          (* One assembly pass over the full roster: payloads replay through the
        engine's unit cache, skips answer through [load], and the parent
        touches no resolver, artifact, or source file. Everything downstream —
        total order, dedup, project status, exit law — is the ordinary run. *)
-      let unit_cache =
-        {
-          Engine.Unit_cache.load =
-            (fun entry ->
-              match Hashtbl.find_opt results entry with
-              | Some (Either.Left payload) -> Some payload
-              | Some (Either.Right _) | None -> None);
-          store = (fun _ _ -> ());
-        }
-      in
-      let load entry =
-        Error
-          (match Hashtbl.find_opt results entry with
-          | Some (Either.Right sk) -> sk
-          | Some (Either.Left _) | None ->
-              (* Unreachable: the engine consults [load] only below a [None]
+          let unit_cache =
+            {
+              Engine.Unit_cache.load =
+                (fun entry ->
+                  match Hashtbl.find_opt results entry with
+                  | Some (Either.Left payload) -> Some payload
+                  | Some (Either.Right _) | None -> None);
+              store = (fun _ _ -> ());
+            }
+          in
+          let load entry =
+            Error
+              (match Hashtbl.find_opt results entry with
+              | Some (Either.Right sk) -> sk
+              | Some (Either.Left _) | None ->
+                  (* Unreachable: the engine consults [load] only below a [None]
                from the cache, and every entry has exactly one row. *)
-              Unit.Skip.Unreadable "worker result missing")
-      in
-      let report =
-        Engine.run ?keep ~unit_cache ~rules ~catalog ~roster ~load ()
-      in
-      Some (report, snapshots)
+                  Unit.Skip.Unreadable "worker result missing")
+          in
+          let report =
+            Engine.run ?keep ~unit_cache ~rules ~catalog ~roster ~load ()
+          in
+          Some (report, snapshots)
     end
 end
 
@@ -1213,8 +1238,8 @@ let explain_withheld_page report ~roster =
                 in
                 [
                   Printf.sprintf
-                    "%d %s lack library/kind metadata: %s%s (dune (test) \
-                     stanzas are not described to the adapter)"
+                    "%d %s lack library/kind metadata: %s%s (no dune stanza \
+                     was found for them)"
                     n
                     (if n = 1 then "entry" else "entries")
                     (String.concat ", " (List.map Roster.Entry.source named))

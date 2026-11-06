@@ -65,10 +65,8 @@ module Unit_file : sig
       [(complete false)]. The bytes are canonical: field order fixed, one form
       per line, byte-identical across runs for equal rosters.
       [litany units --save] writes it; [--dump] pretty-prints the human sexp
-      form instead.
-
-      Raises [Invalid_argument] if two entries of [r] share a source path — such
-      a roster has no serialization {!decode} accepts. *)
+      form instead. Of two entries sharing a source path, artifact copies of one
+      unit, the first is kept: {!decode} accepts one per source. *)
 
   val pp_error : Format.formatter -> error -> unit
   (** [pp_error ppf e] formats [e] with its byte offset for the refusal message.
@@ -125,6 +123,8 @@ module Dune : sig
     | Dune_missing
         (** No dune on PATH. Remedy: [--units] or [--cmt-root] for artifacts
             built elsewhere. *)
+    | Dune_unusable of string
+        (** The dune on PATH could not be started, for the named reason. *)
     | Build_failed
         (** [dune build @check] failed; its errors already streamed through.
             Lint presupposes a building project. *)

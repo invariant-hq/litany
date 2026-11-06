@@ -433,9 +433,7 @@ let glob_matching_tests =
       test "non-canonical candidate paths are refused" (fun () ->
           let g = glob "a" in
           List.iter
-            (fun path ->
-              raises_match (Exn.invalid_arg ~substring:"non-canonical")
-                (fun () -> Glob.matches g path))
+            (fun path -> is_false ~msg:path (Glob.matches g path))
             [ ""; "/a"; "a/"; "a//b"; "a/./b"; "a/../b"; "a\000b" ]);
       test "of_string reasons stand alone" (fun () ->
           equal string "empty glob" (glob_err "");

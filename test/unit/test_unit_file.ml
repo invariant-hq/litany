@@ -187,7 +187,7 @@ let encode_golden_tests =
               equal string ~msg:file (Unit_file.encode roster)
                 (Unit_file.encode roster))
             goldens);
-      test "encode refuses a duplicate source" (fun () ->
+      test "encode keeps the first of two copies of a source" (fun () ->
           let r =
             Roster.v
               [
@@ -195,8 +195,12 @@ let encode_golden_tests =
                 Entry.v ~source:"a.ml" ~cmt:"b.cmt" ();
               ]
           in
-          raises_match (Exn.invalid_arg ~substring:"duplicate source")
-            (fun () -> Unit_file.encode r));
+          match Unit_file.decode (Unit_file.encode r) with
+          | Error _ -> fail "the encoding of a two-copy roster did not decode"
+          | Ok decoded -> (
+              match Roster.entries decoded with
+              | [ e ] -> equal (option string) (Some "a.cmt") (Entry.cmt e)
+              | _ -> fail "expected one entry for one source"));
     ]
 
 (* {1 Errors}

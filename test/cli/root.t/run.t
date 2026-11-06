@@ -34,3 +34,37 @@ The one argv carried --root:
 
   $ cat args.log
   build --root . @check
+
+A dune on PATH that cannot be started is a refusal that says so, not an
+internal error:
+
+  $ mkdir unusable
+  $ printf '#!/bin/sh\n' > unusable/dune
+  $ chmod 644 unusable/dune
+  $ litany=$(command -v litany)
+  $ (unset INSIDE_DUNE; PATH=$PWD/unusable "$litany" check --root proj 2>&1) | sed 's/Permission denied/DENIED/'
+  litany: dune could not be started: DENIED. Fix the dune on PATH, or pass --cmt-root DIR to lint artifacts built elsewhere.
+
+--root enters the workspace: from anywhere, paths print and globs match as
+they do at its root, and what was named on the command line still means what
+it meant where it was typed.
+
+  $ mkdir -p work/lib
+  $ cat > work/dune-project <<'EOP'
+  > (lang dune 3.20)
+  > EOP
+  $ cat > work/lib/dune <<'EOP'
+  > (library (name l))
+  > EOP
+  $ cat > work/lib/a.ml <<'EOP'
+  > let x = print_endline "a"
+  > EOP
+  $ cat > work/litany <<'EOP'
+  > (rule restricted-dependency
+  >  (forbid Stdlib.print_endline (use "a logger") (only "lib/**")))
+  > EOP
+  $ env -u INSIDE_DUNE dune build --root work @check 2>/dev/null
+  $ env -u INSIDE_DUNE litany check --root work --no-build --select restricted-dependency | grep -c '^File "lib/a.ml"'
+  1
+  $ env -u INSIDE_DUNE litany check --root $PWD/work --cmt-root work/_build/default/lib --select restricted-dependency | grep -c '^File "lib/a.ml"'
+  1

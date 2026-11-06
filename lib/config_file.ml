@@ -120,9 +120,7 @@ module Glob = struct
   let matches g path =
     match canonical_parts path with
     | Some parts -> match_components g.components parts
-    | None ->
-        invalid_arg
-          (Printf.sprintf "Config_file.Glob.matches: non-canonical path %S" path)
+    | None -> false
 end
 
 (* {1 Lexing and reading} *)

@@ -165,16 +165,6 @@ let pred_of_token ~catalog tok : string -> bool =
           let names = List.map Litany.Rule.name rules in
           fun rule -> List.mem rule names)
 
-(* [Glob.matches] raises on non-canonical candidates by contract; a path an
-   adapter hands us that is not a canonical workspace-relative path simply
-   never matches — filtering is report selection, not a correctness gate. *)
-let canonical_rel path =
-  path <> "" && Filename.is_relative path
-  && (not (String.contains path '\000'))
-  && List.for_all
-       (fun seg -> seg <> "" && seg <> "." && seg <> "..")
-       (String.split_on_char '/' path)
-
 let keep { cfg; _ } ~catalog =
   match Config.per_paths cfg with
   | [] -> None
@@ -192,11 +182,10 @@ let keep { cfg; _ } ~catalog =
       in
       Some
         (fun ~path ~rule ->
-          (not (canonical_rel path))
-          || not
-               (List.exists
-                  (fun (pp, mentions) ->
-                    Config.Per_path.matches pp path && mentions rule)
-                  compiled))
+          not
+            (List.exists
+               (fun (pp, mentions) ->
+                 Config.Per_path.matches pp path && mentions rule)
+               compiled))
 
 let closed_world { cfg; _ } = Config.closed_world cfg

@@ -108,3 +108,12 @@ itself.)
 
   $ env -u INSIDE_DUNE LITANY_TEST_LOSE_SHARD=1:kill litany check --no-build -j 2 2>&1 >/dev/null | head -1
   litany: worker lost (killed by SIGKILL); 1 unit of its shard skipped
+
+A pipe or fork the system refuses costs the workers, not the run: at a low
+limit on open files the page is the same page.
+
+  $ env -u INSIDE_DUNE litany check --no-build --no-cache -j 1 > serial.out 2>&1; echo "exit=$?"
+  exit=1
+  $ (ulimit -n 8; env -u INSIDE_DUNE litany check --no-build --no-cache -j 12 > limited.out 2>&1; echo "exit=$?")
+  exit=1
+  $ cmp serial.out limited.out

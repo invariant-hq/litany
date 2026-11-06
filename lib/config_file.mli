@@ -96,12 +96,10 @@ module Glob : sig
   (** [to_string g] is the spelling [g] was compiled from. *)
 
   val matches : t -> string -> bool
-  (** [matches g path] is [true] iff [g] matches all of [path]. [path] must be
-      canonical: nonempty, relative, [/]-separated, with no empty, [.], [..], or
-      NUL component. A non-canonical [path] is the caller's infrastructure
-      failure, not a non-match.
-
-      Raises [Invalid_argument] if [path] is not canonical. *)
+  (** [matches g path] is [true] iff [g] matches all of [path]. A glob is
+      anchored at the workspace root, so a [path] that is not relative to it --
+      empty, absolute, or with an empty, [.], [..] or NUL component -- matches
+      nothing. *)
 
   val pp : Format.formatter -> t -> unit
   (** [pp ppf g] formats {!to_string}. *)

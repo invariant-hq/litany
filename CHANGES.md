@@ -13,6 +13,17 @@
   shadowed where they write it, which changed what the program computed, and a
   constructor chosen by its expected type may stop compiling. Replacing a match
   with its own scrutinee stays safe.
+- `litany check --root DIR` works from any directory: it enters DIR, so paths
+  print and globs match as they do at the root. A `(only ...)` or `(except ...)`
+  scope failed the rule under an absolute root, and the default lane found no
+  artifacts from elsewhere.
+- A system that refuses a worker's pipe or fork no longer stops the run, which
+  continues without workers; a dune on `PATH` that can't be started is a
+  refusal, exit 2, where both were internal errors.
+- `litany units --save` keeps one entry for a source with two artifact copies,
+  where it failed with an internal error.
+- An executable or library named only by its `public_name` is described to the
+  project rules, which were withheld from the whole project.
 - The documentation is a site, `hyphatech.github.io/litany`, built by
   `make docs`, replacing `doc/`. Its rule pages are written from `litany
   rules` and `litany explain`, and every program it shows is a file of

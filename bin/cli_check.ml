@@ -238,6 +238,26 @@ let roster_of_flags ~progress ~in_action_ctx ~root ~cmt_root ~units ~build
           | Error e ->
               Error (Cli_common.refuse "%a" Litany.Adapter.Dune.pp_error e)))
 
+(* The workspace is the working directory from here on, so a path resolves and
+   prints as it does from the root, and a glob, anchored there, can match it.
+   What the user named against the directory they ran in keeps meaning that. *)
+let enter_root root ~cmt_root ~units ~cache_dir =
+  if String.equal root "." then Ok (cmt_root, units, cache_dir)
+  else
+    let cwd = Sys.getcwd () in
+    let absolute path =
+      if Filename.is_relative path then Filename.concat cwd path else path
+    in
+    match Sys.chdir root with
+    | () ->
+        Ok
+          ( Option.map absolute cmt_root,
+            Option.map absolute units,
+            Option.map absolute cache_dir )
+    | exception Sys_error msg ->
+        Error
+          (Cli_common.refuse "cannot enter the workspace root %s: %s" root msg)
+
 let check root cmt_root units no_build trust_build list_units select ignore fix
     unsafe format_flag jobs_flag cache_dir no_cache cache_stats explain_withheld
     no_progress =
@@ -305,162 +325,179 @@ let check root cmt_root units no_build trust_build list_units select ignore fix
        directory, and rebasing them out from under it would repoint the
        run at a different tree (litany's own cram sandboxes run exactly
        such invocations). *)
-        let rebase source_root ctx =
-          match Sys.chdir source_root with
-          | () -> Ok (Some ctx)
-          | exception Sys_error msg ->
-              Error
-                (Cli_common.refuse "cannot enter the workspace root %s: %s"
-                   source_root msg)
-        in
-        match
+        let entered =
           match vantage with
-          | Action { source_root; context; subdir }
-            when cmt_root = None && units = None ->
-              rebase source_root (context, subdir, None)
-          | Sandboxed { source_root; context; sandbox; subdir }
-            when cmt_root = None && units = None ->
-              rebase source_root (context, subdir, Some sandbox)
-          | Action _ | Sandboxed _ | Shell | Exec -> Ok None
-        with
+          | Shell | Exec -> enter_root root ~cmt_root ~units ~cache_dir
+          | Action _ | Sandboxed _ -> Ok (cmt_root, units, cache_dir)
+        in
+        match entered with
         | Error code -> code
-        | Ok in_action_ctx -> (
+        | Ok (cmt_root, units, cache_dir) -> (
+            let root =
+              match vantage with
+              | Shell | Exec -> "."
+              | Action _ | Sandboxed _ -> root
+            in
+            let rebase source_root ctx =
+              match Sys.chdir source_root with
+              | () -> Ok (Some ctx)
+              | exception Sys_error msg ->
+                  Error
+                    (Cli_common.refuse "cannot enter the workspace root %s: %s"
+                       source_root msg)
+            in
             match
-              (* Explicit machine formats refuse the two text-surface modes; the
+              match vantage with
+              | Action { source_root; context; subdir }
+                when cmt_root = None && units = None ->
+                  rebase source_root (context, subdir, None)
+              | Sandboxed { source_root; context; sandbox; subdir }
+                when cmt_root = None && units = None ->
+                  rebase source_root (context, subdir, Some sandbox)
+              | Action _ | Sandboxed _ | Shell | Exec -> Ok None
+            with
+            | Error code -> code
+            | Ok in_action_ctx -> (
+                match
+                  (* Explicit machine formats refuse the two text-surface modes; the
                  GITHUB_ACTIONS auto-selection is a default, not a mandate, and
                  yields to them silently. Inside a dune action nothing
                  changes: the text page is the grammar dune's diagnostic
                  parser accepts from a failing action, so the page a
                  terminal shows is the page dune serves to editors. *)
-              match format_flag with
-              | Some ((Litany.Driver.Json | Litany.Driver.Github) as f)
-                when fix || list_units || explain_withheld ->
-                  Error
-                    (Cli_common.refuse
-                       "--format %s renders the report page only; %s speaks \
-                        the text surface"
-                       (match f with
-                       | Litany.Driver.Json -> "json"
-                       | Litany.Driver.Github -> "github"
-                       | Litany.Driver.Text -> assert false)
-                       (if fix then "--fix"
-                        else if list_units then "--list-units"
-                        else "--explain-withheld"))
-              | Some f -> Ok f
-              | None ->
-                  if
-                    Sys.getenv_opt "GITHUB_ACTIONS" <> None
-                    && (not fix) && not list_units
-                  then Ok Litany.Driver.Github
-                  else Ok Litany.Driver.Text
-            with
-            | Error code -> code
-            | Ok format -> (
-                match Cli_config.load ~root with
+                  match format_flag with
+                  | Some ((Litany.Driver.Json | Litany.Driver.Github) as f)
+                    when fix || list_units || explain_withheld ->
+                      Error
+                        (Cli_common.refuse
+                           "--format %s renders the report page only; %s \
+                            speaks the text surface"
+                           (match f with
+                           | Litany.Driver.Json -> "json"
+                           | Litany.Driver.Github -> "github"
+                           | Litany.Driver.Text -> assert false)
+                           (if fix then "--fix"
+                            else if list_units then "--list-units"
+                            else "--explain-withheld"))
+                  | Some f -> Ok f
+                  | None ->
+                      if
+                        Sys.getenv_opt "GITHUB_ACTIONS" <> None
+                        && (not fix) && not list_units
+                      then Ok Litany.Driver.Github
+                      else Ok Litany.Driver.Text
+                with
                 | Error code -> code
-                | Ok cfg -> (
-                    match Cli_config.configured_catalog cfg with
+                | Ok format -> (
+                    match Cli_config.load ~root with
                     | Error code -> code
-                    | Ok catalog -> (
-                        (* The config's [closed-world] bit reaches the two
+                    | Ok cfg -> (
+                        match Cli_config.configured_catalog cfg with
+                        | Error code -> code
+                        | Ok catalog -> (
+                            (* The config's [closed-world] bit reaches the two
                    cross-module rules here: their open-world defaults are
                    swapped for the closed variants before selection, so
                    tokens, keep, and the engine all see the effective
                    rules. The two names are the catalog's own; a
                    third-party catalog wires its own policy. *)
-                        let catalog =
-                          if not (Cli_config.closed_world cfg) then catalog
-                          else
-                            List.map
-                              (fun r ->
-                                match Litany.Rule.name r with
-                                | "unused-export" ->
-                                    Litany_rules.Unused_export.v
-                                      ~closed_world:true
-                                | "dead-code" ->
-                                    Litany_rules.Dead_code.v ~closed_world:true
-                                | _ -> r)
-                              catalog
-                        in
-                        let eff_select, eff_ignore =
-                          Cli_config.tokens cfg ~cli_select:(List.concat select)
-                            ~cli_ignore:(List.concat ignore)
-                        in
-                        match
-                          selection ~catalog ~select:eff_select
-                            ~ignore:eff_ignore
-                        with
-                        | Error code -> code
-                        | Ok rules -> (
-                            (* The configured-but-silent trap, warned on the same
+                            let catalog =
+                              if not (Cli_config.closed_world cfg) then catalog
+                              else
+                                List.map
+                                  (fun r ->
+                                    match Litany.Rule.name r with
+                                    | "unused-export" ->
+                                        Litany_rules.Unused_export.v
+                                          ~closed_world:true
+                                    | "dead-code" ->
+                                        Litany_rules.Dead_code.v
+                                          ~closed_world:true
+                                    | _ -> r)
+                                  catalog
+                            in
+                            let eff_select, eff_ignore =
+                              Cli_config.tokens cfg
+                                ~cli_select:(List.concat select)
+                                ~cli_ignore:(List.concat ignore)
+                            in
+                            match
+                              selection ~catalog ~select:eff_select
+                                ~ignore:eff_ignore
+                            with
+                            | Error code -> code
+                            | Ok rules -> (
+                                (* The configured-but-silent trap, warned on the same
                        channel as selection's rename warnings: a
                        [(rule X ...)] form whose rule the run does not
                        select validates and then does nothing — loud,
                        never a refusal (the options may serve another
                        lane's selection). *)
-                            List.iter
-                              (fun n ->
-                                if
-                                  not
-                                    (List.exists
-                                       (fun r ->
-                                         String.equal (Litany.Rule.name r) n)
-                                       rules)
-                                then
-                                  Format.eprintf
-                                    "litany: rule %S is configured but not \
-                                     selected@."
-                                    n)
-                              (Cli_config.configured_rule_names cfg);
-                            (* The mirror trap: a rule
+                                List.iter
+                                  (fun n ->
+                                    if
+                                      not
+                                        (List.exists
+                                           (fun r ->
+                                             String.equal (Litany.Rule.name r) n)
+                                           rules)
+                                    then
+                                      Format.eprintf
+                                        "litany: rule %S is configured but not \
+                                         selected@."
+                                        n)
+                                  (Cli_config.configured_rule_names cfg);
+                                (* The mirror trap: a rule
                        that is inert until configured
                        ([Litany.Rule.requires_options]), selected with no
                        [(rule X ...)] form, runs and reports nothing —
                        equally invisible, and likelier during adoption (the
                        user enables first, means to add the policy next).
                        Same channel, a warning, never a refusal. *)
-                            List.iter
-                              (fun r ->
-                                let n = Litany.Rule.name r in
-                                if
-                                  Litany.Rule.requires_options r
-                                  && not
-                                       (List.mem n
-                                          (Cli_config.configured_rule_names cfg))
-                                then
-                                  Format.eprintf
-                                    "litany: rule %S is selected but not \
-                                     configured; it reports nothing without a \
-                                     (rule %s ...) form@."
-                                    n n)
-                              rules;
-                            let keep = Cli_config.keep cfg ~catalog in
-                            (* The run's meter, from here to the last pass: the
+                                List.iter
+                                  (fun r ->
+                                    let n = Litany.Rule.name r in
+                                    if
+                                      Litany.Rule.requires_options r
+                                      && not
+                                           (List.mem n
+                                              (Cli_config.configured_rule_names
+                                                 cfg))
+                                    then
+                                      Format.eprintf
+                                        "litany: rule %S is selected but not \
+                                         configured; it reports nothing \
+                                         without a (rule %s ...) form@."
+                                        n n)
+                                  rules;
+                                let keep = Cli_config.keep cfg ~catalog in
+                                (* The run's meter, from here to the last pass: the
                        adapter names its stretches on it, the driver counts
                        units into it, and it draws nothing unless standard
                        error is a terminal — so a pipe, a cram sandbox, and a
                        CI log see exactly the bytes they saw before. *)
-                            let progress =
-                              Litany.Progress.v ~enabled:(not no_progress)
-                                ~jobs:(Option.value jobs_flag ~default:1)
-                            in
-                            match
-                              roster_of_flags ~progress ~in_action_ctx ~root
-                                ~cmt_root ~units ~build:(not no_build)
-                                ~trust_build
-                            with
-                            | Error code -> code
-                            | Ok (roster, build_current) ->
-                                if list_units then begin
-                                  Litany.Driver.listing roster ~build_current;
-                                  Cli_common.exit_ok
-                                end
-                                else begin
-                                  let cache =
-                                    Litany.Driver.Result_cache.setup ~cache_dir
-                                      ~no_cache ~root ~rules
-                                  in
-                                  (* The build capability: how litany re-runs this
+                                let progress =
+                                  Litany.Progress.v ~enabled:(not no_progress)
+                                    ~jobs:(Option.value jobs_flag ~default:1)
+                                in
+                                match
+                                  roster_of_flags ~progress ~in_action_ctx ~root
+                                    ~cmt_root ~units ~build:(not no_build)
+                                    ~trust_build
+                                with
+                                | Error code -> code
+                                | Ok (roster, build_current) ->
+                                    if list_units then begin
+                                      Litany.Driver.listing roster
+                                        ~build_current;
+                                      Cli_common.exit_ok
+                                    end
+                                    else begin
+                                      let cache =
+                                        Litany.Driver.Result_cache.setup
+                                          ~cache_dir ~no_cache ~root ~rules
+                                      in
+                                      (* The build capability: how litany re-runs this
                              roster's build, when it can — the shell dune
                              lane only (the
                              in-action lane never spawns dune, so it is a
@@ -469,42 +506,43 @@ let check root cmt_root units no_build trust_build list_units select ignore fix
                              holds one; the worker-count decision
                              (defaulting, the --fix serial clamp) is the
                              driver's too. *)
-                                  let rebuild =
-                                    if
-                                      cmt_root = None && units = None
-                                      && (not no_build)
-                                      && not (Cli_common.inside_dune ())
-                                    then
-                                      Some
-                                        (fun () ->
-                                          Litany.Adapter.Dune.roster ~progress
-                                            ~build:true ~root ())
-                                    else None
-                                  in
-                                  let code =
-                                    Litany.Driver.run_check ~progress ~rebuild
-                                      ~format ~jobs:jobs_flag ~cache roster
-                                      ~build_current ~rules ~catalog ~keep
-                                      ~fix:
-                                        (if fix then
-                                           Some
-                                             {
-                                               Litany.Driver.unsafe;
-                                               corrections =
-                                                 (match in_action_ctx with
-                                                 | Some (_, _, c) -> c
-                                                 | None -> None);
-                                             }
-                                         else None)
-                                      ~explain_withheld
-                                  in
-                                  Option.iter
-                                    (fun c ->
-                                      Litany.Driver.Result_cache.finish c
-                                        ~stats:cache_stats)
-                                    cache;
-                                  code
-                                end))))))
+                                      let rebuild =
+                                        if
+                                          cmt_root = None && units = None
+                                          && (not no_build)
+                                          && not (Cli_common.inside_dune ())
+                                        then
+                                          Some
+                                            (fun () ->
+                                              Litany.Adapter.Dune.roster
+                                                ~progress ~build:true ~root ())
+                                        else None
+                                      in
+                                      let code =
+                                        Litany.Driver.run_check ~progress
+                                          ~rebuild ~format ~jobs:jobs_flag
+                                          ~cache roster ~build_current ~rules
+                                          ~catalog ~keep
+                                          ~fix:
+                                            (if fix then
+                                               Some
+                                                 {
+                                                   Litany.Driver.unsafe;
+                                                   corrections =
+                                                     (match in_action_ctx with
+                                                     | Some (_, _, c) -> c
+                                                     | None -> None);
+                                                 }
+                                             else None)
+                                          ~explain_withheld
+                                      in
+                                      Option.iter
+                                        (fun c ->
+                                          Litany.Driver.Result_cache.finish c
+                                            ~stats:cache_stats)
+                                        cache;
+                                      code
+                                    end)))))))
 
 let cmt_root =
   let doc =

@@ -402,10 +402,14 @@ let forward_capture_limit = 8 * 1024 * 1024
    never to unbounded memory). *)
 let run_forwarding ~progress ~root argv =
   let r, w = Unix.pipe ~cloexec:true () in
+  let close_pipe () =
+    Unix.close r;
+    Unix.close w
+  in
   (* A child inherits the signal mask of the thread that starts it, and
      OCaml 5 blocks signals in threads of its own: dune, started with them
      blocked, cannot handle the signals its watcher waits on. *)
-  let pid =
+  match
     let mask = Unix.sigprocmask Unix.SIG_SETMASK [] in
     Fun.protect
       ~finally:(fun () ->
@@ -413,36 +417,40 @@ let run_forwarding ~progress ~root argv =
       (fun () ->
         with_cwd root (fun () ->
             Unix.create_process argv.(0) argv Unix.stdin w w))
-  in
-  Unix.close w;
-  let buf = Buffer.create 1024 in
-  let chunk = Bytes.create 8192 in
-  (* The child's own output owns stderr while it flows: the meter's line is
+  with
+  | exception Unix.Unix_error (err, _, _) ->
+      close_pipe ();
+      Error err
+  | pid ->
+      Unix.close w;
+      let buf = Buffer.create 1024 in
+      let chunk = Bytes.create 8192 in
+      (* The child's own output owns stderr while it flows: the meter's line is
      erased before a chunk is forwarded and redrawn on the next quiet poll, so
      a build that prints and a build that sits silent both read correctly. The
      poll timeout only paces the clock — the read below is the same read. *)
-  let rec drain () =
-    match Unix.select [ r ] [] [] 0.1 with
-    | exception Unix.Unix_error (Unix.EINTR, _, _) -> drain ()
-    | [], _, _ ->
-        Progress.refresh progress;
-        drain ()
-    | _ -> (
-        match Unix.read r chunk 0 (Bytes.length chunk) with
-        | 0 -> ()
-        | n ->
-            if Buffer.length buf < forward_capture_limit then
-              Buffer.add_subbytes buf chunk 0 n;
-            Progress.clear progress;
-            output stderr chunk 0 n;
-            flush stderr;
+      let rec drain () =
+        match Unix.select [ r ] [] [] 0.1 with
+        | exception Unix.Unix_error (Unix.EINTR, _, _) -> drain ()
+        | [], _, _ ->
+            Progress.refresh progress;
             drain ()
-        | exception Unix.Unix_error (Unix.EINTR, _, _) -> drain ())
-  in
-  drain ();
-  Unix.close r;
-  let _, status = Unix.waitpid [] pid in
-  (status, Buffer.contents buf)
+        | _ -> (
+            match Unix.read r chunk 0 (Bytes.length chunk) with
+            | 0 -> ()
+            | n ->
+                if Buffer.length buf < forward_capture_limit then
+                  Buffer.add_subbytes buf chunk 0 n;
+                Progress.clear progress;
+                output stderr chunk 0 n;
+                flush stderr;
+                drain ()
+            | exception Unix.Unix_error (Unix.EINTR, _, _) -> drain ())
+      in
+      drain ();
+      Unix.close r;
+      let _, status = Unix.waitpid [] pid in
+      Ok (status, Buffer.contents buf)
 
 (* {1 The unit file} *)
 
@@ -651,27 +659,27 @@ module Unit_file = struct
       (fun e ->
         let module E = Roster.Entry in
         let source = E.source e in
-        if Hashtbl.mem seen source then
-          invalid_arg
-            (Printf.sprintf "Adapter.Unit_file.encode: duplicate source %S"
-               source);
-        Hashtbl.replace seen source ();
-        Buffer.add_char b '(';
-        add_atom b "unit";
-        add_field b "source" source;
-        Option.iter (add_field b "cmt") (E.cmt e);
-        Option.iter (add_field b "cmti") (E.cmti e);
-        Option.iter (add_field b "pp-source") (E.preprocessed_source e);
-        Option.iter (add_field b "intf-source") (E.interface_source e);
-        Option.iter (add_field b "library") (E.library e);
-        (match E.visibility e with
-        | Roster.Public -> add_field b "public" "true"
-        | Roster.Private -> add_field b "public" "false"
-        | Roster.Unknown -> ());
-        Option.iter
-          (fun k -> add_field b "kind" (Roster.kind_to_string k))
-          (E.kind e);
-        Buffer.add_string b ")\n")
+        (* Two artifact copies of one source, native and Melange's say, are
+           one unit, as they are to the report. *)
+        if not (Hashtbl.mem seen source) then begin
+          Hashtbl.replace seen source ();
+          Buffer.add_char b '(';
+          add_atom b "unit";
+          add_field b "source" source;
+          Option.iter (add_field b "cmt") (E.cmt e);
+          Option.iter (add_field b "cmti") (E.cmti e);
+          Option.iter (add_field b "pp-source") (E.preprocessed_source e);
+          Option.iter (add_field b "intf-source") (E.interface_source e);
+          Option.iter (add_field b "library") (E.library e);
+          (match E.visibility e with
+          | Roster.Public -> add_field b "public" "true"
+          | Roster.Private -> add_field b "public" "false"
+          | Roster.Unknown -> ());
+          Option.iter
+            (fun k -> add_field b "kind" (Roster.kind_to_string k))
+            (E.kind e);
+          Buffer.add_string b ")\n"
+        end)
       (Roster.entries r);
     Buffer.contents b
 end
@@ -765,10 +773,18 @@ let library_visibilities sexps =
   List.filter_map
     (function
       | List (Atom "library" :: fields) ->
-          let name =
+          let field key =
             List.find_map
-              (function List [ Atom "name"; Atom n ] -> Some n | _ -> None)
+              (function
+                | List [ Atom k; Atom v ] when String.equal k key -> Some v
+                | _ -> None)
               fields
+          in
+          (* dune takes the name from the public name when none is written. *)
+          let name =
+            match field "name" with
+            | Some _ as name -> name
+            | None -> field "public_name"
           in
           let public =
             List.exists
@@ -807,8 +823,15 @@ let test_stanza_names sexps =
 let executable_stanza_names sexps =
   List.concat_map
     (function
-      | List (Atom "executable" :: fields) -> stanza_field_names "name" fields
-      | List (Atom "executables" :: fields) -> stanza_field_names "names" fields
+      | List (Atom "executable" :: fields) -> (
+          (* dune takes the name from the public name when none is written. *)
+          match stanza_field_names "name" fields with
+          | [] -> stanza_field_names "public_name" fields
+          | names -> names)
+      | List (Atom "executables" :: fields) -> (
+          match stanza_field_names "names" fields with
+          | [] -> stanza_field_names "public_names" fields
+          | names -> names)
       | _ -> [])
     sexps
 
@@ -817,6 +840,7 @@ let executable_stanza_names sexps =
 module Dune = struct
   type error =
     | Dune_missing
+    | Dune_unusable of string
     | Build_failed
     | No_check_alias of string
     | No_build_tree of string
@@ -831,13 +855,13 @@ module Dune = struct
      a live watch: a secondary [dune build] forwards its request to the
      watch server holding the lock instead of fighting it. *)
   let build_check ~progress ~root =
-    let status, out =
+    match
       run_forwarding ~progress ~root
         [| "dune"; "build"; "--root"; "."; "@check" |]
-    in
-    match status with
-    | Unix.WEXITED 0 -> Ok ()
-    | _ ->
+    with
+    | Error err -> Error (Dune_unusable (Unix.error_message err))
+    | Ok (Unix.WEXITED 0, _) -> Ok ()
+    | Ok (_, out) ->
         if
           contains_substring ~sub:"Alias \"check\"" out
           && contains_substring ~sub:"not defined" out
@@ -1115,6 +1139,11 @@ module Dune = struct
         Format.fprintf ppf
           "dune is not on PATH. Pass --cmt-root DIR to lint artifacts built \
            elsewhere."
+    | Dune_unusable reason ->
+        Format.fprintf ppf
+          "dune could not be started: %s. Fix the dune on PATH, or pass \
+           --cmt-root DIR to lint artifacts built elsewhere."
+          reason
     | Build_failed ->
         Format.fprintf ppf
           "dune build @@check failed; its errors are above. Lint presupposes a \

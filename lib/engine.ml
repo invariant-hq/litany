@@ -225,13 +225,22 @@ module Report = struct
                      c.audits)
            rows
        in
+       let blocks = Hashtbl.create 8 in
+       let blocked name =
+         match Hashtbl.find_opt blocks name with
+         | Some blocked -> blocked
+         | None ->
+             let blocked = Option.is_some (block_of ~capable ~rows name) in
+             Hashtbl.replace blocks name blocked;
+             blocked
+       in
        let project_rows =
          (* A project rule's findings stand only while nothing blocks it —
             demoting a unit blocks every project rule, so universal claims
             never outlive the universe they quantified over. *)
          List.filter_map
            (fun (name, f) ->
-             if block_of ~capable ~rows name = None && keep_finding name f then
+             if (not (blocked name)) && keep_finding name f then
                match severity_of name with
                | Some sev -> Some (name, sev, f)
                | None -> None
