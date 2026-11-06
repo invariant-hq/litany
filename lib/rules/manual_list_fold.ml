@@ -99,7 +99,10 @@ let fold_left_ok u ~self ~params ~acc_idx ~list_idx ~scrut_param ~tl rhs =
            (fun (i, a) ->
              if list_idx = Some i || i >= n then List_recursion.is_id u tl a
              else if i = acc_idx then clean ~self ~tl ~scrut_param a
-             else List_recursion.is_id u (List.nth params i) a)
+             else
+               match List.nth_opt params i with
+               | Some param -> List_recursion.is_id u param a
+               | None -> false)
            (List.mapi (fun i a -> (i, a)) args)
   | Some _ | None -> false
 
@@ -159,7 +162,7 @@ let rule =
               | None -> []
               | Some list_idx ->
                   let scrut_param =
-                    Option.map (fun k -> List.nth params k) list_idx
+                    Option.bind list_idx (List.nth_opt params)
                   in
                   if
                     fold_left_ok u ~self ~params ~acc_idx ~list_idx ~scrut_param

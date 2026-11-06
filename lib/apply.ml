@@ -58,9 +58,11 @@ let record_edit (ivls, pts) (e : Fix.edit) =
   let s = Span.start e.span and t = Span.stop e.span in
   if s = t then (ivls, Pts.add s pts) else (Ivl.add (s, t) ivls, pts)
 
-(* A fix's sort span is its first edit's — edits are sorted in the fix, so
-   [List.hd] is the least, and a fix always has one. *)
-let first_span c = (List.hd (Fix.edits c.fix)).Fix.span
+(* A fix's sort span is its first edit's, the least, since edits are sorted. *)
+let first_span c =
+  match Fix.edits c.fix with
+  | e :: _ -> e.Fix.span
+  | [] -> assert false (* [Fix.v] refuses a fix with no edit *)
 
 let compare_candidates c c' =
   match Span.compare (first_span c) (first_span c') with

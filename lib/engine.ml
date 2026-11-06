@@ -90,7 +90,15 @@ module Report = struct
 
   let compare_suppressed (k1, r1, why1, f1) (k2, r2, why2, f2) =
     let c = compare_keyed r1 f1 r2 f2 in
-    if c <> 0 then c else compare (k1, why1) (k2, why2)
+    if c <> 0 then c
+    else
+      let rank = function
+        | Suppress.Directive.Allow -> 0
+        | Suppress.Directive.Expect -> 1
+      in
+      match Int.compare (rank k1) (rank k2) with
+      | 0 -> String.compare why1 why2
+      | n -> n
 
   (* Two roster entries for one source path — two artifact copies of
      one unit — emit identical rows; sorting makes the copies adjacent and an
@@ -455,7 +463,8 @@ module Summary = struct
       skipped_by_reason =
         List.map
           (fun ((_, slug), n) -> (slug, n))
-          (List.sort compare
+          (List.sort
+             (fun ((rank, _), _) ((rank', _), _) -> Int.compare rank rank')
              (Hashtbl.fold (fun k n acc -> (k, n) :: acc) skips []));
       dropped = Report.dropped rep;
       degraded = List.length (Report.degraded rep);
@@ -629,13 +638,22 @@ type resolution =
 
 type suppress_ctx = { resolve : string -> resolution }
 
+let is_source r =
+  match Rule.callback r with
+  | Rule.Source _ -> true
+  | Rule.Expr _ | Rule.Pattern _ | Rule.Binding _ | Rule.Type_decl _
+  | Rule.Let_group _ | Rule.Module_binding _ | Rule.Open _ | Rule.Export _
+  | Rule.Attribute _ | Rule.Project _ ->
+      false
+
 let suppress_ctx ~catalog ~rules =
   let status : (string, rule_status) Hashtbl.t = Hashtbl.create 16 in
   List.iter
     (fun r ->
       let s =
         if Rule.is_project r then Project
-        else match Rule.callback r with Rule.Source _ -> Text | _ -> Runs
+        else if is_source r then Text
+        else Runs
       in
       Hashtbl.replace status (Rule.name r) s)
     rules;
@@ -650,7 +668,8 @@ let suppress_ctx ~catalog ~rules =
       if not (Hashtbl.mem status n) then
         Hashtbl.replace status n
           (if Rule.is_project r then Project
-           else match Rule.callback r with Rule.Source _ -> Text | _ -> Off))
+           else if is_source r then Text
+           else Off))
     catalog;
   (* Written name -> (canonical, alias). Canonical names are registered
      before aliases so a name that is both stays a rule, not an alias. *)
@@ -697,6 +716,10 @@ let suppress_ctx ~catalog ~rules =
    is its exact path, consistency its line index, and the path needs no
    rewrite — the rule built the location from the interface source itself. *)
 type lane = Typed | Untyped | Intf
+
+(* Rule name, then message. *)
+let compare_failures (r, m) (r', m') =
+  match String.compare r r' with 0 -> String.compare m m' | n -> n
 
 type unit_result = {
   kept : (Rule.t * bool * Finding.t) list;
@@ -1016,10 +1039,14 @@ let analyze ~kinds ~suppress u =
         let typed = lane = Typed in
         let loc = Finding.loc f in
         let cons =
-          match lane with Intf -> intf_consistent loc | _ -> consistent loc
+          match lane with
+          | Intf -> intf_consistent loc
+          | Typed | Untyped -> consistent loc
         in
         let owned_here =
-          match lane with Intf -> intf_owned loc | _ -> owned loc
+          match lane with
+          | Intf -> intf_owned loc
+          | Typed | Untyped -> owned loc
         in
         (* The drop conditions, in contract order — [||] preserves the
            short-circuit, so [corroborated] is unreached for ghost or
@@ -1051,7 +1078,9 @@ let analyze ~kinds ~suppress u =
           in
           (* No rewrite on the interface lane: the location's path is the
              adapter-supplied interface path already. *)
-          let loc' = match lane with Intf -> loc | _ -> rewrite_loc loc in
+          let loc' =
+            match lane with Intf -> loc | Typed | Untyped -> rewrite_loc loc
+          in
           let f' = Finding.v ?fix ~loc:loc' (Finding.message f) in
           let key = (Rule.name rule, Finding.loc f', Finding.message f') in
           if not (Hashtbl.mem seen key) then begin
@@ -1238,7 +1267,8 @@ let analyze ~kinds ~suppress u =
     unit_dropped = !dropped;
     unit_degraded = !parse_demand_failed;
     unit_failures =
-      List.sort compare (Hashtbl.fold (fun r m acc -> (r, m) :: acc) failed []);
+      List.sort compare_failures
+        (Hashtbl.fold (fun r m acc -> (r, m) :: acc) failed []);
   }
 
 (* {1 Per-unit payloads}
@@ -1361,7 +1391,10 @@ let run ?keep ?unit_cache ?capture ?progress ~rules ~catalog ~roster ~load () =
       (fun r ->
         match Rule.callback r with
         | Rule.Project { collect; report } -> Some (Rule.name r, collect, report)
-        | _ -> None)
+        | Rule.Expr _ | Rule.Pattern _ | Rule.Binding _ | Rule.Type_decl _
+        | Rule.Let_group _ | Rule.Module_binding _ | Rule.Open _ | Rule.Export _
+        | Rule.Attribute _ | Rule.Source _ ->
+            None)
       rules
   in
   (* [collect] per admitted unit, isolated per rule like any callback: a
@@ -1384,7 +1417,7 @@ let run ?keep ?unit_cache ?capture ?progress ~rules ~catalog ~roster ~load () =
               None)
         projects
     in
-    (facts, List.sort compare !failures)
+    (facts, List.sort compare_failures !failures)
   in
   let rows = ref [] in
   let failures = ref [] in
@@ -1479,7 +1512,8 @@ let run ?keep ?unit_cache ?capture ?progress ~rules ~catalog ~roster ~load () =
                           if Hashtbl.mem noted_cmi failure then None
                           else Some (Report.Resolution { cmi; reason }))
                         (Naming.Scope.read_failures (Unit.scope u));
-                    failures = List.sort compare (r.unit_failures @ cfailures);
+                    failures =
+                      List.sort compare_failures (r.unit_failures @ cfailures);
                     facts;
                   }
             in

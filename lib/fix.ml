@@ -26,7 +26,7 @@ type t = {
 }
 
 let v ?(applicability = Unsafe) ~title edits =
-  if edits = [] then invalid_arg "Fix.v: no edits";
+  if List.is_empty edits then invalid_arg "Fix.v: no edits";
   let edits =
     List.stable_sort (fun e e' -> Span.compare e.span e'.span) edits
   in

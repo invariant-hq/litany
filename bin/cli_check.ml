@@ -316,7 +316,8 @@ let check root cmt_root units no_build trust_build list_units select ignore fix
            instead (litany check --fix, e.g. via `opam exec -- litany` or your \
            PATH), or run litany check --fix as a build rule's action (see the \
            build-integration manual)."
-    | _ -> (
+    | true, (Shell | Sandboxed _)
+    | false, (Shell | Exec | Action _ | Sandboxed _) -> (
         (* The in-action rebase, before anything reads the tree: cwd moves
        from the build context to the vantage's source root, so the config
        file, the cache's workspace key, the artifact walk, and every

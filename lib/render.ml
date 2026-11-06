@@ -295,7 +295,9 @@ let text ?(color = false) ?(fixes = `Hint) ?(notes_detail = false)
           | Engine.Report.Collect_failed paths ->
               add "roster: %s withheld (collect failed on %s)" rule
                 (String.concat ", " paths)
-          | _ -> ())
+          | Engine.Report.Not_capable | Engine.Report.Incomplete _
+          | Engine.Report.Ambiguous _ ->
+              ())
         blocked);
   (* Kind-gated local rules structurally silent in this lane ride their own
      withheld channel — silence is enumerated, never absorbed: one [roster:]

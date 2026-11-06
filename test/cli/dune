@@ -51,7 +51,7 @@
 ; rebuilt after the fix.
 
 (cram
- (applies_to fixsafety)
+ (applies_to fixsafety refusals)
  (deps %{bin:litany}))
 
 ; M7: the one-unit in-build gate (litany unit), proved against the

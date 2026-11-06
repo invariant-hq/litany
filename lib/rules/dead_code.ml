@@ -109,9 +109,13 @@ let report facts =
   M.iter
     (fun uid rows ->
       let rows = List.rev rows in
-      let first = List.hd rows in
+      let owner =
+        match rows with
+        | first :: _ -> first.Project_facts.path
+        | [] -> assert false (* a uid is in the map with its first row *)
+      in
       decl
-        (Solver.Decl.v ~uid ~owner:first.Project_facts.path
+        (Solver.Decl.v ~uid ~owner
            ~root:(List.exists (fun r -> r.Project_facts.root) rows));
       List.iter
         (fun (r : Project_facts.decl) ->

@@ -223,7 +223,14 @@ let configure r payload =
 
 let renamed_from r = r.meta.renamed_from
 let group r = r.meta.group
-let is_project r = match r.callback with Project _ -> true | _ -> false
+
+let is_project r =
+  match r.callback with
+  | Project _ -> true
+  | Expr _ | Pattern _ | Binding _ | Type_decl _ | Let_group _
+  | Module_binding _ | Open _ | Export _ | Attribute _ | Source _ ->
+      false
+
 let stability r = r.meta.stability
 let since r = r.meta.since
 let fix r = r.meta.fix

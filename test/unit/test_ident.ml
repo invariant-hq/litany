@@ -58,6 +58,25 @@ let malformed =
 let name_tests =
   group "Name"
     [
+      prop "a generated name round-trips"
+        Gen.(
+          let tail =
+            string_of ~size:(int_range 0 6)
+              (of_list [ 'a'; 'z'; 'A'; '0'; '_'; '\'' ])
+          in
+          let component first =
+            map
+              (fun (c, rest) -> Printf.sprintf "%c%s" c rest)
+              (pair (of_list first) tail)
+          in
+          map
+            (fun (modules, value) -> String.concat "." (modules @ [ value ]))
+            (pair
+               (list ~size:(int_range 1 3) (component [ 'A'; 'M'; 'Z' ]))
+               (component [ 'a'; 'x'; 'z' ])))
+        (fun s ->
+          let n = require_ok ~pp_error:Name.pp_error (Name.of_string s) in
+          equal string s (Name.to_string n));
       cases
         ~name:(fun s -> s)
         "well-formed round trip" well_formed

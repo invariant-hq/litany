@@ -791,7 +791,9 @@ let listing roster ~build_current =
   let by_reason =
     List.map
       (fun ((_, slug), n) -> Printf.sprintf "%s %d" slug n)
-      (List.sort compare (Hashtbl.fold (fun k n acc -> (k, n) :: acc) skips []))
+      (List.sort
+         (fun ((rank, _), _) ((rank', _), _) -> Int.compare rank rank')
+         (Hashtbl.fold (fun k n acc -> (k, n) :: acc) skips []))
   in
   Printf.printf "summary: %d entries, %d admitted, %d skipped%s\n" total
     !admitted skipped
