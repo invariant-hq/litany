@@ -6,4 +6,6 @@
   fixtures/fix_mrm.ml
   fixtures/.fix_mrm.objs/byte/fix_mrm.cmt
   fixtures/fix_mrm.fixed.ml
+  fixtures/fix_mrm.unsafe.ml
+  fixtures/.fix_mrm_unsafe.objs/byte/fix_mrm_unsafe.cmt
   fixtures/.fix_mrm_fixed.objs/byte/fix_mrm_fixed.cmt))

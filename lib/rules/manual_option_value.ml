@@ -29,7 +29,8 @@ and the `function` form. Effectful or raising defaults, transforming
 user-defined `Some`/`None` constructors deliberately do not fire. The
 fix rewrites the match form to `Option.value o ~default:D` where the
 sources slice cleanly; the `function` form has no scrutinee to name and
-ships none.|}
+ships none. `Option` resolves in the fix site's scope, which the rule
+never checked, so the fix is unsafe, applied only under `--unsafe`.|}
     ()
 
 let message = "a trivial-default option match is Option.value in longhand"
@@ -86,7 +87,7 @@ let rule =
         match (Unit.splice u scrut, Unit.splice u d) with
         | Some o, Some dv ->
             Some
-              (Fix.safe_replace e.exp_loc
+              (Fix.unsafe_replace e.exp_loc
                  (Unit.delimited u e
                     (String.concat "" [ "Option.value "; o; " ~default:"; dv ]))
                  ~title:"rewrite with Option.value")

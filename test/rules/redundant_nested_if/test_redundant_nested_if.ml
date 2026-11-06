@@ -27,7 +27,10 @@ let () =
             ~message:
               "if c1 then if c2 then e is longhand for if c1 && c2 then e"
             ~source ~cmt);
-      test "fixes round-trip to the compiled golden" (fun () ->
+      test "--fix alone applies only the fixes that name nothing" (fun () ->
           Support.check_fixed rule ~source ~cmt
             ~golden:"fixtures/fix_rni.fixed.ml");
+      test "--fix --unsafe round-trips to the compiled golden" (fun () ->
+          Support.check_fixed ~unsafe:true rule ~source ~cmt
+            ~golden:"fixtures/fix_rni.unsafe.ml");
     ]

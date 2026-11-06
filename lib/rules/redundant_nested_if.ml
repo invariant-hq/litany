@@ -12,8 +12,7 @@ let meta =
     ~doc:
       {|An else-less `if` whose then-branch is directly another else-less
 `if` is one condition spelled as two: `&&`'s short-circuit evaluates
-the inner condition exactly when the nested form does, so the collapse
-is behavior-preserving by construction.
+the inner condition exactly when the nested form does.
 
     (* bad *)  if ok then if ready then launch ()
     (* good *) if ok && ready then launch ()
@@ -28,7 +27,9 @@ deliberately does not fire. Deeper nests report once per level. The
 fix rewrites the head to `c1 && c2`, parenthesizing each condition
 unless atomic; it ships only when the text between the conditions is
 exactly `then` `if` with whitespace — a parenthesis, `begin`, or
-comment in the gap withholds the fix, not the finding.|}
+comment in the gap withholds the fix, not the finding. The fix splices
+`&&`, a spelling that resolves in the fix site's scope, which the rule
+never checked, so it is unsafe, applied only under `--unsafe`.|}
     ()
 
 let message = "if c1 then if c2 then e is longhand for if c1 && c2 then e"
@@ -68,7 +69,7 @@ let fix u (c1 : Typedtree.expression) (c2 : Typedtree.expression) =
           (fun bytes ->
             if gap_ok bytes then
               Some
-                (Fix.v ~applicability:Fix.Safe ~title:"collapse to c1 && c2"
+                (Fix.v ~applicability:Fix.Unsafe ~title:"collapse to c1 && c2"
                    [
                      { Fix.span = s1; text = a1 };
                      { Fix.span = gap; text = " && " };

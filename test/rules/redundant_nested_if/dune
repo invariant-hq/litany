@@ -6,4 +6,6 @@
   fixtures/fix_rni.ml
   fixtures/.fix_rni.objs/byte/fix_rni.cmt
   fixtures/fix_rni.fixed.ml
+  fixtures/fix_rni.unsafe.ml
+  fixtures/.fix_rni_unsafe.objs/byte/fix_rni_unsafe.cmt
   fixtures/.fix_rni_fixed.objs/byte/fix_rni_fixed.cmt))

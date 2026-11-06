@@ -167,20 +167,34 @@ let correcting =
             cand ~applicability:Fix.Safe ~title:"t"
               [ edit ~text:"0 = 0" start stop ]
           in
-          match Apply.correct source [ identity ] with
+          match Apply.correct ~path:"a.ml" source [ identity ] with
           | Error (`Fixer_bug _) -> ()
           | Ok _ -> failf "expected a fixer bug, got Ok"
           | Error `Unverifiable ->
               failf "expected a fixer bug, got Unverifiable");
       test "an empty selection is Ok and unchanged, never a bug" (fun () ->
           match
-            Apply.correct source
+            Apply.correct ~path:"a.ml" source
               [ cand ~applicability:Fix.Display ~title:"t" [ edit 0 1 ] ]
           with
           | Ok bytes -> equal string source bytes
           | Error _ -> failf "expected Ok on an empty selection");
+      test "an interface is parsed as an interface" (fun () ->
+          (* [module M : sig end] is no implementation: read as one, every
+             fix to such a file would be refused as unparsable. *)
+          let interface = "module M : sig end\n" in
+          let fix =
+            cand ~applicability:Fix.Safe ~title:"t" [ edit ~text:"N" 7 8 ]
+          in
+          (match Apply.correct ~path:"m.mli" interface [ fix ] with
+          | Ok bytes -> equal string "module N : sig end\n" bytes
+          | Error _ -> failf "expected the interface to be corrected");
+          match Apply.correct ~path:"m.ml" interface [ fix ] with
+          | Error `Unverifiable -> ()
+          | Ok _ | Error (`Fixer_bug _) ->
+              failf "expected an implementation not to parse this");
       test "a changing fix still corrects" (fun () ->
-          match Apply.correct source [ replacement "true" ] with
+          match Apply.correct ~path:"a.ml" source [ replacement "true" ] with
           | Ok bytes -> equal string "let a = true\n" bytes
           | Error _ -> failf "expected Ok");
     ]

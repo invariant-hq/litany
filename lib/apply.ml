@@ -142,19 +142,31 @@ type outcome =
   | Unverifiable
   | Io_error of string
 
-let parses bytes =
+(* Silent, since a warning in the source is the build's to report, and the
+   compiler's warning state is global, so it is restored. *)
+let parses ~path bytes =
   let lexbuf = Lexing.from_string bytes in
-  match Parse.implementation lexbuf with
-  | _ -> true
-  | exception (Syntaxerr.Error _ | Lexer.Error _) -> false
+  Location.init lexbuf path;
+  let warnings = Warnings.backup () in
+  Fun.protect
+    ~finally:(fun () -> Warnings.restore warnings)
+    (fun () ->
+      let (_ : Warnings.alert option) = Warnings.parse_options false "-a" in
+      match
+        if Filename.check_suffix path ".mli" then
+          ignore (Parse.interface lexbuf : Parsetree.signature)
+        else ignore (Parse.implementation lexbuf : Parsetree.structure)
+      with
+      | () -> true
+      | exception (Syntaxerr.Error _ | Lexer.Error _) -> false)
 
 (* The never-write-unverified-bytes discipline, pure and in one place —
    the disk mode and the proposal mode must both go through it: plan,
    patch, reparse-verify. The original's parse gates
    everything — the applier never verifies what it cannot reparse, so an
    unparsable original is [`Unverifiable] before any fix is blamed. *)
-let correct ?unsafe bytes cands =
-  if not (parses bytes) then Error `Unverifiable
+let correct ?unsafe ~path bytes cands =
+  if not (parses ~path bytes) then Error `Unverifiable
   else
     let p = plan ?unsafe cands in
     let edits = List.concat_map (fun c -> Fix.edits c.fix) p.selected in
@@ -174,7 +186,7 @@ let correct ?unsafe bytes cands =
             (`Fixer_bug
                "the corrected result equals the input — the fixes change \
                 nothing")
-        else if parses fixed then Ok fixed
+        else if parses ~path fixed then Ok fixed
         else Error (`Fixer_bug "the corrected result does not parse")
 
 (* Atomic publication is [Write.atomic] — the one write-then-rename
@@ -214,7 +226,7 @@ let file ?unsafe ~path ~baseline cands =
               (* [correct] re-plans internally (planning is pure and
                  per-file cheap); the plan above is the partition the
                  outcomes report against — the two agree by determinism. *)
-              match correct ?unsafe bytes cands with
+              match correct ?unsafe ~path bytes cands with
               | Error `Unverifiable ->
                   (* An unparsable original is refused
                      even when the patch happens to produce parsing

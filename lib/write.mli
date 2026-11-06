@@ -27,9 +27,9 @@ val atomic :
 
     - [fsync] (default [true]) flushes the temp file's data to disk before the
       rename.
-    - [mode] (default [0o644]) is the created file's permission bits, set before
-      the rename; callers preserving a target's permissions stat it and pass
-      them.
+    - [mode] (default [0o644]) is the created file's exact permission bits,
+      whatever the umask, set before the rename; callers preserving a target's
+      permissions stat it and pass them.
 
     Temp names are [".litany.<pid>.<n>.tmp"] — pid plus an atomic counter,
     unique across processes and domains alike (no shared PRNG), created with

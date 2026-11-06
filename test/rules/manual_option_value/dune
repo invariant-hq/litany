@@ -6,4 +6,6 @@
   fixtures/fix_mov.ml
   fixtures/.fix_mov.objs/byte/fix_mov.cmt
   fixtures/fix_mov.fixed.ml
+  fixtures/fix_mov.unsafe.ml
+  fixtures/.fix_mov_unsafe.objs/byte/fix_mov_unsafe.cmt
   fixtures/.fix_mov_fixed.objs/byte/fix_mov_fixed.cmt))

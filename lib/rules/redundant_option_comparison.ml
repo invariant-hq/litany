@@ -30,8 +30,10 @@ program. `None = None` (a two-constant expression), orderings,
 shadowed operators deliberately do not fire. The fix rewrites the whole
 comparison to the predicate applied to the other operand — structural
 comparison against the immediate `None` decides on the tag without
-traversing the payload, so the rewrite is behavior-identical, even for
-payloads whose comparison would raise.
+traversing the payload, so the predicate computes the same answer, even
+for payloads whose comparison would raise. `Option` resolves in the fix
+site's scope, which the rule never checked, so the fix is unsafe, applied
+only under `--unsafe`.
 
 The reporting unit is the boolean chain, not the comparison: when two
 or more such comparisons are direct operands of one `Stdlib` `&&`/`||`
@@ -134,7 +136,7 @@ let single u (e : Typedtree.expression) x predicate =
   let fix =
     Option.map
       (fun src ->
-        Fix.safe_replace e.exp_loc
+        Fix.unsafe_replace e.exp_loc
           (Unit.delimited u e (predicate ^ " " ^ src))
           ~title:("use " ^ predicate))
       (Unit.splice u x)
@@ -145,7 +147,7 @@ let single u (e : Typedtree.expression) x predicate =
 (* One finding for a chain of two or more members, anchored at the whole
    chain. The fix rewrites every member in one application, and ships
    only when every member's operand splices — a partial rewrite would
-   leave a mixed chain while claiming Safe. *)
+   leave a mixed chain. *)
 let chain u (e : Typedtree.expression) ms =
   let edits =
     List.map
@@ -162,7 +164,7 @@ let chain u (e : Typedtree.expression) ms =
   let fix =
     if List.for_all Option.is_some edits then
       Some
-        (Fix.v ~applicability:Fix.Safe ~title:"use Option predicates"
+        (Fix.v ~applicability:Fix.Unsafe ~title:"use Option predicates"
            (List.filter_map Fun.id edits))
     else None
   in

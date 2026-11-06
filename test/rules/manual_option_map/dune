@@ -6,4 +6,6 @@
   fixtures/fix_mom.ml
   fixtures/.fix_mom.objs/byte/fix_mom.cmt
   fixtures/fix_mom.fixed.ml
+  fixtures/fix_mom.unsafe.ml
+  fixtures/.fix_mom_unsafe.objs/byte/fix_mom_unsafe.cmt
   fixtures/.fix_mom_fixed.objs/byte/fix_mom_fixed.cmt))

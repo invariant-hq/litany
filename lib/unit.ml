@@ -887,15 +887,28 @@ let unit_refs u = snd (deps_and_refs u)
 
 (* {1 Source slicing} *)
 
-(* One outer bracket pair delimiting the whole slice; refuse when a string
-   literal could hide a bracket. [atomic]'s bracketed case — where a wrong
-   [false] only costs a harmless wrap. *)
+(* One outer bracket pair delimiting the whole slice; refuse when a string,
+   a character literal or a comment could hide a bracket. [atomic]'s bracketed
+   case — where a wrong [false] only costs a harmless wrap, and a wrong [true]
+   breaks the program. *)
+let contains_comment text =
+  let rec from i =
+    match String.index_from_opt text i '(' with
+    | None -> false
+    | Some j ->
+        (j + 1 < String.length text && text.[j + 1] = '*') || from (j + 1)
+  in
+  from 0
+
 let outer_pair text =
   let len = String.length text in
   len >= 2
   && (match (text.[0], text.[len - 1]) with
-    | '(', ')' | '[', ']' | '{', '}' -> not (String.contains text '"')
+    | '(', ')' | '[', ']' | '{', '}' -> true
     | _ -> false)
+  && (not (String.contains text '"'))
+  && (not (String.contains text '\''))
+  && (not (contains_comment text))
   &&
   let depth = ref 0 and ok = ref true in
   String.iteri

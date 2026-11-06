@@ -27,7 +27,10 @@ let () =
             ~message:
               "a trivial-default option match is Option.value in longhand"
             ~source ~cmt);
-      test "fixes round-trip to the compiled golden" (fun () ->
+      test "--fix alone applies only the fixes that name nothing" (fun () ->
           Support.check_fixed rule ~source ~cmt
             ~golden:"fixtures/fix_mov.fixed.ml");
+      test "--fix --unsafe round-trips to the compiled golden" (fun () ->
+          Support.check_fixed ~unsafe:true rule ~source ~cmt
+            ~golden:"fixtures/fix_mov.unsafe.ml");
     ]

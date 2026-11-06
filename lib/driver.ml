@@ -834,7 +834,7 @@ let propose_file ?unsafe ~path ~baseline ~dest cands =
         | bytes -> (
             if not (Digest0.matches ~recorded:baseline bytes) then Apply.Stale
             else
-              match Apply.correct ?unsafe bytes cands with
+              match Apply.correct ?unsafe ~path bytes cands with
               | Error `Unverifiable -> Apply.Unverifiable
               | Error (`Fixer_bug _) -> Apply.Fixer_bug
               | Ok fixed -> (

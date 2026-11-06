@@ -81,15 +81,17 @@ val patch : string -> Fix.edit list -> string
 
 val correct :
   ?unsafe:bool ->
+  path:string ->
   string ->
   candidate list ->
   (string, [ `Fixer_bug of string | `Unverifiable ]) result
-(** [correct bytes cands] is the never-write-unverified-bytes discipline as a
-    pure function — one home for plan → patch → reparse-verify, used by
+(** [correct ~path bytes cands] is the never-write-unverified-bytes discipline
+    as a pure function — one home for plan → patch → reparse-verify, used by
     {!file}'s disk mode and available to any worker proposing corrections
     without touching disk: [bytes] with [cands]'s planned fixes applied (as
     {!val:plan}, under [unsafe]), provided the original parses and the result
-    parses again.
+    parses again. [path] names the source [bytes] came from, and only that: an
+    [.mli] is parsed as an interface, anything else as an implementation.
 
     [`Unverifiable] when [bytes] does not parse — checked first: the applier
     never verifies what it cannot reparse, and no fix is blamed for bytes the

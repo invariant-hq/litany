@@ -13,3 +13,13 @@
 (library
  (name fix_mrm_fixed)
  (modules fix_mrm_fixed))
+
+; The fixes that name an operator or a module, whose spelling the rule never
+; resolved at the fix site, are unsafe: their golden is --fix --unsafe's.
+
+(rule
+ (copy fix_mrm.unsafe.ml fix_mrm_unsafe.ml))
+
+(library
+ (name fix_mrm_unsafe)
+ (modules fix_mrm_unsafe))

@@ -21,6 +21,9 @@ let atomic ?(fsync = true) ?(mode = 0o644) ~path bytes =
     in
     let close_fd () = try Unix.close fd with Unix.Unix_error _ -> () in
     (match
+       (* [openfile]'s mode passes through the umask; the caller asked for
+          these bits exactly, a preserved target's among them. *)
+       Unix.fchmod fd mode;
        let len = String.length bytes in
        let rec write off =
          if off < len then

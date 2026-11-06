@@ -12,8 +12,8 @@ let meta =
       "two-case match that transforms one result arm and rebuilds the other"
     ~doc:
       {|`match r with Ok x -> Ok E | Error e -> Error e` is `Result.map
-(fun x -> E) r`: the error arm provably rebuilds the same payload, so
-the rewrite is exact. The mirrored shape — identity `Ok` arm,
+(fun x -> E) r`: the error arm provably rebuilds the same payload. The
+mirrored shape — identity `Ok` arm,
 transforming `Error` arm — is `Result.map_error` and is matched too,
 with its own message.
 
@@ -32,7 +32,11 @@ spelling `Ok`/`Error` deliberately do not fire. The fix rewrites the
 match form to `Result.map (fun x -> E) r` / `Result.map_error (fun e ->
 E) r` (the scrutinee alone for the double identity) where the sources
 slice cleanly; the `function` form has no scrutinee to name and ships
-none.|}
+none. The `Result` rewrites are unsafe, applied only under `--unsafe`:
+`Result` resolves in the fix site's scope, which the rule never checked,
+and a constructor or field in `E` chosen by its expected type may not
+typecheck inside the lambda. The scrutinee alone names nothing, and is
+safe.|}
     ()
 
 let map_message =
@@ -95,7 +99,7 @@ let lambda_fix u (m : Typedtree.expression) ~fn ~pat ~ee ~scrut =
   match (Pat.bound_var pat, Unit.text u ee, Unit.splice u scrut) with
   | Some (name, _), Some body, Some r ->
       Some
-        (Fix.safe_replace m.exp_loc
+        (Fix.unsafe_replace m.exp_loc
            (Unit.delimited u m
               (String.concat ""
                  [ fn; " (fun "; name.Location.txt; " -> "; body; ") "; r ]))

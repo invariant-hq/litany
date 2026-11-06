@@ -46,6 +46,18 @@ let () =
           equal (result unit string) (Ok ())
             (W.atomic ~mode:0o600 ~path "secret");
           equal int 0o600 (Unix.stat path).Unix.st_perm);
+      test "mode is exact, whatever the umask would clear" (fun () ->
+          in_dir @@ fun dir ->
+          let path = Filename.concat dir "out" in
+          let umask = Unix.umask 0o022 in
+          Fun.protect
+            ~finally:(fun () ->
+              let (_ : int) = Unix.umask umask in
+              ())
+            (fun () ->
+              equal (result unit string) (Ok ())
+                (W.atomic ~mode:0o664 ~path "shared"));
+          equal int 0o664 (Unix.stat path).Unix.st_perm);
       test "a failed write leaves the target's bytes alone" (fun () ->
           in_dir @@ fun dir ->
           let path = Filename.concat dir "out" in

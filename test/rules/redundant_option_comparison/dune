@@ -6,4 +6,6 @@
   fixtures/fix_roc.ml
   fixtures/.fix_roc.objs/byte/fix_roc.cmt
   fixtures/fix_roc.fixed.ml
+  fixtures/fix_roc.unsafe.ml
+  fixtures/.fix_roc_unsafe.objs/byte/fix_roc_unsafe.cmt
   fixtures/.fix_roc_fixed.objs/byte/fix_roc_fixed.cmt))

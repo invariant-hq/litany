@@ -12,7 +12,7 @@ let meta =
     ~doc:
       {|`match o with Some x -> Some E | None -> None` is `Option.map
 (fun x -> E) o` written longhand: both forms evaluate the scrutinee once
-and `E` only in the `Some` case, so the rewrite is exact.
+and `E` only in the `Some` case.
 
     (* bad *)  match o with Some x -> Some (x + 1) | None -> None
     (* good *) Option.map (fun x -> x + 1) o
@@ -28,7 +28,11 @@ territory) deliberately do not fire. The fix rewrites the match form to
 `Option.map (fun x -> E) o` — the tighter `Option.map f o` when `E` is
 exactly `f x` for an identifier `f` other than `x`, and the scrutinee
 alone for the degenerate rebuild — where the sources slice cleanly; the
-`function` form has no scrutinee to name and ships none.|}
+`function` form has no scrutinee to name and ships none. The `Option.map`
+rewrites are unsafe, applied only under `--unsafe`: `Option` resolves in
+the fix site's scope, which the rule never checked, and a constructor in
+`E` chosen by its expected type may not typecheck inside the lambda. The
+scrutinee alone names nothing, and is safe.|}
     ()
 
 let map_message =
@@ -110,7 +114,7 @@ let build_fix u (e : Typedtree.expression) ~scrut ~pat ~x ~ee ~identity =
         in
         Option.map
           (fun text ->
-            Fix.safe_replace loc (Unit.delimited u e text)
+            Fix.unsafe_replace loc (Unit.delimited u e text)
               ~title:"rewrite with Option.map")
           rewrite
 

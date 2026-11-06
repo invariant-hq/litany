@@ -1,5 +1,18 @@
 # Unreleased
 
+- `--fix` keeps a file's permission bits, whatever the umask, as it always
+  said it did.
+- `--fix` parses an `.mli` as an interface, where a `module` or `class`
+  declaration was refused as unparsable, and prints none of the compiler's
+  warnings when it reparses a source.
+- A safe fix no longer breaks the build when a character literal or a comment
+  in its operand holds a bracket.
+- The fixes of `redundant-nested-if`, `manual-option-map`,
+  `manual-option-value`, `manual-result-map` and `redundant-option-comparison`
+  are unsafe, applied only under `--unsafe`: the name they write may be
+  shadowed where they write it, which changed what the program computed, and a
+  constructor chosen by its expected type may stop compiling. Replacing a match
+  with its own scrutinee stays safe.
 - The documentation is a site, `hyphatech.github.io/litany`, built by
   `make docs`, replacing `doc/`. Its rule pages are written from `litany
   rules` and `litany explain`, and every program it shows is a file of

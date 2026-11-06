@@ -47,6 +47,13 @@
  (applies_to fixloop)
  (deps %{bin:litany}))
 
+; What --fix must never do to the files it writes: real nested dune projects,
+; rebuilt after the fix.
+
+(cram
+ (applies_to fixsafety)
+ (deps %{bin:litany}))
+
 ; M7: the one-unit in-build gate (litany unit), proved against the
 ; vendored ocamlc-loc parser — what litany emits is what dune's editor
 ; pipeline receives.
