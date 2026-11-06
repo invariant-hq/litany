@@ -2,16 +2,16 @@
 ; contents under dune's dev profile — the unused-module-binding defect
 ; this fixture exists to exhibit drags its members along, so the
 ; value-level echo is opted out alone. Warning 60 (the module-level
-; judgment itself) is already off in the dev profile.
+; judgment itself) is what this fixture exhibits, so it is opted out too.
 
 (library
  (name fix_sumb)
  (modules fix_sumb)
  (flags
-  (:standard -w -32)))
+  (:standard -w -32-60)))
 
 (library
  (name fix_sumb_nomli)
  (modules fix_sumb_nomli)
  (flags
-  (:standard -w -32)))
+  (:standard -w -32-60)))

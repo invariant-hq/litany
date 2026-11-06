@@ -12,4 +12,7 @@
 
 (library
  (name fix_nll_fixed)
+ ; Deliberate: what these fixtures hold unused is what they test.
+ (flags
+  (:standard -w -27-32-60))
  (modules fix_nll_fixed))

@@ -10,6 +10,9 @@
 
 (executable
  (name dcx_root)
+ ; Deliberate: what these fixtures hold unused is what they test.
+ (flags
+  (:standard -w -27-32-60))
  (modules dcx_root)
  (libraries dcx))
 

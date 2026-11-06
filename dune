@@ -1,6 +1,18 @@
-; litany on litany. The report rule gates every test run; fixing is the
-; explicit @lint alias, whose fixes arrive as dune correction diffs —
-; dune promote applies them. Fixture noise is ringed out in ./litany.
+; Every warning but 4 (fragile match, which fires on every `_ ->`, and a
+; dependency's variant ends in a catch-all) and the module-style ones: 40, 41,
+; 42 (names resolved by type), 44, 45 (an open shadowing), 48 (eliminated
+; optional arguments), 67 (a functor parameter its signature leaves unused) and
+; 70 (a missing interface, which review holds). Warning 9 makes a new record
+; field a compile error wherever a pattern should handle it.
+
+(env
+ (_
+  (flags
+   (:standard -w +a-4-40-41-42-44-45-48-67-70))))
+
+; litany on litany: make test runs this report, and it fails on a finding.
+; Fixing is the explicit @lint alias, whose fixes arrive as dune correction
+; diffs that dune promote applies. Fixture noise is ringed out in ./litany.
 
 (rule
  (alias runtest)
@@ -17,11 +29,10 @@
  (action
   (run litany check --fix)))
 
-; Run with dune build @cover --instrument-with ppx_windtrap.coverage
-; Coverage runs the test tree, never bench: a benchmark under
-; instrumentation measures the counters, not the code (observed: +44.6%
-; on analyze), and its gate failure would kill this chain before the
-; merge. (alias_rec test/runtest) scopes the run half to test/.
+; make coverage. The tests alone, never bench: a benchmark under instrumentation
+; measures the counters. What a cram test runs is not counted, since its process
+; writes its counts into a sandbox dune removes, so the floor is the unit and
+; rule suites' alone: raise it with them, and never lower it.
 
 (rule
  (alias cover)
@@ -29,13 +40,4 @@
   (alias_rec test/runtest)
   (universe))
  (action
-  ; measured 81.5% on 2026-08-21 (settled tree); ratchet up, never down
-  (run %{bin:windtrap} coverage --min 79)))
-
-; dune build @mutate --instrument-with ppx_windtrap.mutate
-
-(rule
- (alias mutate)
- (deps (universe))
- (action
-  (run %{bin:windtrap} mutate)))
+  (run %{bin:windtrap} coverage --min 84)))

@@ -1,5 +1,8 @@
 (library
  (name fix_wit)
+ ; Deliberate: what these fixtures hold unused is what they test.
+ (flags
+  (:standard -w -27-32-60))
  (modules
   wit_direct
   wit_mli

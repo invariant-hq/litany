@@ -1263,7 +1263,7 @@ let unit_cache_tests =
           in
           same_report cold warm);
       test "capture fires once per admitted unit, cold and warm" (fun () ->
-          let tbl, uc = store_all () in
+          let _, uc = store_all () in
           let entries = [ entry_a (); entry_missing () ] in
           let captured () =
             let acc = ref [] in

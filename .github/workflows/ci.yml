@@ -23,6 +23,7 @@ jobs:
       - run: opam install -y ocamlformat.0.29.0
       - run: make lint OPAM="opam exec --"
       - run: make test OPAM="opam exec --"
+      - run: make coverage OPAM="opam exec --"
 
   # The oldest versions the opam file allows, as opam-repository checks.
   lower-bounds:

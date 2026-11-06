@@ -13,3 +13,8 @@
         examples/inventory/**)
  (ignore all)
  (reason "rule fixtures are deliberate provocations; the suites own them"))
+
+(per-path
+ (paths bench/**)
+ (ignore suspicious-wall-clock-elapsed)
+ (reason "a benchmark reports wall time; the stdlib has no monotonic clock"))

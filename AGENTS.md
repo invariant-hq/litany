@@ -13,11 +13,14 @@ is for anyone changing it, human or agent. Users start at
 ## Commands
 
 ```sh
-make setup   # once: the switch hypha-litany, litany's test tools pinned
-make test    # every test
-make lint    # formatting and the release build
-make fmt     # format in place
-make docs    # the documentation site, into _build/docs; make docs-serve
+make setup     # once: the switch hypha-litany, litany's test tools pinned
+make test      # every test, and litany over itself
+make lint      # formatting and the release build
+make coverage  # the tests' coverage, held to its floor; CI runs it
+make mutate    # the mutants no test kills, to weigh
+make bench     # the timing gate, on a quiet machine
+make fmt       # format in place
+make docs      # the documentation site, into _build/docs; make docs-serve
 ```
 
 A change that makes a sentence of the site false edits that sentence in

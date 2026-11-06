@@ -1,4 +1,4 @@
-; bench_traversal is the runtest-wired thumper suite (hermetic fixture,
+; bench_traversal is the thumper suite (hermetic fixture,
 ; committed baseline; thumper is an ordinary test dependency since the 5.5
 ; re-lock — see dune-project); bench_corpus takes a corpus directory
 ; argument like bench/decode and is run by hand.
@@ -20,8 +20,11 @@
  (modules bench_corpus)
  (libraries compiler-libs.common litany litany_rules unix))
 
+; A timing, so make bench alone runs it: under load it fails without a
+; regression, which no test may do.
+
 (rule
- (alias runtest)
+ (alias bench)
  (deps
   traversal.thumper
   fixtures/fix_bench.ml

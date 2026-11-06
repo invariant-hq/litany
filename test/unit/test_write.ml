@@ -7,9 +7,7 @@ open Windtrap
 module W = Litany.Write
 
 let in_dir f =
-  let dir = Filename.temp_file "litany-write" "" in
-  Sys.remove dir;
-  Unix.mkdir dir 0o755;
+  let dir = Filename.temp_dir "litany-write" "" in
   Fun.protect
     ~finally:(fun () ->
       Array.iter

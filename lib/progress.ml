@@ -51,7 +51,10 @@ let truncate s =
   let max = width () - 1 in
   if String.length s <= max then s else String.sub s 0 max
 
-let elapsed t = Unix.gettimeofday () -. t.started
+(* The stdlib has no monotonic clock, and a jump only misprints a meter line. *)
+let[@litany.allow "suspicious-wall-clock-elapsed: only a meter line reads it"] elapsed
+    t =
+  Unix.gettimeofday () -. t.started
 
 let line t =
   let secs = elapsed t in

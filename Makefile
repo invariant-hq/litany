@@ -2,7 +2,7 @@ SWITCH ?= hypha-litany
 OPAM = opam exec --switch=$(SWITCH) --
 
 .DEFAULT_GOAL := help
-.PHONY: help setup pin build test lint fmt docs docs-serve
+.PHONY: help setup pin build test bench coverage mutate lint fmt docs docs-serve
 
 DOCS_PORT ?= 4321
 
@@ -36,8 +36,21 @@ build: ## build everything
 # The tests read litany's page plain -- a parser and a grep over it -- and
 # dune decides from the console it runs in whether to colour what its
 # actions write: so every run, here or on CI, is given one with no colour.
-test: ## run every test
-	env -u CI -u TERM -u GITHUB_ACTIONS -u CLICOLOR_FORCE NO_COLOR=1 $(OPAM) dune runtest test
+TEST_ENV = env -u CI -u TERM -u GITHUB_ACTIONS -u CLICOLOR_FORCE NO_COLOR=1
+test: ## run every test, and litany over itself
+	$(TEST_ENV) $(OPAM) dune build @test/runtest @@runtest
+
+bench: ## run the timing gate, on a quiet machine
+	$(OPAM) dune build @bench/traversal/bench
+
+coverage: ## measure the tests' coverage, and hold it to its floor
+	$(TEST_ENV) $(OPAM) dune build @cover --instrument-with ppx_windtrap.coverage
+
+# A suite with a survivor fails, so the merge runs whatever the suites answer.
+# Survivors are work to weigh, not a gate: some mutants are equivalent.
+mutate: ## list the mutants no test kills
+	-$(TEST_ENV) WINDTRAP_MUTATE=1 $(OPAM) dune build @test/runtest --force --instrument-with ppx_windtrap.mutate
+	$(OPAM) windtrap mutate
 
 # Release is the profile opam installs with.
 lint: ## check formatting and the release build

@@ -34,6 +34,9 @@
 
 (executable
  (name fix_mbo_run)
+ ; Deliberate: what these fixtures hold unused is what they test.
+ (flags
+  (:standard -w -27-32-60))
  (modules fix_mbo_run))
 
 (rule
@@ -41,6 +44,9 @@
 
 (executable
  (name fix_mbo_unsafe_run)
+ ; Deliberate: what these fixtures hold unused is what they test.
+ (flags
+  (:standard -w -27-32-60))
  (modules fix_mbo_unsafe_run))
 
 (rule
