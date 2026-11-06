@@ -55,9 +55,9 @@ Warning 0 [suspicious-physical-equality]: physical comparison has a non-immediat
 30 rules selected · 1 unit · 2 findings (1 fixable — run `litany check --fix`) · 0 skipped
 ```
 
-`litany check --fix` makes the comparison `t.stock = []`.
-[Getting started](https://hyphatech.github.io/litany/) walks through it, and
-[the rules](https://hyphatech.github.io/litany/reference/rules/) lists all 84.
+`litany check --fix` rewrites the first to `t.stock = []`; the second has no fix,
+since that judgement is yours. Next: [Getting started](https://hyphatech.github.io/litany/)
+and [all 84 rules](https://hyphatech.github.io/litany/reference/rules/).
 
 ## Contributing
 
