@@ -37,6 +37,8 @@
   `untyped-wildcard-binding` are `nursery`, as a new rule is until it has been
   reviewed: naming one still runs it, and `--select restriction` no longer does.
 - `suspicious-str-formatter` promises no fix, as it has never emitted one.
+- `litany --version` prints the release's version, where every release printed
+  `dev`.
 - `litany units --dump` prints `intf-source`, as `--save` writes it.
 - With `GITHUB_ACTIONS` set, `--explain-withheld` keeps the text page, as it
   says it does, and doesn't write text into the annotation stream.

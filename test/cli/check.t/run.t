@@ -15,8 +15,8 @@ whole session.)
 
   $ unset GITHUB_ACTIONS
 
-Version metadata is available without running a check (the version is
-pinned at the first release — dev until then).
+Version metadata is available without running a check. A checkout says dev; a
+release archive says its tag, which git archive writes into bin/version.ml.
 
   $ litany --version
   dev

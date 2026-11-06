@@ -9,10 +9,6 @@
 
 open Cmdliner
 
-(* dune-build-info is not in the lock; the version is pinned at the first
-   release. *)
-let version = "dev"
-
 let man =
   [
     `S Manpage.s_description;
@@ -43,8 +39,9 @@ let default = Term.(ret (const (`Help (`Auto, None))))
    linter and its build integration, no developer workflows. *)
 let tool =
   let info =
-    Cmd.info "litany" ~version ~doc:"Lint OCaml from its compiled artifacts."
-      ~man ~exits:Cli_common.exits
+    Cmd.info "litany" ~version:Version.current
+      ~doc:"Lint OCaml from its compiled artifacts." ~man
+      ~exits:Cli_common.exits
   in
   Cmd.group ~default info
     [
