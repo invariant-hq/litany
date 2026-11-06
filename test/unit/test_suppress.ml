@@ -365,5 +365,8 @@ let property_tests =
     ]
 
 let () =
-  run "litany_suppress"
-    [ payload_tests; scope_tests; scan_tests; deletion_tests; property_tests ]
+  exit
+  @@ run "litany_suppress"
+       [
+         payload_tests; scope_tests; scan_tests; deletion_tests; property_tests;
+       ]

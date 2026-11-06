@@ -65,57 +65,61 @@ let scope local =
   Scope.v ~resolver ~intra:(fun _ -> []) ~local
 
 let () =
-  Windtrap.run "matches_type local-alias hop"
-    [
-      test "a unit-local functor instance resolves through the hop" (fun () ->
-          let str = structure () in
-          let sc = scope str.Typedtree.str_type in
-          let sm = type_head str "SM.empty" in
-          is_true ~msg:"SM.t is Stdlib.Map.Make.t under the hop"
-            (Scope.matches_type sc (name "Stdlib.Map.Make.t") sm);
-          is_false ~msg:"SM.t is not Stdlib.Set.Make.t"
-            (Scope.matches_type sc (name "Stdlib.Set.Make.t") sm);
-          is_false ~msg:"under an empty [local] the head stays unresolved"
-            (Scope.matches_type (scope []) (name "Stdlib.Map.Make.t") sm);
-          let is_head = type_head str "IS.empty" in
-          is_true ~msg:"IS.t is Stdlib.Set.Make.t under the hop"
-            (Scope.matches_type sc (name "Stdlib.Set.Make.t") is_head));
-      test "a plain module alias resolves through the hop" (fun () ->
-          let str = structure () in
-          let sc = scope str.Typedtree.str_type in
-          let h = type_head str "h_probe" in
-          is_true ~msg:"H.t is Stdlib.Hashtbl.t under the hop"
-            (Scope.matches_type sc (name "Stdlib.Hashtbl.t") h));
-      test "an ascription resolves as its written signature" (fun () ->
-          let str = structure () in
-          let sc = scope str.Typedtree.str_type in
-          let am = type_head str "AM.empty" in
-          is_true
-            ~msg:
-              "a Map.S-ascribed instance carries S's interface UIDs and matches"
-            (Scope.matches_type sc (name "Stdlib.Map.Make.t") am);
-          let opaque = type_head str "Opaque.empty" in
-          is_false ~msg:"an inline-signature ascription stays unmatched"
-            (Scope.matches_type sc (name "Stdlib.Map.Make.t") opaque);
-          is_false ~msg:"nor is it any other canonical type"
-            (Scope.matches_type sc (name "Stdlib.Hashtbl.t") opaque));
-      test "same-name shadowed bindings resolve by ident, not name" (fun () ->
-          (* [include] keeps both an included [M = Hashtbl] and a
+  exit
+  @@ Windtrap.run "matches_type local-alias hop"
+       [
+         test "a unit-local functor instance resolves through the hop"
+           (fun () ->
+             let str = structure () in
+             let sc = scope str.Typedtree.str_type in
+             let sm = type_head str "SM.empty" in
+             is_true ~msg:"SM.t is Stdlib.Map.Make.t under the hop"
+               (Scope.matches_type sc (name "Stdlib.Map.Make.t") sm);
+             is_false ~msg:"SM.t is not Stdlib.Set.Make.t"
+               (Scope.matches_type sc (name "Stdlib.Set.Make.t") sm);
+             is_false ~msg:"under an empty [local] the head stays unresolved"
+               (Scope.matches_type (scope []) (name "Stdlib.Map.Make.t") sm);
+             let is_head = type_head str "IS.empty" in
+             is_true ~msg:"IS.t is Stdlib.Set.Make.t under the hop"
+               (Scope.matches_type sc (name "Stdlib.Set.Make.t") is_head));
+         test "a plain module alias resolves through the hop" (fun () ->
+             let str = structure () in
+             let sc = scope str.Typedtree.str_type in
+             let h = type_head str "h_probe" in
+             is_true ~msg:"H.t is Stdlib.Hashtbl.t under the hop"
+               (Scope.matches_type sc (name "Stdlib.Hashtbl.t") h));
+         test "an ascription resolves as its written signature" (fun () ->
+             let str = structure () in
+             let sc = scope str.Typedtree.str_type in
+             let am = type_head str "AM.empty" in
+             is_true
+               ~msg:
+                 "a Map.S-ascribed instance carries S's interface UIDs and \
+                  matches"
+               (Scope.matches_type sc (name "Stdlib.Map.Make.t") am);
+             let opaque = type_head str "Opaque.empty" in
+             is_false ~msg:"an inline-signature ascription stays unmatched"
+               (Scope.matches_type sc (name "Stdlib.Map.Make.t") opaque);
+             is_false ~msg:"nor is it any other canonical type"
+               (Scope.matches_type sc (name "Stdlib.Hashtbl.t") opaque));
+         test "same-name shadowed bindings resolve by ident, not name"
+           (fun () ->
+             (* [include] keeps both an included [M = Hashtbl] and a
              later explicit [M = Set.Make (Int)] in [str_type]. A first-hit
              name lookup read the shadowed binding's identity — the second
              M's use matched [Stdlib.Hashtbl.t] (FP) and missed
              [Stdlib.Set.Make.t] (FN). The hop resolves the [Pident] head
              by [Ident.same], so each use matches exactly its binding. *)
-          let str = structure_of shadow_cmt_path in
-          let sc = scope str.Typedtree.str_type in
-          let first = type_head str "first_probe" in
-          let second = type_head str "second_probe" in
-          is_true ~msg:"the first M's use is Stdlib.Hashtbl.t"
-            (Scope.matches_type sc (name "Stdlib.Hashtbl.t") first);
-          is_false ~msg:"the first M's use is not Stdlib.Set.Make.t"
-            (Scope.matches_type sc (name "Stdlib.Set.Make.t") first);
-          is_true ~msg:"the second M's use is Stdlib.Set.Make.t"
-            (Scope.matches_type sc (name "Stdlib.Set.Make.t") second);
-          is_false ~msg:"the second M's use is NOT Stdlib.Hashtbl.t"
-            (Scope.matches_type sc (name "Stdlib.Hashtbl.t") second));
-    ]
+             let str = structure_of shadow_cmt_path in
+             let sc = scope str.Typedtree.str_type in
+             let first = type_head str "first_probe" in
+             let second = type_head str "second_probe" in
+             is_true ~msg:"the first M's use is Stdlib.Hashtbl.t"
+               (Scope.matches_type sc (name "Stdlib.Hashtbl.t") first);
+             is_false ~msg:"the first M's use is not Stdlib.Set.Make.t"
+               (Scope.matches_type sc (name "Stdlib.Set.Make.t") first);
+             is_true ~msg:"the second M's use is Stdlib.Set.Make.t"
+               (Scope.matches_type sc (name "Stdlib.Set.Make.t") second);
+             is_false ~msg:"the second M's use is NOT Stdlib.Hashtbl.t"
+               (Scope.matches_type sc (name "Stdlib.Hashtbl.t") second));
+       ]

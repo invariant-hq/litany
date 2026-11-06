@@ -476,4 +476,4 @@ let walk_tests =
               failf "expected the one real artifact, got %d" (List.length es));
     ]
 
-let () = run "litany_adapter" [ dune_tests; walk_tests ]
+let () = exit @@ run "litany_adapter" [ dune_tests; walk_tests ]

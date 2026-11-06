@@ -76,7 +76,7 @@ let lines_and_line =
   group "lines"
     [
       cases
-        ~name:(fun (contents, _) -> Printf.sprintf "%S" contents)
+        ~id:(fun (contents, _) -> Printf.sprintf "%S" contents)
         "line count"
         [
           ("", 0);
@@ -314,5 +314,6 @@ let consistency =
     ]
 
 let () =
-  run "litany_source"
-    [ accessors; lines_and_line; slicing; positions; locations; consistency ]
+  exit
+  @@ run "litany_source"
+       [ accessors; lines_and_line; slicing; positions; locations; consistency ]

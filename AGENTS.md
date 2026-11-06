@@ -13,7 +13,7 @@ is for anyone changing it, human or agent. Users start at
 ## Commands
 
 ```sh
-make setup     # once: the switch hypha-litany, litany's test tools pinned
+make setup     # once: the switch hypha-litany and litany's test tools
 make test      # every test, and litany over itself
 make lint      # formatting and the release build
 make coverage  # the tests' coverage, held to its floor; CI runs it
@@ -58,8 +58,7 @@ Hypha's rules, each with its reason here, and nowhere else:
 
 - **Tests are Windtrap, and benchmarks Thumper**, not Alcotest and QCheck.
   They are the fork's choice from upstream, and Windtrap's mutation testing is
-  what `make mutate` is. They are pinned to upstream's commits until the tests
-  are ported to a release: its released versions don't compile them.
+  what `make mutate` is.
 - **`(lang dune 3.23)`**: `(corrections produce)` in the root `dune`, which is
   the flow litany itself documents, needs it.
 - **The driver prints, reads its environment and enters a directory**:

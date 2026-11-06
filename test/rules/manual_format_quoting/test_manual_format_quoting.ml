@@ -52,20 +52,22 @@ let check_fixed_unsafe ~golden =
   equal ~msg:"fixed bytes vs the committed golden" string (read golden) fixed
 
 let () =
-  Windtrap.run "manual-format-quoting"
-    [
-      test "declares its one metadata record" (fun () ->
-          equal string "manual-format-quoting" (Rule.name rule);
-          is_true ~msg:"group is Pedantic" (Rule.group rule = Rule.Pedantic);
-          is_true ~msg:"nursery" (Rule.stability rule = Rule.Stability.Nursery);
-          is_true ~msg:"fix promise is Sometimes"
-            (Rule.fix rule = Rule.Sometimes);
-          is_true ~msg:"local rule" (not (Rule.is_project rule));
-          equal string "1.0" (Rule.since rule));
-      test "fires exactly on the marked hand-quoted literals" (fun () ->
-          Support.check_markers rule
-            ~message:"hand-quoted %s re-implements %S without its escaping"
-            ~source ~cmt);
-      test "unsafe fixes round-trip to the compiled golden" (fun () ->
-          check_fixed_unsafe ~golden:"fixtures/fix_mfq.fixed.ml");
-    ]
+  exit
+  @@ Windtrap.run "manual-format-quoting"
+       [
+         test "declares its one metadata record" (fun () ->
+             equal string "manual-format-quoting" (Rule.name rule);
+             is_true ~msg:"group is Pedantic" (Rule.group rule = Rule.Pedantic);
+             is_true ~msg:"nursery"
+               (Rule.stability rule = Rule.Stability.Nursery);
+             is_true ~msg:"fix promise is Sometimes"
+               (Rule.fix rule = Rule.Sometimes);
+             is_true ~msg:"local rule" (not (Rule.is_project rule));
+             equal string "1.0" (Rule.since rule));
+         test "fires exactly on the marked hand-quoted literals" (fun () ->
+             Support.check_markers rule
+               ~message:"hand-quoted %s re-implements %S without its escaping"
+               ~source ~cmt);
+         test "unsafe fixes round-trip to the compiled golden" (fun () ->
+             check_fixed_unsafe ~golden:"fixtures/fix_mfq.fixed.ml");
+       ]

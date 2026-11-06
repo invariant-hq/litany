@@ -52,40 +52,42 @@ let lines r =
     (Support.shape (Support.report r ~source ~cmt))
 
 let () =
-  Windtrap.run "wildcard-over-owned-variant"
-    [
-      test "declares its one metadata record" (fun () ->
-          equal string "wildcard-over-owned-variant" (Rule.name rule);
-          is_true ~msg:"group is Restriction"
-            (Rule.group rule = Rule.Restriction);
-          is_true ~msg:"nursery" (Rule.stability rule = Rule.Stability.Nursery);
-          is_true ~msg:"fix promise is Never" (Rule.fix rule = Rule.Never);
-          is_true ~msg:"local rule" (not (Rule.is_project rule));
-          equal string "1.1" (Rule.since rule));
-      test "fires exactly on the marked wildcard arms" (fun () ->
-          Support.check_markers rule ~source ~cmt);
-      test "a library the option names is owned too" (fun () ->
-          let owning =
-            configured [ form [ atom "owned"; atom "fix_wov_other" ] ]
-          in
-          let other =
-            List.filter
-              (fun l -> not (List.mem l (Support.fire_lines ~source)))
-              (lines owning)
-          in
-          equal (list int) ~msg:"other_library's wildcards fire, aliased too"
-            [
-              line_containing "match c with Red";
-              line_containing "match c with Aliased_other.Red";
-            ]
-            other);
-      test "the schema refuses what it cannot read" (fun () ->
-          is_true ~msg:"empty owned"
-            (String.length (refused [ form [ atom "owned" ] ]) > 0);
-          is_true ~msg:"owned twice"
-            (String.length
-               (refused [ form [ atom "owned"; atom "a"; atom "a" ] ])
-            > 0);
-          is_true ~msg:"unknown option"
-            (String.length (refused [ form [ atom "own"; atom "a" ] ]) > 0));
-    ]
+  exit
+  @@ Windtrap.run "wildcard-over-owned-variant"
+       [
+         test "declares its one metadata record" (fun () ->
+             equal string "wildcard-over-owned-variant" (Rule.name rule);
+             is_true ~msg:"group is Restriction"
+               (Rule.group rule = Rule.Restriction);
+             is_true ~msg:"nursery"
+               (Rule.stability rule = Rule.Stability.Nursery);
+             is_true ~msg:"fix promise is Never" (Rule.fix rule = Rule.Never);
+             is_true ~msg:"local rule" (not (Rule.is_project rule));
+             equal string "1.1" (Rule.since rule));
+         test "fires exactly on the marked wildcard arms" (fun () ->
+             Support.check_markers rule ~source ~cmt);
+         test "a library the option names is owned too" (fun () ->
+             let owning =
+               configured [ form [ atom "owned"; atom "fix_wov_other" ] ]
+             in
+             let other =
+               List.filter
+                 (fun l -> not (List.mem l (Support.fire_lines ~source)))
+                 (lines owning)
+             in
+             equal (list int) ~msg:"other_library's wildcards fire, aliased too"
+               [
+                 line_containing "match c with Red";
+                 line_containing "match c with Aliased_other.Red";
+               ]
+               other);
+         test "the schema refuses what it cannot read" (fun () ->
+             is_true ~msg:"empty owned"
+               (String.length (refused [ form [ atom "owned" ] ]) > 0);
+             is_true ~msg:"owned twice"
+               (String.length
+                  (refused [ form [ atom "owned"; atom "a"; atom "a" ] ])
+               > 0);
+             is_true ~msg:"unknown option"
+               (String.length (refused [ form [ atom "own"; atom "a" ] ]) > 0));
+       ]

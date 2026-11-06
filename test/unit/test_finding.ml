@@ -59,4 +59,4 @@ let equality_tests =
           contains ~sub:"the message" s);
     ]
 
-let () = run "litany_finding" [ construction_tests; equality_tests ]
+let () = exit @@ run "litany_finding" [ construction_tests; equality_tests ]

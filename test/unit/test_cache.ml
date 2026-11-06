@@ -492,7 +492,14 @@ let resolve_root =
     ]
 
 let () =
-  run "litany_cache"
-    [
-      keys; storing; corruption; eviction; workspaces; concurrency; resolve_root;
-    ]
+  exit
+  @@ run "litany_cache"
+       [
+         keys;
+         storing;
+         corruption;
+         eviction;
+         workspaces;
+         concurrency;
+         resolve_root;
+       ]

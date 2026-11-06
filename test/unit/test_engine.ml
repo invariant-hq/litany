@@ -1313,19 +1313,20 @@ let unit_cache_tests =
     ]
 
 let () =
-  Windtrap.run "litany_engine"
-    [
-      dispatch_tests;
-      kinds_tests;
-      emit_contract_tests;
-      degraded_tests;
-      resolver_degradation_tests;
-      roster_shape_tests;
-      ordering_tests;
-      failure_tests;
-      suppression_tests;
-      fix_channel_tests;
-      report_tests;
-      m6_tests;
-      unit_cache_tests;
-    ]
+  exit
+  @@ Windtrap.run "litany_engine"
+       [
+         dispatch_tests;
+         kinds_tests;
+         emit_contract_tests;
+         degraded_tests;
+         resolver_degradation_tests;
+         roster_shape_tests;
+         ordering_tests;
+         failure_tests;
+         suppression_tests;
+         fix_channel_tests;
+         report_tests;
+         m6_tests;
+         unit_cache_tests;
+       ]

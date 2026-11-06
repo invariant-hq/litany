@@ -30,9 +30,7 @@
   (run litany check --fix)))
 
 ; make coverage. The tests alone, never bench: a benchmark under instrumentation
-; measures the counters. What a cram test runs is not counted, since its process
-; writes its counts into a sandbox dune removes, so the floor is the unit and
-; rule suites' alone: raise it with them, and never lower it.
+; measures the counters. Raise the floor with the tests, and never lower it.
 
 (rule
  (alias cover)
@@ -40,4 +38,4 @@
   (alias_rec test/runtest)
   (universe))
  (action
-  (run %{bin:windtrap} coverage --min 84)))
+  (run %{bin:windtrap} coverage --min 89)))

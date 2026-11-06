@@ -51,7 +51,7 @@ let load ?(build_current = false) ?resolver:r entry =
   Unit.load ~resolver ~build_current entry
 
 let require_load ?build_current ?resolver entry =
-  require_ok ~pp_error:Unit.Skip.pp (load ?build_current ?resolver entry)
+  require_ok ~pp:Unit.Skip.pp (load ?build_current ?resolver entry)
 
 let require_skip ?build_current entry =
   require_error (load ?build_current entry)
@@ -464,8 +464,7 @@ let splice_tests =
     ]
 
 let name s =
-  require_ok ~pp_error:Litany.Naming.Name.pp_error
-    (Litany.Naming.Name.of_string s)
+  require_ok ~pp:Litany.Naming.Name.pp_error (Litany.Naming.Name.of_string s)
 
 (* Use sites of one cmt as [(Path.name, val_uid)] pairs — the compiler is the
    oracle for the uids use sites carry (test_ident's harvest, repeated here
@@ -1142,20 +1141,21 @@ let generated_tests =
     ]
 
 let () =
-  run "litany_unit"
-    [
-      digest_tests;
-      direct_tests;
-      skip_tests;
-      message_tests;
-      derived_tests;
-      substrate_tests;
-      splice_tests;
-      scope_tests;
-      uses_tests;
-      module_uses_tests;
-      exports_tests;
-      deps_tests;
-      generated_tests;
-      pp_tests;
-    ]
+  exit
+  @@ run "litany_unit"
+       [
+         digest_tests;
+         direct_tests;
+         skip_tests;
+         message_tests;
+         derived_tests;
+         substrate_tests;
+         splice_tests;
+         scope_tests;
+         uses_tests;
+         module_uses_tests;
+         exports_tests;
+         deps_tests;
+         generated_tests;
+         pp_tests;
+       ]

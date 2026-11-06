@@ -233,4 +233,5 @@ let facts =
           Support.check_project_marshal rule (units ()));
     ]
 
-let () = run "unused-export" [ metadata; findings; world; honesty; facts ]
+let () =
+  exit @@ run "unused-export" [ metadata; findings; world; honesty; facts ]

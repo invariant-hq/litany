@@ -18,30 +18,33 @@ let message name =
     name name
 
 let () =
-  Windtrap.run "suspicious-ambiguous-constructors"
-    [
-      test "declares its one metadata record" (fun () ->
-          equal string "suspicious-ambiguous-constructors" (Rule.name rule);
-          is_true ~msg:"group is Suspicious" (Rule.group rule = Rule.Suspicious);
-          is_true ~msg:"nursery" (Rule.stability rule = Rule.Stability.Nursery);
-          is_true ~msg:"fix promise is Never" (Rule.fix rule = Rule.Never);
-          is_true ~msg:"local rule" (not (Rule.is_project rule));
-          equal string "1.0" (Rule.since rule));
-      test "fires exactly on the marked shadowing constructors" (fun () ->
-          Support.check_markers rule ~source ~cmt);
-      test "each message names the shadowed constructor" (fun () ->
-          let rep = Support.report rule ~source ~cmt in
-          equal (list string)
-            [
-              message "Error";
-              message "Ok";
-              message "Some";
-              message "None";
-              message "Some";
-              message "::";
-              message "[]";
-            ]
-            (List.map
-               (fun (_, f) -> Litany.Finding.message f)
-               (Litany.Engine.Report.findings rep)));
-    ]
+  exit
+  @@ Windtrap.run "suspicious-ambiguous-constructors"
+       [
+         test "declares its one metadata record" (fun () ->
+             equal string "suspicious-ambiguous-constructors" (Rule.name rule);
+             is_true ~msg:"group is Suspicious"
+               (Rule.group rule = Rule.Suspicious);
+             is_true ~msg:"nursery"
+               (Rule.stability rule = Rule.Stability.Nursery);
+             is_true ~msg:"fix promise is Never" (Rule.fix rule = Rule.Never);
+             is_true ~msg:"local rule" (not (Rule.is_project rule));
+             equal string "1.0" (Rule.since rule));
+         test "fires exactly on the marked shadowing constructors" (fun () ->
+             Support.check_markers rule ~source ~cmt);
+         test "each message names the shadowed constructor" (fun () ->
+             let rep = Support.report rule ~source ~cmt in
+             equal (list string)
+               [
+                 message "Error";
+                 message "Ok";
+                 message "Some";
+                 message "None";
+                 message "Some";
+                 message "::";
+                 message "[]";
+               ]
+               (List.map
+                  (fun (_, f) -> Litany.Finding.message f)
+                  (Litany.Engine.Report.findings rep)));
+       ]

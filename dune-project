@@ -42,11 +42,14 @@
   (windtrap
    (and
     :with-test
-    (>= 0.2.0)))
+    (>= 0.3.1)))
   (ppx_windtrap
    (and
     :with-test
-    (>= 0.2.0)))
-  (thumper :with-test))
+    (>= 0.3.1)))
+  (thumper
+   (and
+    :with-test
+    (>= 0.1.0))))
  (tags
   (linter static-analysis developer-tools ocaml)))

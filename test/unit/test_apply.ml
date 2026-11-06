@@ -110,10 +110,10 @@ let patching =
           equal string "abXYc"
             (Apply.patch "abc" [ edit ~text:"X" 2 2; edit ~text:"Y" 2 2 ]));
       test "rejects an edit past the end" (fun () ->
-          raises_match (Exn.invalid_arg ~substring:"exceeds") (fun () ->
+          raises_match (Exn.invalid_arg ~sub:"exceeds") (fun () ->
               Apply.patch "ab" [ edit ~text:"x" 1 3 ]));
       test "rejects conflicting edits" (fun () ->
-          raises_match (Exn.invalid_arg ~substring:"conflict") (fun () ->
+          raises_match (Exn.invalid_arg ~sub:"conflict") (fun () ->
               Apply.patch "abcdef" [ edit 0 4; edit 2 5 ]));
       test "empty edit list is the identity" (fun () ->
           equal string "abc" (Apply.patch "abc" []));
@@ -340,4 +340,5 @@ let applying =
     ]
 
 let () =
-  Windtrap.run "litany_apply" [ planning; patching; correcting; applying ]
+  exit
+  @@ Windtrap.run "litany_apply" [ planning; patching; correcting; applying ]

@@ -14,9 +14,9 @@ depends: [
   "dune" {>= "3.23"}
   "ocaml" {>= "5.5.0" & < "5.6.0"}
   "cmdliner" {>= "2.0.0"}
-  "windtrap" {with-test & >= "0.2.0"}
-  "ppx_windtrap" {with-test & >= "0.2.0"}
-  "thumper" {with-test}
+  "windtrap" {with-test & >= "0.3.1"}
+  "ppx_windtrap" {with-test & >= "0.3.1"}
+  "thumper" {with-test & >= "0.1.0"}
   "odoc" {with-doc}
 ]
 build: [

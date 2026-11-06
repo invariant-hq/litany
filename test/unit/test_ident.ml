@@ -18,7 +18,7 @@ module Scope = Litany.Naming.Scope
 
 let name_t = Testable.make ~pp:Name.pp ~equal:Name.equal
 let uid_t = Testable.make ~pp:Shape.Uid.print ~equal:Shape.Uid.equal
-let name s = require_ok ~pp_error:Name.pp_error (Name.of_string s)
+let name s = require_ok ~pp:Name.pp_error (Name.of_string s)
 
 (* {1 Name grammar} *)
 
@@ -75,20 +75,20 @@ let name_tests =
                (list ~size:(int_range 1 3) (component [ 'A'; 'M'; 'Z' ]))
                (component [ 'a'; 'x'; 'z' ])))
         (fun s ->
-          let n = require_ok ~pp_error:Name.pp_error (Name.of_string s) in
+          let n = require_ok ~pp:Name.pp_error (Name.of_string s) in
           equal string s (Name.to_string n));
       cases
-        ~name:(fun s -> s)
+        ~id:(fun s -> s)
         "well-formed round trip" well_formed
         (fun s ->
-          let n = require_ok ~pp_error:Name.pp_error (Name.of_string s) in
+          let n = require_ok ~pp:Name.pp_error (Name.of_string s) in
           equal string s (Name.to_string n);
           equal
             (result name_t Testable.(make ~pp:Name.pp_error ~equal:( = )))
             (Ok n)
             (Name.of_string (Name.to_string n)));
       cases
-        ~name:(fun (s, _, _) -> if s = "" then "<empty>" else s)
+        ~id:(fun (s, _, _) -> if s = "" then "<empty>" else s)
         "malformed inputs" malformed
         (fun (s, at, fragment) ->
           match Name.of_string s with
@@ -266,7 +266,7 @@ let resolver_tests =
   group "Resolver"
     [
       cases
-        ~name:(fun (canonical, _, key) -> canonical ^ " = " ^ key)
+        ~id:(fun (canonical, _, key) -> canonical ^ " = " ^ key)
         "resolves to the uid the use site carries" table
         (fun (canonical, cmt, key) ->
           let r = resolver () in
@@ -629,12 +629,13 @@ let probe_tests =
     ]
 
 let () =
-  run "litany_ident"
-    [
-      name_tests;
-      ref_tests;
-      resolver_tests;
-      scope_tests;
-      type_tests;
-      probe_tests;
-    ]
+  exit
+  @@ run "litany_ident"
+       [
+         name_tests;
+         ref_tests;
+         resolver_tests;
+         scope_tests;
+         type_tests;
+         probe_tests;
+       ]

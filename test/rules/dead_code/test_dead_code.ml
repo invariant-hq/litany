@@ -236,4 +236,5 @@ let facts =
           Support.check_project_marshal rule (units ()));
     ]
 
-let () = run "dead-code" [ metadata; findings; contrast; honesty; facts ]
+let () =
+  exit @@ run "dead-code" [ metadata; findings; contrast; honesty; facts ]

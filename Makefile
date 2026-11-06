@@ -10,11 +10,7 @@ help: ## list targets
 	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
 	  | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-10s %s\n", $$1, $$2}'
 
-# The test tools are upstream's, unreleased: pinned from invariant-hq at
-# the commits litany was written against, since their main has moved on,
-# and dune at the release its tests are written for.
-WINDTRAP = git+https://github.com/invariant-hq/windtrap.git\#93473fb37635b95a0de94a228caef3df8fa798ee
-THUMPER = git+https://github.com/invariant-hq/thumper.git\#0d42dc6964e30525b0595b6d5be04a1eda76c90e
+# dune at the release litany's tests are written for.
 setup: ## create the switch and install dependencies
 	@command -v bun >/dev/null 2>&1 || echo "The documentation site needs Bun 1.3 or later."
 	@opam switch list --short | grep -qx $(SWITCH) || opam switch create $(SWITCH) --empty -y
@@ -23,12 +19,9 @@ setup: ## create the switch and install dependencies
 	opam install . --switch=$(SWITCH) --deps-only --with-test --with-doc -y
 	opam install --switch=$(SWITCH) -y ocamlformat.0.29.0 ocaml-lsp-server merlin
 
-# With SWITCH= empty, the pins go to the current switch, as CI's is.
-pin: ## pin dune and the test tools
+# With SWITCH= empty, the pin goes to the current switch, as CI's is.
+pin: ## pin dune
 	opam pin add $(if $(SWITCH),--switch=$(SWITCH)) --no-action -y dune 3.23.0
-	opam pin add $(if $(SWITCH),--switch=$(SWITCH)) --no-action -y thumper $(THUMPER)
-	opam pin add $(if $(SWITCH),--switch=$(SWITCH)) --no-action -y windtrap $(WINDTRAP)
-	opam pin add $(if $(SWITCH),--switch=$(SWITCH)) --no-action -y ppx_windtrap $(WINDTRAP)
 
 build: ## build everything
 	$(OPAM) dune build @all
@@ -50,7 +43,7 @@ coverage: ## measure the tests' coverage, and hold it to its floor
 # Survivors are work to weigh, not a gate: some mutants are equivalent.
 mutate: ## list the mutants no test kills
 	-$(TEST_ENV) WINDTRAP_MUTATE=1 $(OPAM) dune build @test/runtest --force --instrument-with ppx_windtrap.mutate
-	$(OPAM) windtrap mutate
+	$(OPAM) windtrap mutants
 
 # Release is the profile opam installs with.
 lint: ## check formatting and the release build

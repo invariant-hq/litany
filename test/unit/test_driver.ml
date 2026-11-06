@@ -93,4 +93,4 @@ let fingerprint =
           equal string (fp pass1) (fp pass2));
     ]
 
-let () = Windtrap.run "litany_driver" [ fingerprint ]
+let () = exit @@ Windtrap.run "litany_driver" [ fingerprint ]

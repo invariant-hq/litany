@@ -244,8 +244,7 @@ let universe_hygiene =
                ~decls:[ d ~root:true "a"; d "b" ]
                ~edges:[ e "a" "b"; e "a" "b"; e "a" "b" ]));
       test "an owner conflict on one uid is a caller bug" (fun () ->
-          raises_match (Exn.invalid_arg ~substring:"declared by both")
-            (fun () ->
+          raises_match (Exn.invalid_arg ~sub:"declared by both") (fun () ->
               unreachable
                 ~decls:[ d ~owner:"alpha" "x"; d ~owner:"beta" "x" ]
                 ~edges:[]));
@@ -300,5 +299,6 @@ let properties =
     ]
 
 let () =
-  run "dead-code-solver"
-    [ facts; reachability; islands; universe_hygiene; properties ]
+  exit
+  @@ run "dead-code-solver"
+       [ facts; reachability; islands; universe_hygiene; properties ]

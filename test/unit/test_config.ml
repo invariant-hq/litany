@@ -528,18 +528,19 @@ let property_tests =
     ]
 
 let () =
-  Windtrap.run "litany_config"
-    [
-      reading_tests;
-      position_tests;
-      lexer_goldens;
-      form_goldens;
-      header_goldens;
-      lint_goldens;
-      rule_goldens;
-      per_path_goldens;
-      glob_goldens;
-      check_names_tests;
-      glob_matching_tests;
-      property_tests;
-    ]
+  exit
+  @@ Windtrap.run "litany_config"
+       [
+         reading_tests;
+         position_tests;
+         lexer_goldens;
+         form_goldens;
+         header_goldens;
+         lint_goldens;
+         rule_goldens;
+         per_path_goldens;
+         glob_goldens;
+         check_names_tests;
+         glob_matching_tests;
+         property_tests;
+       ]

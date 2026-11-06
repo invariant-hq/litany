@@ -21,22 +21,22 @@ let construction =
   group "construction"
     [
       test "v rejects an empty edit list" (fun () ->
-          raises_match (Exn.invalid_arg ~substring:"no edits") (fun () ->
+          raises_match (Exn.invalid_arg ~sub:"no edits") (fun () ->
               Fix.v ~title:"t" []));
       test "v rejects overlapping edits" (fun () ->
-          raises_match (Exn.invalid_arg ~substring:"overlap") (fun () ->
+          raises_match (Exn.invalid_arg ~sub:"overlap") (fun () ->
               Fix.v ~title:"t" [ edit 0 5; edit 3 8 ]));
       test "v rejects overlap hidden behind an interleaved empty edit"
         (fun () ->
           (* Sorted order puts [5;5) between [0;10) and [6;8); a naive
              adjacent-pair check would miss the outer overlap. *)
-          raises_match (Exn.invalid_arg ~substring:"overlap") (fun () ->
+          raises_match (Exn.invalid_arg ~sub:"overlap") (fun () ->
               Fix.v ~title:"t" [ edit 0 10; edit ~text:"" 5 5; edit 6 8 ]));
       test "v rejects an insertion strictly inside a replaced range" (fun () ->
           (* The conflict relation the applier's plan enforces — accepted
              here, the fix would die at apply time as a fixer bug instead
              of failing at construction where the programmer error is. *)
-          raises_match (Exn.invalid_arg ~substring:"conflicting") (fun () ->
+          raises_match (Exn.invalid_arg ~sub:"conflicting") (fun () ->
               Fix.v ~title:"t" [ edit 0 10; edit ~text:"i" 5 5 ]));
       test "v accepts adjacent edits — half-open spans do not overlap"
         (fun () ->
@@ -80,7 +80,7 @@ let constructors =
       test "safe_replace raises on dummy positions" (fun () ->
           (* [Location.none] carries pos_cnum = -1: a rule fix built on a
              PPX-synthesized node is a rule failure, not a wrong edit. *)
-          raises_match (Exn.invalid_arg ~substring:"negative") (fun () ->
+          raises_match (Exn.invalid_arg ~sub:"negative") (fun () ->
               Fix.safe_replace Location.none "x" ~title:"t"));
       test "a zero-width location is an insertion point" (fun () ->
           let f = Fix.safe_replace (loc 7 7) "\n" ~title:"t" in
@@ -98,4 +98,5 @@ let updating =
           is_true (Fix.applicability f = Fix.Safe));
     ]
 
-let () = Windtrap.run "litany_fix" [ construction; constructors; updating ]
+let () =
+  exit @@ Windtrap.run "litany_fix" [ construction; constructors; updating ]

@@ -38,37 +38,39 @@ let finding_lines rep =
     (Litany.Engine.Report.findings rep)
 
 let () =
-  Windtrap.run "suspicious-print-debugging"
-    [
-      test "declares its one metadata record" (fun () ->
-          equal string "suspicious-print-debugging" (Rule.name rule);
-          is_true ~msg:"group is Restriction"
-            (Rule.group rule = Rule.Restriction);
-          is_true ~msg:"stable" (Rule.stability rule = Rule.Stability.Stable);
-          is_true ~msg:"fix promise is Never" (Rule.fix rule = Rule.Never);
-          is_true ~msg:"local rule" (not (Rule.is_project rule));
-          equal string "1.0" (Rule.since rule));
-      test "fires exactly on the marked references in a library" (fun () ->
-          let rep = report ~kind:Litany.Roster.Library () in
-          check_clean rep;
-          List.iter
-            (fun (_, f) ->
-              equal ~msg:"message" string "library code prints to the console"
-                (Litany.Finding.message f))
-            (Litany.Engine.Report.findings rep);
-          equal ~msg:"finding lines vs (* FIRE *) markers" (list int)
-            (Support.fire_lines ~source)
-            (finding_lines rep));
-      test "an executable unit is silent" (fun () ->
-          let rep = report ~kind:Litany.Roster.Executable () in
-          check_clean rep;
-          equal (list int) [] (finding_lines rep));
-      test "a test unit is silent" (fun () ->
-          let rep = report ~kind:Litany.Roster.Test () in
-          check_clean rep;
-          equal (list int) [] (finding_lines rep));
-      test "a unit without kind metadata is silent" (fun () ->
-          let rep = report () in
-          check_clean rep;
-          equal (list int) [] (finding_lines rep));
-    ]
+  exit
+  @@ Windtrap.run "suspicious-print-debugging"
+       [
+         test "declares its one metadata record" (fun () ->
+             equal string "suspicious-print-debugging" (Rule.name rule);
+             is_true ~msg:"group is Restriction"
+               (Rule.group rule = Rule.Restriction);
+             is_true ~msg:"stable" (Rule.stability rule = Rule.Stability.Stable);
+             is_true ~msg:"fix promise is Never" (Rule.fix rule = Rule.Never);
+             is_true ~msg:"local rule" (not (Rule.is_project rule));
+             equal string "1.0" (Rule.since rule));
+         test "fires exactly on the marked references in a library" (fun () ->
+             let rep = report ~kind:Litany.Roster.Library () in
+             check_clean rep;
+             List.iter
+               (fun (_, f) ->
+                 equal ~msg:"message" string
+                   "library code prints to the console"
+                   (Litany.Finding.message f))
+               (Litany.Engine.Report.findings rep);
+             equal ~msg:"finding lines vs (* FIRE *) markers" (list int)
+               (Support.fire_lines ~source)
+               (finding_lines rep));
+         test "an executable unit is silent" (fun () ->
+             let rep = report ~kind:Litany.Roster.Executable () in
+             check_clean rep;
+             equal (list int) [] (finding_lines rep));
+         test "a test unit is silent" (fun () ->
+             let rep = report ~kind:Litany.Roster.Test () in
+             check_clean rep;
+             equal (list int) [] (finding_lines rep));
+         test "a unit without kind metadata is silent" (fun () ->
+             let rep = report () in
+             check_clean rep;
+             equal (list int) [] (finding_lines rep));
+       ]

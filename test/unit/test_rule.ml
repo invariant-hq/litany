@@ -321,4 +321,6 @@ let selection_tests =
     ]
 
 let () =
-  run "litany_rule" [ meta_tests; query_tests; policy_tests; selection_tests ]
+  exit
+  @@ run "litany_rule"
+       [ meta_tests; query_tests; policy_tests; selection_tests ]

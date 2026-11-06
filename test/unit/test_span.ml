@@ -35,10 +35,10 @@ let construction =
           is_true (Span.is_empty s);
           equal int 0 (Span.length s));
       test "v rejects a negative start" (fun () ->
-          raises_match (Exn.invalid_arg ~substring:"negative start") (fun () ->
+          raises_match (Exn.invalid_arg ~sub:"negative start") (fun () ->
               Span.v ~start:(-1) ~stop:3));
       test "v rejects stop before start" (fun () ->
-          raises_match (Exn.invalid_arg ~substring:"precedes") (fun () ->
+          raises_match (Exn.invalid_arg ~sub:"precedes") (fun () ->
               Span.v ~start:4 ~stop:3));
       prop "length is stop minus start" gen_span (fun s ->
           equal int (Span.stop s - Span.start s) (Span.length s));
@@ -105,7 +105,7 @@ let converting =
           in
           equal span (Span.v ~start:1 ~stop:2) (Span.of_location loc));
       test "rejects dummy positions with pos_cnum = -1" (fun () ->
-          raises_match (Exn.invalid_arg ~substring:"negative offset") (fun () ->
+          raises_match (Exn.invalid_arg ~sub:"negative offset") (fun () ->
               Span.of_location (position (pos (-1)) (pos (-1)))));
       test "rejects an end preceding the start" (fun () ->
           raises_match
@@ -136,4 +136,5 @@ let ordering =
             (Format.asprintf "%a" Span.pp (Span.v ~start:3 ~stop:7)));
     ]
 
-let () = run "litany_span" [ construction; predicates; converting; ordering ]
+let () =
+  exit @@ run "litany_span" [ construction; predicates; converting; ordering ]

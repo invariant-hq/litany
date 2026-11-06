@@ -18,38 +18,39 @@ let message name =
     name
 
 let () =
-  Windtrap.run "needless-mutually-recursive-types"
-    [
-      test "declares its one metadata record" (fun () ->
-          equal string "needless-mutually-recursive-types" (Rule.name rule);
-          is_true ~msg:"group is Style" (Rule.group rule = Rule.Style);
-          is_true ~msg:"stable" (Rule.stability rule = Rule.Stability.Stable);
-          is_true ~msg:"fix promise is Never" (Rule.fix rule = Rule.Never);
-          is_true ~msg:"local rule" (not (Rule.is_project rule));
-          equal string "1.0" (Rule.since rule));
-      test "fires exactly on the marked extractable declarations" (fun () ->
-          Support.check_markers rule ~source ~cmt);
-      test "each message names the extractable declaration" (fun () ->
-          let rep = Support.report rule ~source ~cmt in
-          equal (list string)
-            (List.map message
-               [
-                 "t1";
-                 "t2";
-                 "t3";
-                 "q3";
-                 "g1";
-                 "g2";
-                 "g3";
-                 "g4";
-                 "g7";
-                 "g8";
-                 "g9";
-                 "na";
-                 "nb";
-                 "sc";
-               ])
-            (List.map
-               (fun (_, f) -> Litany.Finding.message f)
-               (Litany.Engine.Report.findings rep)));
-    ]
+  exit
+  @@ Windtrap.run "needless-mutually-recursive-types"
+       [
+         test "declares its one metadata record" (fun () ->
+             equal string "needless-mutually-recursive-types" (Rule.name rule);
+             is_true ~msg:"group is Style" (Rule.group rule = Rule.Style);
+             is_true ~msg:"stable" (Rule.stability rule = Rule.Stability.Stable);
+             is_true ~msg:"fix promise is Never" (Rule.fix rule = Rule.Never);
+             is_true ~msg:"local rule" (not (Rule.is_project rule));
+             equal string "1.0" (Rule.since rule));
+         test "fires exactly on the marked extractable declarations" (fun () ->
+             Support.check_markers rule ~source ~cmt);
+         test "each message names the extractable declaration" (fun () ->
+             let rep = Support.report rule ~source ~cmt in
+             equal (list string)
+               (List.map message
+                  [
+                    "t1";
+                    "t2";
+                    "t3";
+                    "q3";
+                    "g1";
+                    "g2";
+                    "g3";
+                    "g4";
+                    "g7";
+                    "g8";
+                    "g9";
+                    "na";
+                    "nb";
+                    "sc";
+                  ])
+               (List.map
+                  (fun (_, f) -> Litany.Finding.message f)
+                  (Litany.Engine.Report.findings rep)));
+       ]

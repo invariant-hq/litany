@@ -21,7 +21,7 @@ let read file = In_channel.with_open_bin file In_channel.input_all
 let header = "(12:litany-units1:1)\n"
 
 let decode_ok ?msg bytes =
-  require_ok ?msg ~pp_error:Unit_file.pp_error (Unit_file.decode bytes)
+  require_ok ?msg ~pp:Unit_file.pp_error (Unit_file.decode bytes)
 
 let decode_err ?msg bytes = require_error ?msg (Unit_file.decode bytes)
 
@@ -413,5 +413,6 @@ let property_tests =
     ]
 
 let () =
-  run "litany_adapter_unit_file"
-    [ decode_golden_tests; encode_golden_tests; error_tests; property_tests ]
+  exit
+  @@ run "litany_adapter_unit_file"
+       [ decode_golden_tests; encode_golden_tests; error_tests; property_tests ]

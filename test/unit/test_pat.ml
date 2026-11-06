@@ -105,12 +105,12 @@ let ident_tests =
       test "an unresolved name matches nothing" (fun () ->
           equal int 0 (count (Pat.ident "Nowhere_at_all.thing")));
       test "a malformed name raises at construction" (fun () ->
-          raises_match (Exn.invalid_arg ~substring:"Pat.ident") (fun () ->
+          raises_match (Exn.invalid_arg ~sub:"Pat.ident") (fun () ->
               Pat.ident "not-a-name"));
       test "idents is any-of over canonical names" (fun () ->
           (* max matches twice, (=) once — the union, left-biased. *)
           equal int 3 (count (Pat.idents [ "Stdlib.max"; "Stdlib.(=)" ]));
-          raises_match (Exn.invalid_arg ~substring:"Pat.idents") (fun () ->
+          raises_match (Exn.invalid_arg ~sub:"Pat.idents") (fun () ->
               Pat.idents []));
     ]
 
@@ -220,7 +220,7 @@ let typ_tests =
             (Pat.run
                (Pat.typ "Nowhere_at_all.t")
                u (find "Some 9").exp_type true);
-          raises_match (Exn.invalid_arg ~substring:"Pat.typ") (fun () ->
+          raises_match (Exn.invalid_arg ~sub:"Pat.typ") (fun () ->
               Pat.typ "not-a-name"));
     ]
 
@@ -426,7 +426,7 @@ let views_expr =
           (* the two List.length uses plus [lam]/[lam2]s map and fold_left *)
           equal int 4 (count (Pat.from_unit "Stdlib__List"));
           equal int 0 (count (Pat.from_unit "Str"));
-          raises_match (Exn.invalid_arg ~substring:"from_unit") (fun () ->
+          raises_match (Exn.invalid_arg ~sub:"from_unit") (fun () ->
               Pat.from_unit "not a module"));
       test "ebool is the predefined literal - fake booleans refuse" (fun () ->
           (* [yes = true] matches; [fakes : fake = true] must not. *)
@@ -766,23 +766,24 @@ let registry_tests =
     ]
 
 let () =
-  Windtrap.run "litany_pat"
-    [
-      ident_tests;
-      apply_tests;
-      apply_list_tests;
-      typ_tests;
-      bound_var_tests;
-      constant_tests;
-      alternation_tests;
-      payload_tests;
-      views_generic;
-      views_expr;
-      views_params_cases;
-      views_patterns;
-      views_queries;
-      views_kinds;
-      query_type_refs;
-      reference_tests;
-      registry_tests;
-    ]
+  exit
+  @@ Windtrap.run "litany_pat"
+       [
+         ident_tests;
+         apply_tests;
+         apply_list_tests;
+         typ_tests;
+         bound_var_tests;
+         constant_tests;
+         alternation_tests;
+         payload_tests;
+         views_generic;
+         views_expr;
+         views_params_cases;
+         views_patterns;
+         views_queries;
+         views_kinds;
+         query_type_refs;
+         reference_tests;
+         registry_tests;
+       ]

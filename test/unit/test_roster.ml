@@ -102,4 +102,4 @@ let capability =
           is_true (Roster.project_capable (Roster.v ~complete:true [ e ])));
     ]
 
-let () = run "litany_roster" [ entries; rosters; capability ]
+let () = exit @@ run "litany_roster" [ entries; rosters; capability ]

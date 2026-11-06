@@ -582,5 +582,6 @@ let failure_proof_tests =
     ]
 
 let () =
-  Windtrap.run "litany_render"
-    [ golden_tests; color_tests; grammar_tests; failure_proof_tests ]
+  exit
+  @@ Windtrap.run "litany_render"
+       [ golden_tests; color_tests; grammar_tests; failure_proof_tests ]

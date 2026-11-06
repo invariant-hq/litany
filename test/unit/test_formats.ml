@@ -204,4 +204,5 @@ let github_tests =
           equal string "" (github (report ~rules:[] [ entry_a () ])));
     ]
 
-let () = Windtrap.run "litany_render_formats" [ json_tests; github_tests ]
+let () =
+  exit @@ Windtrap.run "litany_render_formats" [ json_tests; github_tests ]

@@ -124,11 +124,14 @@ let whole_suite_check argv =
   |> List.for_all (fun arg -> List.mem arg [ "check"; "--quick"; "--precise" ])
 
 let () =
-  Thumper.run "traversal"
-    ~budgets:
-      [
-        Thumper.Budget.no_slower_than 0.15;
-        Thumper.Budget.no_more_alloc_than 0.02;
-      ]
-    cases;
+  let code =
+    Thumper.run "traversal"
+      ~budgets:
+        [
+          Thumper.Budget.no_slower_than 0.15;
+          Thumper.Budget.no_more_alloc_than 0.02;
+        ]
+      cases
+  in
+  if code <> 0 then exit code;
   if whole_suite_check Sys.argv then rule7_gate ()
