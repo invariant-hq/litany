@@ -261,6 +261,11 @@ let enter_root root ~cmt_root ~units ~cache_dir =
 let check root cmt_root units no_build trust_build list_units select ignore fix
     unsafe format_flag jobs_flag cache_dir no_cache cache_stats explain_withheld
     no_progress =
+  (* Warned rather than refused: a run that passes today keeps its exit code. *)
+  if unsafe && not fix then
+    prerr_endline "litany: --unsafe does nothing without --fix";
+  if fix && list_units then
+    prerr_endline "litany: --list-units lists the units and applies no fix";
   if match jobs_flag with Some n -> n < 1 | None -> false then
     Cli_common.refuse "--jobs must be at least 1"
   else
@@ -383,7 +388,7 @@ let check root cmt_root units no_build trust_build list_units select ignore fix
                   | None ->
                       if
                         Sys.getenv_opt "GITHUB_ACTIONS" <> None
-                        && (not fix) && not list_units
+                        && (not fix) && (not list_units) && not explain_withheld
                       then Ok Litany.Driver.Github
                       else Ok Litany.Driver.Text
                 with
@@ -653,8 +658,9 @@ let format_arg =
      output), or $(b,github) (workflow annotations — auto-selected when \
      $(b,GITHUB_ACTIONS) is set and no $(b,--format) is given; an explicit \
      $(b,--format) always wins). The two machine formats render the report \
-     page only and refuse $(b,--fix) and $(b,--list-units); anything else the \
-     run prints (build forwarding, rename warnings) keeps its own channel."
+     page only and refuse $(b,--fix), $(b,--list-units) and \
+     $(b,--explain-withheld); anything else the run prints (build forwarding, \
+     rename warnings) keeps its own channel."
   in
   Arg.(
     value

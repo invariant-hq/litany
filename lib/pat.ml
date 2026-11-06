@@ -611,12 +611,7 @@ let pvalue pp =
         | _ -> fail ());
   }
 
-(* Tuple views. [Tuple] is the version seam over the payload shape
-   (labeled components from 5.4, see dune); both legs deliver unlabeled
-   components only, so one labeled component refuses here without this
-   module naming the 5.4 shape. The expression side ([etuple]) ships with its
-   first consuming rule, not before; [Tuple.expr_components] stays
-   in the seam for its return. *)
+(* Tuple views: one labeled component refuses the node. *)
 
 let ptuple pps =
   {

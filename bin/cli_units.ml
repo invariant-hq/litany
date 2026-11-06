@@ -70,6 +70,7 @@ let dump roster =
       Option.iter (field "cmt") (E.cmt entry);
       Option.iter (field "cmti") (E.cmti entry);
       Option.iter (field "pp-source") (E.preprocessed_source entry);
+      Option.iter (field "intf-source") (E.interface_source entry);
       Option.iter (field "library") (E.library entry);
       (match E.visibility entry with
       | Litany.Roster.Public -> field "public" "true"

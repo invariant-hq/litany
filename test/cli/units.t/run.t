@@ -83,3 +83,13 @@ So is a missing file.
   $ litany check --units no-such.units
   litany: no-such.units: No such file or directory
   [2]
+
+--dump is the document --save writes: an interface's source is in both.
+
+  $ printf 'val double : int -> int\n' > clean.mli
+  $ env -u INSIDE_DUNE dune build --root . @check 2>/dev/null
+  $ env -u INSIDE_DUNE litany units --dump | grep -c 'intf-source clean.mli'
+  1
+  $ env -u INSIDE_DUNE litany units --save with-intf.units
+  $ grep -c 'clean.mli' with-intf.units
+  1

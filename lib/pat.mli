@@ -430,12 +430,8 @@ val pvalue :
 
 (** {1:tuples Tuple views}
 
-    The tuple payloads ([Texp_tuple], [Tpat_tuple], [Ttyp_tuple]) gained labeled
-    components at 5.4 ((string option * _) list; plain lists in 5.3). The view
-    is seam-normalized behind a version-selected-copy leg pair
-    ([tuple_53.ml]/[tuple_54.ml], the [apply_arg] pattern) and matches
-    {e unlabeled} tuples only: one labeled component refuses the node. The
-    expression-side twin ([etuple]) ships with its first rule, not before. *)
+    A tuple view matches {e unlabeled} tuples only: one labeled component
+    refuses the node. *)
 
 val ptuple : (Typedtree.pattern list, 'k, 'r) t -> (Typedtree.pattern, 'k, 'r) t
 (** [ptuple pps] matches an unlabeled tuple pattern, its components as a list

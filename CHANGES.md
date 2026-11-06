@@ -37,6 +37,11 @@
   `untyped-wildcard-binding` are `nursery`, as a new rule is until it has been
   reviewed: naming one still runs it, and `--select restriction` no longer does.
 - `suspicious-str-formatter` promises no fix, as it has never emitted one.
+- `litany units --dump` prints `intf-source`, as `--save` writes it.
+- With `GITHUB_ACTIONS` set, `--explain-withheld` keeps the text page, as it
+  says it does, and doesn't write text into the annotation stream.
+- `--unsafe` without `--fix`, and `--list-units` with `--fix`, warn that they do
+  nothing.
 - The documentation is a site, `hyphatech.github.io/litany`, built by
   `make docs`, replacing `doc/`. Its rule pages are written from `litany
   rules` and `litany explain`, and every program it shows is a file of

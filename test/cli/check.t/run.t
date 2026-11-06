@@ -114,3 +114,10 @@ format is terminal-dependent, plain is not.
          3   internal error: a rule failed.
   
   SEE ALSO
+
+A flag that would do nothing says so, and the run keeps its exit code.
+
+  $ env -u INSIDE_DUNE litany check --no-build --unsafe 2>&1 >/dev/null | grep -- '--unsafe'
+  litany: --unsafe does nothing without --fix
+  $ env -u INSIDE_DUNE litany check --no-build --fix --list-units 2>&1 >/dev/null | grep -- '--list-units'
+  litany: --list-units lists the units and applies no fix

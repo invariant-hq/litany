@@ -118,22 +118,6 @@
  (modules test_driver)
  (libraries windtrap litany compiler-libs.common unix))
 
-; The dep-kind type moved between compiler minors (Cmt_format.dependency_kind
-; in 5.3/5.4, Shape.Uid.Deps.kind in 5.5); ppx_optcomp is not in the lock, so
-; the seam is a version-selected copy of one of two hand-written legs.
-
-(rule
- (action
-  (copy dep_kind_54.ml dep_kind.ml))
- (enabled_if
-  (< %{ocaml_version} 5.5.0)))
-
-(rule
- (action
-  (copy dep_kind_55.ml dep_kind.ml))
- (enabled_if
-  (>= %{ocaml_version} 5.5.0)))
-
 ; The test resolves against the fixture libraries' own build artifacts: dune
 ; compiles them normally and the deps below name the cmi/cmt files the
 ; resolver and the harvest read. LITANY_TEST_STDLIB carries the toolchain's
