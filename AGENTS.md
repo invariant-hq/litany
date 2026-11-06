@@ -26,8 +26,9 @@ make docs      # the documentation site, into _build/docs; make docs-serve
 A change that makes a sentence of the site false edits that sentence in
 the same commit, as it does the README's. The rule catalog on the site is
 written by `make docs` from `litany rules` and `litany explain`, never by
-hand, and every program a page shows is a file of `examples/`, which
-`test/cli/examples.t` lints.
+hand. A page imports a whole program from `examples/`, built with the
+repository, and `test/cli/examples.t` lints `examples/inventory`; short
+snippets and console samples are inline, and nothing checks them.
 
 ## What is Hypha's here
 
@@ -50,6 +51,27 @@ hand, and every program a page shows is a file of `examples/`, which
   `restricted-dependency`'s; no project's list is copied into a rule.
   Why: a project changes what it refuses with no release of this
   repository.
+
+## What is litany's own to allow
+
+Hypha's rules, each with its reason here, and nowhere else:
+
+- **Tests are Windtrap, and benchmarks Thumper**, not Alcotest and QCheck.
+  They are the fork's choice from upstream, and Windtrap's mutation testing is
+  what `make mutate` is. They are pinned to upstream's commits until the tests
+  are ported to a release: its released versions don't compile them.
+- **`(lang dune 3.23)`**: `(corrections produce)` in the root `dune`, which is
+  the flow litany itself documents, needs it.
+- **The driver prints, reads its environment and enters a directory**:
+  `lib/driver.ml`, `lib/progress.ml` and `lib/adapter.ml` are the command's own,
+  in a library nothing outside this repository can install, so the printing, the
+  `Sys.getenv_opt` and `Sys.chdir` are the executable's business in all but name.
+- **`Unix.gettimeofday`** in `lib/progress.ml` and for the cache's stamps in
+  `lib/driver.ml`, and throughout `bench/`: the stdlib has no monotonic clock,
+  and no dependency is worth a meter line, a coarse eviction age or a benchmark.
+- **`open Litany`** in `lib/rules/` and **`open Cmdliner`** in `bin/`: the first
+  is the rule author's whole vocabulary, and the second a library of combinators
+  every line of those files reads.
 
 ## Releases
 

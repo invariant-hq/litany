@@ -198,8 +198,7 @@ let estring p =
    compared with [Path.same] against the [Predef] path, plus a name
    equality — never the spelled [Longident], and never predef [cstr_uid]s
    (their cross-session stability is undocumented; [Predef] paths are the
-   contract). [Cstr] is the churn seam over the description's module home
-   ([Types] in 5.3, [Data_types] from 5.4). *)
+   contract). *)
 let predef_cstr cd path name =
   String.equal (Cstr.name cd) name
   && match Cstr.res_head cd with Some p -> Path.same p path | None -> false
@@ -622,10 +621,8 @@ let ptuple pps =
         | None -> fail ());
   }
 
-(* Record views. The [label_description] module home churns with [constructor_description]
-   (Types in 5.3, Data_types from 5.4), so [Lbl] rides the [Cstr] seam;
-   [Field.t] is a thin pair so the fields-array shape and the
-   [record_label_definition] payloads ([Kept] gained a field mid-window)
+(* Record views. [Field.t] is a thin pair so the fields-array shape and the
+   [record_label_definition] payloads
    never reach rule code. *)
 
 module Lbl = struct

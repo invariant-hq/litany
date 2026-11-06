@@ -32,9 +32,7 @@ exactly where an enabled warning 60 is also silent. Module bindings
 nested inside sub-structures need per-path signature reasoning and are
 recorded false negatives; `Pstr_recmodule` groups are not dispatched.
 The anonymous `module _ = …` is the sanctioned effect-only spelling
-and refuses by construction. The interface substrate is not
-witness-checked in 1.0: a stale `.cmti` can misreport export and skew
-this rule's gate — a named risk for the graduation review. No fix: a
+and refuses by construction. A stale `.cmti` can misreport exports at this rule's gate. No fix: a
 module body can perform effects at initialization, so deletion is
 never mechanical.|}
     ()

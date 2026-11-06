@@ -4,7 +4,7 @@
   ---------------------------------------------------------------------------*)
 
 (* The M3 traversal lane, hermetic: the engine with the launch catalog over
-   one compiled fixture unit. Three cases bracket the budget (plan rule 7:
+   one compiled fixture unit. Three cases bracket the budget (the overhead budget:
    engine overhead < 30% of decode+run):
 
    - [load]:    decode + witness join alone — the M2 lane per unit.
@@ -13,9 +13,9 @@
    - [check]:   load + analyze, the full per-unit lane. The committed
      baseline records this case too, deliberately: [analyze] pre-pays the
      demand-gated parse in its setup, so only [check] sees the
-     attribute-lane cost that rule 7 budgets.
+     attribute-lane cost that the budget limits.
 
-   After a whole-suite check passes, the rule-7 drift gate below re-measures
+   After a whole-suite check passes, the overhead gate below re-measures
    [load] and [check] under the quick protocol and fails the run when the
    hermetic overhead ratio drifts over its ceiling — so a corpus-scale
    30%→40% regression class fails runtest instead of waiting for the next
@@ -61,7 +61,7 @@ let cases =
       (fun (resolver, entry) -> analyze ~loaded:(load resolver entry) entry);
   ]
 
-(* The rule-7 drift gate. Rule 7 budgets engine overhead — everything but
+(* The overhead gate. The budget limits engine overhead — everything but
    cmt decode — at < 30% of the per-unit lane at corpus scale. The hermetic
    proxy here is the quotient (check − load) / load over the fixture unit:
    engine cost per unit of decode cost. The quotient form keeps uniform
@@ -95,25 +95,25 @@ let rule7_gate () =
     match Thumper.Run.samples run ~case Thumper.Metric.wall_time with
     | Some samples -> median samples
     | None ->
-        Printf.printf "rule-7 gate: no wall-time samples for %s\n" case;
+        Printf.printf "overhead gate: no wall-time samples for %s\n" case;
         exit 2
   in
   let load_s = med "load" and check_s = med "check" in
   if not (load_s > 0.) then begin
-    Printf.printf "rule-7 gate: degenerate load median (%.9f s)\n" load_s;
+    Printf.printf "overhead gate: degenerate load median (%.9f s)\n" load_s;
     exit 2
   end;
   let quotient = (check_s -. load_s) /. load_s in
   if quotient > overhead_per_decode_ceiling then begin
     Printf.printf
-      "rule-7 gate: engine overhead %.2fx the decode cost — over the %.1fx \
-       ceiling (load %.3f ms, check %.3f ms); rule 7 drift: re-measure the \
-       corpus ratio with bench_corpus before touching this ceiling\n"
+      "overhead gate: engine overhead %.2fx the decode cost — over the %.1fx \
+       ceiling (load %.3f ms, check %.3f ms); drift: re-measure the corpus \
+       ratio with bench_corpus before touching this ceiling\n"
       quotient overhead_per_decode_ceiling (1000. *. load_s) (1000. *. check_s);
     exit 1
   end;
   Printf.printf
-    "rule-7 gate: engine overhead %.2fx the decode cost (ceiling %.1fx)\n"
+    "overhead gate: engine overhead %.2fx the decode cost (ceiling %.1fx)\n"
     quotient overhead_per_decode_ceiling
 
 (* The gate runs only when the invocation checks the whole suite (the

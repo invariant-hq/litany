@@ -18,7 +18,8 @@ deterministically, and the loser waits for the next pass. The exit code
 describes the tree left behind: 0 clean, 1 findings remain.
 
 With `--units`, `--cmt-root` or `--no-build` litany can't rebuild, so one pass
-runs and it tells you to rebuild and run again.
+runs and it tells you to rebuild and run again; the exit code then describes
+the tree before the fixes.
 
 ## What is checked before a write
 

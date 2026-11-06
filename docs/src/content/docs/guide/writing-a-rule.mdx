@@ -17,7 +17,8 @@ A rule is one OCaml value in one file, a registry entry and a fixture.
   forever; a rename keeps the old one as an alias.
 - **Group**: what the rule detects, not how confident you are
   ([groups](/litany/guide/selecting-rules/#groups)).
-- **Stability**: every new rule is `Nursery`.
+- **Stability**: every new rule is `Nursery`: write
+  `~stability:Rule.Stability.Nursery`, since the default is `Stable`.
 - **Doc**: why, a `(* bad *)` and `(* good *)` block, what it fires on, and what
   it deliberately doesn't. A `Restriction` rule also says *why restrict this?*
 - **Negatives**: at least as many as positives, each a fixture line. Always

@@ -27,7 +27,7 @@ one fails). It fires only where the reduction is type-preserving and
 legal: the callee must not be the binding itself (`let rec f = f` is
 rejected by the compiler) nor one of the parameters, and the callee's
 arrow spine must be unlabeled over the forwarded prefix — the
-probe-pinned gate: with `let g ?(d = 0) x = x + d`, the wrapper
+gate: with `let g ?(d = 0) x = x + d`, the wrapper
 `let f x = g x` has type `int -> int` while `g` keeps
 `?d:int -> int -> int`, so reducing changes the type and the call-site
 surface. A type variable in the spine, or fewer visible arrows than
@@ -77,7 +77,7 @@ let forwards u pids args =
          | Some _ | None -> false)
        pids args
 
-(* The probe-pinned erasure gate: the callee's first [n] arrows must all
+(* The erasure gate: the callee's first [n] arrows must all
    be unlabeled. A type variable in the spine refuses. *)
 let rec unlabeled_prefix n ty =
   n = 0

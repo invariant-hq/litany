@@ -31,14 +31,8 @@ is the identity boundary. In preprocessed units the collapse is off
 and every reference reports individually: a rewriter-spliced location
 on a cluster's first reference is one the emit contract drops, and
 dropping the anchor would silence references that are real. Off by
-default even after graduation — adopting Re is a dependency decision —
-and no fix: the rewrite is a migration.
-
-Stable on field evidence: zero false positives over 91 reviewed
-sightings, UID-based with no resolver dependence. The per-reference
-walls that review recorded — one Str-heavy unit answering a dense page
-of findings — are what the collapse retires: each referenced
-declaration now reports once per unit.|}
+default — adopting Re is a dependency decision —
+and no fix: the rewrite is a migration.|}
     ()
 
 (* The unit name on the use site's declaration UID is the whole test —

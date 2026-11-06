@@ -47,9 +47,8 @@ module Skip = struct
   let rank sk = fst (rank_slug sk)
 
   (* Known cmt/cmi magic numbers, rendered as compiler versions in
-     [message]. cmi and cmt numbers move in lockstep; 036 and 037 are
-     verified against the 5.4.1 and 5.5.0 sources in the lock, 035 is the
-     5.3 release value. Anything else renders verbatim. *)
+     [message]. cmi and cmt numbers move in lockstep. Anything else renders
+     verbatim. *)
   let generation m =
     if
       String.length m = 12
@@ -277,7 +276,7 @@ type raw_tables = {
 }
 
 (* Item rows and unit-level reference names, computed together from the raw
-   tables (ALT-PROJ-05: [deps] carries declaration-pinned rows only; the
+   tables ([deps] carries declaration-pinned rows only; the
    unit-level residue is [unit_refs]). *)
 type deps_state =
   | Deps_raw of raw_tables

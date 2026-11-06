@@ -25,8 +25,7 @@ an absorbing constant on the right (`&& false`, `|| true`) only when the
 discarded left operand is a bare identifier or constant and so provably
 pure. Shadowed operators, two-constant operations, and absorbing cases
 whose discarded operand could have effects deliberately do not fire. No
-automatic fix in this release — the promise flips to `Sometimes` when the
-simplification fix lands.|}
+automatic fix.|}
     ()
 
 let conjunction = Pat.(apply (ident "Stdlib.(&&)") (__ ^:: __ ^:: nil))

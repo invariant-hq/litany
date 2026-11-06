@@ -202,7 +202,7 @@
 ; The report page: goldens over reports from real engine runs, against the
 ; engine suite's compiled fixture libraries, and the grammar pin — every
 ; page round-trips through dune's vendored ocamlc-loc parser
-; (test/vendor_ocamlc_loc, spike B).
+; (test/vendor_ocamlc_loc,.
 
 (test
  (name test_render)

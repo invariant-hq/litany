@@ -6,7 +6,7 @@
 (* Engine overhead at corpus scale: walk a corpus directory (bench/decode's
    lane), load every entry, and run the launch catalog over each admitted
    unit — reporting per-unit analyze time and the ratio the plan budgets
-   (rule 7: engine overhead, everything but cmt decode, < 30% of runtime).
+   (the budget: engine overhead, everything but cmt decode, < 30% of runtime).
 
    Plain executable like bench/decode: the corpus is machine-local, so the
    numbers land in doc/m3-notes.md, not a committed baseline. Run:

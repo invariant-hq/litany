@@ -24,12 +24,8 @@ literals — differing ones, by predefined-constructor identity. Equal
 literals (`then true else true`) are a degenerate shape left to a
 future same-arms analysis, and integer 0/1 branches and user-defined
 `True`/`False` constructors deliberately do not fire. The
-one-literal family (`then true else e` ≡ `c || e`, and kin) lived here
-until field evidence split it out: a shape census over real code
-measured 296 of 342 sightings as
-scanning-loop ladders where the operator rewrite is a side-grade, so
-that family is `manual-boolean-operator` — Pedantic, opt-in — while
-the unambiguous two-literal shapes keep this name. The fix performs
+one-literal family (`then true else e`, and kin) is
+`manual-boolean-operator`, Style and opt-in. The fix performs
 the rewrite from the condition's source slice (`Unit.splice`),
 parenthesizing a non-atomic slice; preprocessed units ship without
 one. Only the `use the condition` cell is safe: negation splices

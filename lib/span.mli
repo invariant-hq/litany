@@ -23,8 +23,9 @@ type t
 val v : start:int -> stop:int -> t
 (** [v ~start ~stop] is the span \[[start];[stop][)].
 
-    Raises [Invalid_argument] if [start < 0] or [stop < start] — checked in that
-    order: a span both negative and inverted reports the negative start. *)
+    @raise Invalid_argument
+      if [start < 0] or [stop < start] — checked in that order: a span both
+      negative and inverted reports the negative start. *)
 
 val start : t -> int
 (** [start s] is the offset of the first byte of [s]. *)
@@ -63,11 +64,12 @@ val of_location : Location.t -> t
     [loc.loc_end.pos_cnum]. It does not inspect [loc_ghost]: rejecting ghost
     locations is the engine's emit contract, not this conversion's.
 
-    Raises [Invalid_argument] if either offset is negative or the end precedes
-    the start — checked in that order: a location both negative and inverted
-    reports the negative offsets. The negative case is the one dummy positions
-    hit: [Location.none] and some PPX-synthesized nodes carry [pos_cnum = -1].
-    Rules guard by slicing first (see [Unit.splice]). *)
+    @raise Invalid_argument
+      if either offset is negative or the end precedes the start — checked in
+      that order: a location both negative and inverted reports the negative
+      offsets. The negative case is the one dummy positions hit: [Location.none]
+      and some PPX-synthesized nodes carry [pos_cnum = -1]. Rules guard by
+      slicing first (see [Unit.splice]). *)
 
 (** {1:fmt Formatting and comparing} *)
 

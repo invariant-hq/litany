@@ -25,7 +25,8 @@ jobs:
       - run: make test OPAM="opam exec --"
       - run: make coverage OPAM="opam exec --"
 
-  # The oldest versions the opam file allows, as opam-repository checks.
+  # The oldest versions the opam file allows, as opam-repository checks, of all
+  # but what make pin holds: dune and the test tools.
   lower-bounds:
     runs-on: ubuntu-24.04
     env:

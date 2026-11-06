@@ -20,9 +20,9 @@
     checker's proof.
 
     Matching is engine-grade: {!run} touches no compiler-libs global state,
-    performs no IO, and does per-node work proportional to the pattern —
-    identity tests are UID equalities against 1–2 element sets after the run's
-    first resolution of each name.
+    reads at most the [.cmi] files that resolve a name, and does per-node work
+    proportional to the pattern — identity tests are UID equalities against 1–2
+    element sets after the run's first resolution of each name.
 
     Patterns are first-class values: build them once, at module initialization,
     and reuse them across nodes — constructing a pattern inside a rule callback
@@ -102,8 +102,9 @@ val ident : string -> (Typedtree.expression, 'r, 'r) t
     so a typo is a failing test, not a silently dead rule. Every accepted name
     is recorded in {!Registry} at construction — the substrate of that audit.
 
-    Raises [Invalid_argument] if [name] does not parse under the canonical-name
-    grammar — a programmer error at rule definition time. *)
+    @raise Invalid_argument
+      if [name] does not parse under the canonical-name grammar — a programmer
+      error at rule definition time. *)
 
 val idents : string list -> (Typedtree.expression, 'r, 'r) t
 (** [idents names] is [ident n1 ||| ... ||| ident nk] — "any of these canonical
@@ -440,10 +441,8 @@ val ptuple : (Typedtree.pattern list, 'k, 'r) t -> (Typedtree.pattern, 'k, 'r) t
 
 (** {1:records Record views}
 
-    [Texp_record]'s shape is stable across the window, but the
-    [label_description] record's module home churns with
-    [constructor_description] (Types in 5.3, Data_types from 5.4) — the [Cstr]
-    seam pattern, extended to labels. *)
+    A view reads a record's labels through {!Field}, never its compiler
+    representation. *)
 
 (** Label descriptions, seam-normalized. *)
 module Lbl : sig

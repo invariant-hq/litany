@@ -25,15 +25,11 @@ boolean literal by predefined-constructor identity. Two-literal
 branches are redundant-if-bool's, and integer 0/1 branches and
 user-defined `True`/`False` constructors deliberately do not fire.
 
-This family was redundant-if-bool's until field evidence split it
-out: a shape census over real code measured 296 of its 342 sightings
-as scanning-loop ladders —
-`if i = len then true else if … then false else aux (i + 1)` — where
-the operator rewrite is a side-grade that folds match-, let-, and
-multi-line arms into `||`/`&&` operands, and a fix trial produced
-exactly those regressions on real code. A house-idiom claim, off by
-default and opt-in, is what Style means; the unambiguous two-literal
-shapes stayed behind under the old name. The fix performs the table's rewrite
+Style: in a scanning loop --
+`if i = len then true else if … then false else aux (i + 1)` -- the
+operator rewrite is a side-grade that folds match-, let-, and multi-line
+arms into `||`/`&&` operands, so it is off by default and opt-in.
+The unambiguous two-literal shapes are redundant-if-bool's. The fix performs the table's rewrite
 from the condition's and surviving branch's source slices
 (`Unit.splice`), parenthesizing non-atomic operands; every cell splices
 `not`, `&&`, or `||` — spellings that resolve in the fix site's scope,

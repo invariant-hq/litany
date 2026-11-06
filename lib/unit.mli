@@ -118,9 +118,9 @@ module Skip : sig
       e.g. ["stale — the source changed since the compiler read it"]. Remedy
       wording is the driver's, keyed on the constructor — only the driver knows
       which adapter ran, so no dune or command-line vocabulary appears here. For
-      [Wrong_magic], known magic numbers render as compiler versions
-      (["built by OCaml 5.6; this litany reads 5.5"]); unknown magics render
-      verbatim. Stable across patch releases; parsed by no one. *)
+      [Wrong_magic], known magic numbers render as compiler versions, and
+      unknown magics verbatim. Stable across patch releases; parsed by no one.
+  *)
 
   val slug : t -> string
   (** [slug sk] is [sk]'s stable machine name — ["stale"], ["wrong-magic"],

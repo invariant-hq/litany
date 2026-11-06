@@ -27,9 +27,7 @@ there the `let` form merely relocates the partiality, which is warning
 `exception` arms, effect-handler matches, and the `function (a, b) ->`
 spelling (`needless-fun-match`'s territory) do not fire. Alias
 components (`(x, _) as whole`) and constraint components
-(`((a : int), b)`) refuse conservatively in this version — recorded
-false negatives: the vocabulary has no view into an alias's
-sub-pattern yet. The fix rewrites `match ... with pat -> body` to
+(`((a : int), b)`) refuse conservatively, recorded false negatives. The fix rewrites `match ... with pat -> body` to
 `let pat = scrutinee in body` when the unit is not preprocessed and
 the keyword gaps normalize to exactly `match`, `with` (or `with |`),
 and `->` — a comment in any gap refuses the fix, never the finding.

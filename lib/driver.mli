@@ -69,26 +69,12 @@ val under_build : string -> bool
     binary — and decides which entries are keyable at all: an entry with a
     preprocessed source (the Derived-witness lane digests the pp file, which is
     not a key component) or without a cmt is never cached and simply recomputes.
-    The five components are populated as:
-
-    - [cmt_digest]: BLAKE128 of the cmt bytes, with the cmti's digest appended
-      when the entry names one — the cmti is a real semantic input:
-      interface-demanding rules ([missing-printer],
-      [suspicious-unused-module-binding]) and the project rules' fact collection
-      read it;
-    - [source_digest]: the adapter-supplied source path, NUL, BLAKE128 of the
-      source bytes — the path is semantic (findings anchor at it; ownership
-      compares its basename) — then the entry's roster metadata triple (library,
-      visibility, kind: project facts bake the root policy in and kind-gated
-      rules read the same fields, so flipping a library public must miss) and,
-      when the entry names a readable interface source, its path and the
-      BLAKE128 of its bytes (the interface text lane — fixing an [.mli] must
-      miss, not replay its findings);
-    - [config_fingerprint]: the raw bytes of the workspace [litany] file (or
-      empty), NUL, the run's build-currency verdict — admission consults
-      [build_current], so it keys;
-    - [selected_rules]: the configured selection's rule names;
-    - [binary_digest]: BLAKE128 of the running executable. *)
+    A key's components are the digests of the cmt and the cmti; the source's
+    path and digest, since a finding anchors at the path; the interface source's
+    path and digest, so that fixing an [.mli] misses; the entry's library,
+    visibility and kind, which project facts and kind-gated rules read; the raw
+    bytes of the workspace [litany] file; the build-currency verdict; the
+    selected rules' names; and the digest of the running executable. *)
 module Result_cache : sig
   type t
   (** The type for one run's cache context: the workspace handle plus the

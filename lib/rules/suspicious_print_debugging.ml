@@ -37,7 +37,7 @@ whose roster kind is `Library`. Executables and tests print by right,
 and a unit whose roster carries no kind (common under adapters whose
 rosters say nothing yet) is deliberately silent: a metadata-gated rule
 degrades to silence, never to guessing. `Printf.sprintf` and kin build
-strings, `Format.printf` is unlisted in this version, and a shadowing
+strings, `Format.printf` is unlisted, and a shadowing
 local `print_endline` resolves to a local declaration — none fire. No
 fix: the remedy — a logging seam, a formatter parameter, deletion — is
 a design decision.|}

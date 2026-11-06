@@ -73,9 +73,10 @@ val patch : string -> Fix.edit list -> string
     point land in list order. Pure: callers slice and verify, [patch] only
     rewrites.
 
-    Raises [Invalid_argument] if an edit's span exceeds [s]'s length or two
-    edits conflict — both mean the edits were not computed against [s], a
-    programmer error in the caller. *)
+    @raise Invalid_argument
+      if an edit's span exceeds [s]'s length or two edits conflict — both mean
+      the edits were not computed against [s], a programmer error in the caller.
+*)
 
 (** {1:correcting Correcting} *)
 

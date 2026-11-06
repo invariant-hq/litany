@@ -6,9 +6,7 @@ description:
 maintainer: ["Hypha Technologies Ltd <dev@hyphatech.io>"]
 authors: ["Thibaut Mattio <thibaut.mattio@gmail.com>"]
 license: "ISC"
-tags: [
-  "linter" "static-analysis" "developer-tools" "ocaml" "org:invariant-hq"
-]
+tags: ["linter" "static-analysis" "developer-tools" "ocaml"]
 homepage: "https://github.com/hyphatech/litany"
 doc: "https://hyphatech.github.io/litany/"
 bug-reports: "https://github.com/hyphatech/litany/issues"

@@ -24,12 +24,7 @@ map application feeds the concatenation directly — including
 shape. Shadowed or let-rebound names, `List.concat_map` itself, partial
 applications (`xs |> List.map f |> List.concat` leaves one), and
 anything between the map and the concatenation deliberately do not fire.
-No automatic fix in this release — the promise flips to `Sometimes` when
-the `List.concat_map` fix lands.
-
-Stable on field evidence: all 27 reviewed sightings were literally the
-bad shape, unambiguous and
-mechanical — the cleanest graduation case in the catalog.|}
+No automatic fix.|}
     ()
 
 let shape =

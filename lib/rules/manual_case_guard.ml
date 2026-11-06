@@ -26,14 +26,9 @@ guard falls through to re-raise, a semantic trap the suggestion must
 not walk users into — deliberately do not fire. No fix: the rewrite
 restructures cases and changes exhaustiveness warnings.
 
-Pedantic on field evidence: letter-exact — 0 false positives across 18
-production and 30 sampled
-third-party sites — and 0 of 18 would-act, because at every opened site
-the `when` rewrite duplicated a non-trivial binding pattern,
-re-evaluated an effectful condition, or exploded a 3-way chain into
-duplicated arms. The rewrite is a taste most maintainers decline;
-opt-in is what Pedantic means, and graduation would need a corpus whose
-authors accept the opinion.|}
+Pedantic: the rewrite often duplicates a non-trivial binding pattern,
+re-evaluates an effectful condition, or explodes a three-way chain into
+duplicated arms, so whether it reads better is a house's opinion.|}
     ()
 
 let message = "an immediate if-then-else in a case body could be a when guard"

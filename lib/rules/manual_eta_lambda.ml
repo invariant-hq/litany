@@ -38,12 +38,11 @@ parameters as unlabeled positional arguments (a partial forward
 swapped order, a labeled or optional argument — labels change arity
 semantics); the callee's arrow spine must be unlabeled over the
 forwarded prefix (with `g : ?d:int -> int -> int`, `fun x -> g x` has
-type `int -> int` while `g` keeps the optional — the probe-pinned
-erasure gate eta-reducible-forwarding records); and the lambda, its
+type `int -> int` while `g` keeps the optional — the erasure gate eta-reducible-forwarding
+records); and the lambda, its
 parameters, its callee, its body, and its arguments carry no type
 annotation, coercion, newtype, or attribute the reduction would drop —
-`fun env -> f (env :> t)` forwards a coerced `env`, not `env`, the
-corpus-recorded false positive of this rule's predecessor. A body that
+`fun env -> f (env :> t)` forwards a coerced `env`, not `env`. A body that
 is itself a function (`fun x -> fun y -> f x y`, `fun x -> function
 ...`) is not a forward. The callee's own arity is irrelevant:
 `fun x -> f x` with a binary `f` is `f` at the same type.

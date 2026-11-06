@@ -32,7 +32,8 @@ dune build @default @lint -w
 
 The rule lints the directory it is in and below, and reads the workspace's
 `litany` file. Run [project rules](/litany/guide/selecting-rules/#project-rules)
-from a terminal or CI, since they don't run here.
+and the rules that need a unit's kind, which litany names as withheld, from a
+terminal or CI, since they don't run here.
 
 ### Fixing in the build
 
@@ -64,8 +65,10 @@ the same on every checkout. A unit it can't lint is a refusal, exit 2.
 
 ## Unit files
 
-A unit file tells litany about any build system's output. `litany units` prints
-dune's, as an example of the format, and `--save` writes it:
+A unit file tells litany about any build system's output. `--units` reads the
+file `--save` writes, in which every atom is length-prefixed (`(4:unit(6:source8:lib/a.ml))`);
+what `litany units` prints is the same document for a person to read, and is
+not accepted back:
 
 ```console
 $ litany units
@@ -76,7 +79,7 @@ $ litany units --save litany.units
 $ litany check --no-build --units litany.units
 ```
 
-The file is canonical s-expressions, one form per line, in this order:
+The file is [canonical s-expressions](https://en.wikipedia.org/wiki/Canonical_S-expressions), one form per line, in this order:
 
 1. `(litany-units 1)`, required.
 2. `(complete false)`, when it isn't your whole project.

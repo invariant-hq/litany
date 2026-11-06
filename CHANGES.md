@@ -1,4 +1,4 @@
-# Unreleased
+## Unreleased
 
 - `--fix` keeps a file's permission bits, whatever the umask, as it always
   said it did.
@@ -47,7 +47,7 @@
   rules` and `litany explain`, and every program it shows is a file of
   `examples/`, built with the repository and linted by the tests.
 
-# 1.1.1 (2026-11-03)
+## 1.1.1 (2026-11-03)
 
 - A Melange library run through a preprocessor -- `melange.ppx`,
   `ppx_solidtype` -- is linted: dune compiles its modules from the
@@ -57,7 +57,7 @@
   and read from the OCaml dune turns it into; such a unit was skipped as
   missing its source.
 
-# 1.1.0 (2026-11-03)
+## 1.1.0 (2026-11-03)
 
 Hypha's fork, `hyphatech/litany`, released by Hypha into its opam
 repository.
@@ -90,7 +90,7 @@ repository.
   `--root`, and an executable, given an implicit empty interface since
   dune's language 3.0, exports nothing to `restricted-export-name`.
 
-# 1.0.0 (2026-08-21)
+## 1.0.0 (2026-08-21)
 
 First release.
 

@@ -27,9 +27,8 @@ that are only part of the body, and matches with `exception` cases
 scrutinee carrying an explicit type constraint —
 `fun mty -> match (mty : Types.module_type) with …` — where the
 annotation is load-bearing (constructor disambiguation) and the
-`function` rewrite has nowhere to put it: in field review the
-constrained sites were the rule's only mis-advised sightings. The drop-parameter rewrite has no automatic
-fix in this release — the promise flips to `Sometimes` when it lands.|}
+`function` rewrite has nowhere to put it: so such a site is left alone. The drop-parameter rewrite has no automatic
+fix.|}
     ()
 
 let message =

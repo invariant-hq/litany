@@ -27,9 +27,7 @@ predefined-constructor identity). A project's own `bind` and `return`
 never fire, lawful or not: each listed pair is an audited lawfulness
 claim, and other identities match nothing. `let*` syntax, guarded or
 multi-case `function` callbacks, and callbacks returning anything but
-the bound value deliberately do not fire. No automatic fix in this
-release — the promise flips to `Sometimes` when the rewrite to the
-bound computation lands.|}
+the bound value deliberately do not fire. No automatic fix.|}
     ()
 
 let pair bind returns =

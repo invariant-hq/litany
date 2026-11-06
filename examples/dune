@@ -1,6 +1,6 @@
-; Small projects for the documentation to point at: each page imports the
-; whole file it shows, every file is built with the repository, and
-; test/cli/examples.t runs litany over them, so a page cannot show code that
-; does not compile or a finding litany would not report. The code under
+; Small projects for the documentation to point at: a page imports the whole
+; file it shows, every file is built with the repository, and
+; test/cli/examples.t runs litany over inventory/, whose findings the pages
+; show as typed samples. The code under
 ; inventory/ is wrong on purpose; the repository's own litany file rings it
 ; out.

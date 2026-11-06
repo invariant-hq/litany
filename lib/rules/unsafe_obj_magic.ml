@@ -17,9 +17,8 @@ not a compile error.
     (* good *) a typed interface, a GADT, or a documented unsafe module
                boundary reviewed on its own
 
-Why restrict this? Every real use is a deliberate kernel: the population
-is specialist code where each use was justified and reviewed on its own —
-corpus review found no `Obj.magic` kernels in application code at all.
+Why restrict this? Every real use is a deliberate kernel, specialist code
+where each use was justified on its own terms.
 "No `Obj.magic`" is a house ban a workspace
 adopts, not a universal improvement the catalog can claim. So the rule is
 `restriction`-tier policy: off even under `--select all`, cherry-picked by

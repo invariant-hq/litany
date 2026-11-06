@@ -10,10 +10,9 @@ import hypha from "starlight-theme-hypha";
 // catalog into src/content/docs/reference/rules/, written by catalog.ts from
 // `litany rules` and `litany explain`, so it cannot drift from the code.
 //
-// Every program or configuration a page shows is a whole file under
-// examples/ or lib/, built with the repository and linted by
-// test/cli/examples.t, which the page imports with `?raw` into Starlight's
-// <Code> -- so a page cannot show code that does not compile. A missing
+// A page imports a whole file of examples/ or lib/ with `?raw` into Starlight's
+// <Code>, so what it shows of them is built with the repository; short snippets
+// and console samples stay inline, and nothing compiles those. A missing
 // file, or a link to a page or a heading that is not there, fails the build.
 const repository = fileURLToPath(new URL("..", import.meta.url));
 

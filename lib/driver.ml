@@ -817,7 +817,7 @@ let fixes n = if n = 1 then "fix" else "fixes"
 (* {2 The corrections sink}
 
    The sandboxed-action fix lane (dune lang 3.23): fixes are never written
-   to the sources — the Law-8 pipeline runs in memory ([Apply.correct]
+   to the sources — the verified pipeline runs in memory ([Apply.correct]
    under the same digest baseline as the disk mode) and the fixed bytes
    land at [<sandbox mirror>/<source path>.corrected], where dune pairs
    each with the file it corrects at action teardown, prints the diff
@@ -1512,7 +1512,7 @@ let run_check ~progress ~rebuild ~format ~jobs ~cache roster ~build_current
         let fp = findings_fingerprint (Engine.Report.findings report) in
         match List.find_opt (fun (_, fp') -> String.equal fp' fp) fps with
         | Some (m, _) ->
-            (* CS-FIX--01: this pass reproduced pass [m]'s finding multiset
+            (* this pass reproduced pass [m]'s finding multiset
                exactly — the loop made no progress, and applying again could
                only replay the same fixes onto the same lint state. Stop
                before writing anything further, and say why honestly: the

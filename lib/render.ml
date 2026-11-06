@@ -469,9 +469,8 @@ let json ppf rep =
         | Skipped sk -> Some (path, sk))
       (Engine.Report.units rep)
   in
-  (* The trailer, schema-versioned: the JSONL schema deliberately carries
-     [schema_version] on every record and [failures]/[exit_code] in the
-     trailer — exit 3 is driven by failures, so a JSON consumer must see
+  (* The trailer, schema-versioned: the JSONL schema carries [schema],
+     [failures] and [exit] in the trailer — exit 3 is driven by failures, so a JSON consumer must see
      them. [schema] is 1; additive keys do not bump it, a change to an
      existing key's meaning does. The counts are [Engine.Summary] —
      the same aggregation the text page prints, serialized field-for-field,

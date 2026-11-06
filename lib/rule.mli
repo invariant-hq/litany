@@ -132,15 +132,14 @@ val meta :
 (** [meta ~name ~group ~since ~fix ~summary ~doc ()] is a rule's metadata.
 
     - [name] is kebab-case ASCII, stable forever, and the rule's identity
-      everywhere — config, suppression attributes, output. Third-party rules
-      render as [org/rule-name].
+      everywhere — config, suppression attributes, output.
     - [renamed_from] lists tombstone aliases from prior names, honored by config
       validation and [allow]/[expect] matching with a rename warning. Defaults
       to [[]].
     - [stability] defaults to [Stability.Stable].
     - [since] is the release that introduced the rule, e.g. ["1.0"].
-    - [fix] is the fix promise, enforced by the rule test suites and at registry
-      construction (see {!Fix.availability}).
+    - [fix] is the fix promise, checked for each finding a rule emits (see
+      {!Fix.availability}).
     - [summary] is the one-line description shown by [litany rules].
     - [doc] is Markdown: the rule's full documentation, rendered by
       [litany explain] and the docs site. House shape: what fires, why it
@@ -158,8 +157,8 @@ val meta :
       the withheld channel ([Engine.Report.withheld_rules]) so structural
       silence is enumerated, never read as a clean corpus.
 
-    Raises [Invalid_argument] if [name] (or an alias) is not kebab-case, or
-    [summary] is empty. *)
+    @raise Invalid_argument
+      if [name] (or an alias) is not kebab-case, or [summary] is empty. *)
 
 (** {1:rules Rules}
 
@@ -523,8 +522,9 @@ val configure : t -> Sexp.t list -> (t, Options.error) result
     declared no schema is an [Error] at the first form —
     [rule "<name>" takes no options].
 
-    Raises [Invalid_argument] if the schema returns a rule whose {!name} differs
-    from [r]'s — options reconfigure a rule, they never substitute one. *)
+    @raise Invalid_argument
+      if the schema returns a rule whose {!name} differs from [r]'s — options
+      reconfigure a rule, they never substitute one. *)
 
 (** {1:seam Engine seam}
 

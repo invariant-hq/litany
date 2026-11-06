@@ -71,7 +71,8 @@ val compare : t -> t -> int
     end byte offset, then message. The renderers' total order — (path, start
     offset, rule name, end offset, message) — is the report's
     ([Engine.Report.findings]), which interleaves the paired rule name as its
-    third key. The order is compatible with {!equal}. *)
+    third key. Two findings differing only in what it doesn't read compare equal
+    and are not {!equal}. *)
 
 val pp : Format.formatter -> t -> unit
 (** [pp ppf f] formats [f] for debugging — location, message, fix presence.

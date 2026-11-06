@@ -36,14 +36,8 @@ narrowing — a higher segment threshold — configurable:
     (rule quadratic-string-concat-chain
      (max-segments 4))
 
-Pedantic on field evidence, re-checked after containment landed: with
-one finding per maximal chain the
-multi-report half of the demote reasoning is retired, but every real
-sighting on both corpora was still a 3–4 segment chain in an error
-path or paren-wrap — sizes where "quadratic" overclaims and no
-maintainer rewrites. The rule stays Pedantic and off; the recorded
-narrowing if it is ever to leave is the segment threshold above (≥ 4–5)
-or scoping to loops and folds, and the name question rides with it.|}
+Pedantic: a chain of three or four segments in a message or a path costs nothing
+anyone would measure, so reporting one is a house's choice.|}
     ()
 
 let concat_operator = Pat.ident "Stdlib.(^)"

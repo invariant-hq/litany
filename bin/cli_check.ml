@@ -173,7 +173,7 @@ let roster_of_flags ~progress ~in_action_ctx ~root ~cmt_root ~units ~build
              against the real sources they mirror.
 
              An empty in-action roster is a refusal, never a silent green
-             (Law 6: silence must stay distinguishable from cleanliness):
+             (silence must stay distinguishable from cleanliness):
              a context that is missing or holds no artifacts means the
              rule's deps built nothing — a missing
              [(deps (alias_rec check))] line — and the refusal names that

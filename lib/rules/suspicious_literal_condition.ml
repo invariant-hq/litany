@@ -21,9 +21,7 @@ predefined-constructor identity. Named flags (`let debug = true … if
 debug`) deliberately do not fire — there is no constant propagation —
 and neither do runtime conditions, `while true` (the idiomatic infinite
 loop, structurally not an `if`), or two-case matches on a boolean
-(redundant-match-bool's business). No automatic fix in this release —
-the promise flips to `Sometimes` when the collapse-to-live-branch
-rewrite lands.|}
+(redundant-match-bool's business). No automatic fix.|}
     ()
 
 let if_true = Pat.(if_ (ebool (cst true)) drop drop)

@@ -26,11 +26,7 @@ wildcards, wildcards inside deeper patterns (`Failure _`), or-patterns,
 and wildcard value cases do not fire either. No fix: only the author
 knows which exception was meant.
 
-Stable on field evidence: zero false positives across two review
-corpora, every exclusion above honored in the field, and every real
-sighting a genuine swallower. Flag-and-judge is this rule's action —
-the deliberate `with _ -> None` option-izer is one `[@litany.allow]`
-with its reason.|}
+The deliberate `with _ -> None` option-izer is one `[@litany.allow]` away.|}
     ()
 
 let message = "wildcard handler swallows every exception"

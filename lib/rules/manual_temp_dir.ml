@@ -26,7 +26,7 @@ window) is the atomic, dedicated form.
 Fires on the three-step sequence: a binding of a `Filename.temp_file`
 application (the omitted `?temp_dir` is tolerated) whose body removes
 the bound path (`Sys.remove` or `Unix.unlink`) and then — directly, or
-after one intervening statement in this version's window — re-creates
+after one intervening statement — re-creates
 it with `Unix.mkdir` or `Sys.mkdir`. Path identity is the bound
 declaration's, never spelling: removing or making some other path
 never counts. Anchored at the `temp_file` application. The fix
@@ -96,7 +96,7 @@ let mkdir_shape u id rest =
   | None ->
       if last rest then Some Unfixable
       else
-        (* One intervening statement in this version's window. *)
+        (* One intervening statement, and no more. *)
         Option.bind
           (Pat.run Pat.(seq_ drop (as__ drop)) u rest Fun.id)
           (fun rest' ->

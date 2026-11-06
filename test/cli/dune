@@ -34,14 +34,14 @@
  (applies_to root)
  (deps %{bin:litany}))
 
-; The M6 config-file cram: a nested dune project built for real inside the
+; The config-file cram: a nested dune project built for real inside the
 ; sandbox — the dune adapter's own lane.
 
 (cram
  (applies_to config)
  (deps %{bin:litany}))
 
-; The M6 --fix convergence-loop cram: real rebuilds between passes.
+; The --fix convergence-loop cram: real rebuilds between passes.
 
 (cram
  (applies_to fixloop)
@@ -54,7 +54,7 @@
  (applies_to fixsafety refusals)
  (deps %{bin:litany}))
 
-; M7: the one-unit in-build gate (litany unit), proved against the
+; the one-unit in-build gate (litany unit), proved against the
 ; vendored ocamlc-loc parser — what litany emits is what dune's editor
 ; pipeline receives.
 
@@ -71,40 +71,40 @@
  (applies_to inbuild)
  (deps %{bin:litany}))
 
-; M7: units --save / --dump and the check --units round-trip.
+; units --save / --dump and the check --units round-trip.
 
 (cram
  (applies_to units)
  (deps %{bin:litany}))
 
-; M7: the catalog product commands.
+; the catalog product commands.
 
 (cram
  (applies_to rules explain)
  (deps %{bin:litany}))
 
-; M7: check --format text|json|github, the text page proved through the
+; check --format text|json|github, the text page proved through the
 ; vendored parser.
 
 (cram
  (applies_to formats)
  (deps %{bin:litany} ../vendor_ocamlc_loc/parse.exe))
 
-; M8: the -j worker lane — byte-identity across worker counts, the --fix
+; the -j worker lane — byte-identity across worker counts, the --fix
 ; single-process clamp, and the lost-shard law (real nested dune builds).
 
 (cram
  (applies_to jobs)
  (deps %{bin:litany}))
 
-; M8: the result cache — warm hits, byte-identical pages across cache
+; the result cache — warm hits, byte-identical pages across cache
 ; states, and per-component key invalidation.
 
 (cram
  (applies_to cache)
  (deps %{bin:litany}))
 
-; M9: the project (cross-module) rules end to end — findings over a real
+; the project (cross-module) rules end to end — findings over a real
 ; multi-unit workspace, byte-identity across -j and cache states with facts
 ; riding the payloads, the withhold gate + --explain-withheld, closed-world,
 ; and the facts-only (.ml-gen) no-withhold pin.

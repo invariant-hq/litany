@@ -628,7 +628,7 @@ type rule_status =
   | Project
       (** Known project rule, selected or not: project findings answer to
           configuration only in this release, so the directive is inert — but
-          named in a per-unit note, never silently swallowed (ALT-PROJ-06). *)
+          named in a per-unit note, never silently swallowed. *)
   | Off  (** Known local rule not running per-unit: unselected. *)
 
 type resolution =
@@ -797,7 +797,7 @@ let analyze ~kinds ~suppress u =
      ([type_decl]/[let_group]/[module_binding]) ride this same pass behind
      non-empty-kind gates — no second traversal exists. Structure-level
      groups dispatch from the [structure] hook (each structure's own
-     [str_items]), not [structure_item]: on the 5.5 leg a [let module] or
+     [str_items]), not [structure_item]: a [let module] or
      [type … in] embeds a bare [structure_item] in expression position
      ([Expr_item] is the seam), and reading [str_items] keeps such
      items off the structure-level dispatch without a context flag. *)
@@ -844,9 +844,8 @@ let analyze ~kinds ~suppress u =
                         ~position:Rule.Module_binding.Local)
                | None -> ());
             (if kinds.type_decls <> [] then
-               (* 5.5's expression-local [type … in e] groups dispatch
-                  as ordinary [type_decl] groups ([None] always on the
-                  5.3/5.4 leg). *)
+               (* An expression-local [type … in e] group dispatches as an
+                  ordinary [type_decl] group. *)
                match Expr_item.type_group e with
                | Some (_, _, ds) -> dispatch_all ~lane:Typed kinds.type_decls ds
                | None -> ());

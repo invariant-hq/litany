@@ -49,4 +49,4 @@
     (>= 0.2.0)))
   (thumper :with-test))
  (tags
-  (linter static-analysis developer-tools ocaml org:invariant-hq)))
+  (linter static-analysis developer-tools ocaml)))

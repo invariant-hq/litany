@@ -41,10 +41,10 @@ val applicability_to_string : applicability -> string
 (** [applicability_to_string a] is ["safe"], ["unsafe"], or ["display"] — the
     fix-line and JSON vocabulary. *)
 
-(** The type for a rule's fix promise, declared in [Rule.meta] and enforced by
-    the rule test suites and at registry construction: a [Never] rule whose
-    callback returns a fix is a rule failure, and an [Always] rule's fixture
-    must exercise a compiled [.fixed] golden.
+(** The type for a rule's fix promise, declared in [Rule.meta] and checked for
+    each finding a rule emits: a [Never] rule whose callback returns a fix is a
+    rule failure, and an [Always] rule's fixture must exercise a compiled
+    [.fixed] golden.
 
     {b Note.} The first case is [Never], not [None], so rule code that matches
     [option] values constantly never shadows [Stdlib.None]. *)
@@ -80,10 +80,11 @@ val v : ?applicability:applicability -> title:string -> edit list -> t
 (** [v ~title edits] is a fix performing [edits], described to the user by
     [title]. [applicability] defaults to [Unsafe] — safety is earned.
 
-    Raises [Invalid_argument] if [edits] is empty or two edits conflict
-    (overlap, or an insertion point strictly inside a replaced range); both are
-    programmer errors in the emitting rule. Checked in that order: emptiness
-    first, then conflicts over the edits sorted by span. *)
+    @raise Invalid_argument
+      if [edits] is empty or two edits conflict (overlap, or an insertion point
+      strictly inside a replaced range); both are programmer errors in the
+      emitting rule. Checked in that order: emptiness first, then conflicts over
+      the edits sorted by span. *)
 
 val safe_replace : Location.t -> string -> title:string -> t
 (** [safe_replace loc text ~title] is a [Safe] single-edit fix replacing the
@@ -119,8 +120,7 @@ val edits : t -> edit list
 
 val with_applicability : applicability -> t -> t
 (** [with_applicability a f] is [f] with applicability [a]. This is the engine's
-    downgrade hook; rules have no reason to upgrade a fix and the rule test
-    suites treat an upgrade as a rule failure. *)
+    downgrade hook; a rule has no reason to upgrade a fix. *)
 
 (** {1:fmt Formatting} *)
 
