@@ -30,7 +30,7 @@ export default defineConfig({
   integrations: [
     starlight({
       title: "litany",
-      description: "A linter for OCaml that reads what the compiler wrote.",
+      description: "The linter for modern OCaml.",
       logo: { dark: "starlight-theme-hypha/assets/hypha.webp", light: "starlight-theme-hypha/assets/hypha-day.webp" },
       favicon: "/favicon-32.png",
       head: [

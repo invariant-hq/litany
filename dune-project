@@ -28,7 +28,7 @@
 
 (package
  (name litany)
- (synopsis "A linter for OCaml")
+ (synopsis "The linter for modern OCaml")
  (description
  "Litany examines OCaml sources and reports style and correctness issues, so they can be faced and fixed rather than silenced.")
  (depends

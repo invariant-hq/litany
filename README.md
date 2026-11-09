@@ -6,8 +6,10 @@
 ![OCaml 5.5](https://img.shields.io/badge/OCaml-5.5-EC6813?logo=ocaml&logoColor=white)
 [![Hypha Stack](https://img.shields.io/badge/Hypha-Stack-d4a820?labelColor=15120e)](https://hyphatech.io/stack/)
 
-A linter for OCaml that reads what the compiler wrote.
-Deterministic and fixable. Hypha's fork of [invariant-hq/litany](https://github.com/invariant-hq/litany).
+The linter for modern OCaml.
+Deterministic and fixable. Reads what the compiler wrote.
+
+Hypha's fork of [invariant-hq/litany](https://github.com/invariant-hq/litany).
 
 **Documentation**: [hyphatech.github.io/litany](https://hyphatech.github.io/litany/)
 
