@@ -89,8 +89,7 @@ docs: docs/node_modules ## build the documentation site
 docs-serve: docs ## serve the built documentation site
 	cd docs && bun --bun astro preview --open --port $(DOCS_PORT)
 
-release: ## release VERSION, once CHANGES.md names it: open-opam tags it and makes its release
-	@test -n "$(VERSION)" || { echo "Give the version: make release VERSION=1.2.3" >&2; exit 2; }
-	@test "$$(git show HEAD:CHANGES.md | grep -m1 '^## ')" = "## $(VERSION) ($$(date +%F))" \
-	  || { echo "The commit to release must open CHANGES.md with ## $(VERSION) ($$(date +%F))" >&2; exit 2; }
+release: ## tag VERSION and make its release
+	@test "$$(git show HEAD:CHANGES.md | grep -m1 '^## ' | cut -d' ' -f2)" = "$(VERSION)" \
+	  || { echo "CHANGES.md must open with ## $(VERSION)" >&2; exit 2; }
 	open-opam release $(VERSION)
