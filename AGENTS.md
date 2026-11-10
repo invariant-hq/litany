@@ -75,7 +75,6 @@ Hypha's rules, each with its reason here, and nowhere else:
 ## Releases
 
 As Hypha's `LIBRARY.md` says: the version in the git tag alone,
-`CHANGES.md`'s `## Unreleased` renamed to it, and the GitHub release
-publishing it to Hypha's opam repository through
-`.github/workflows/release.yml`. Hypha's first release is 1.1.0, after
-upstream's 1.0.0.
+`CHANGES.md`'s `## Unreleased` renamed to it, `open-opam release` making
+the GitHub release, and `open-opam publish` sending it to open-opam.
+Hypha's first release is 1.1.0, after upstream's 1.0.0.

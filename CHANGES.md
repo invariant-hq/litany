@@ -1,3 +1,9 @@
+## 1.2.1 (2026-11-10)
+
+- litany is published to open-opam, `opam repo add open-opam
+  https://github.com/open-opam/opam-repository.git`, and no longer to Hypha's
+  opam repository.
+
 ## 1.2.0 (2026-11-06)
 
 - `--fix` keeps a file's permission bits, whatever the umask, as it always

@@ -14,7 +14,7 @@ help: ## list targets
 setup: ## create the switch and install dependencies
 	@command -v bun >/dev/null 2>&1 || echo "The documentation site needs Bun 1.3 or later."
 	@opam switch list --short | grep -qx $(SWITCH) || opam switch create $(SWITCH) --empty -y
-	opam repo add hypha https://github.com/hyphatech/opam-repository.git --switch=$(SWITCH) --rank=1
+	opam repo add open-opam https://github.com/open-opam/opam-repository.git --switch=$(SWITCH) --rank=1
 	$(MAKE) pin
 	opam install . --switch=$(SWITCH) --deps-only --with-test --with-doc -y
 	opam install --switch=$(SWITCH) -y ocamlformat.0.29.0 ocaml-lsp-server merlin

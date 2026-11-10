@@ -24,7 +24,7 @@ Hypha's fork of [invariant-hq/litany](https://github.com/invariant-hq/litany).
 ## Install
 
 ```sh
-opam repo add hypha https://github.com/hyphatech/opam-repository.git
+opam repo add open-opam https://github.com/open-opam/opam-repository.git
 opam install litany
 ```
 

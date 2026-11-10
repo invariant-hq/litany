@@ -11,7 +11,7 @@ needs no other step:
   with:
     ocaml-compiler: "5.5"
     opam-repositories: |
-      hypha: https://github.com/hyphatech/opam-repository.git
+      open-opam: https://github.com/open-opam/opam-repository.git
       default: https://opam.ocaml.org
 - run: opam install . --deps-only -y
 - run: opam install litany -y

@@ -15,7 +15,7 @@ jobs:
         with:
           ocaml-compiler: "5.5"
           opam-repositories: |
-            hypha: https://github.com/hyphatech/opam-repository.git
+            open-opam: https://github.com/open-opam/opam-repository.git
             default: https://opam.ocaml.org
       # The Makefile's pins, on setup-ocaml's switch.
       - run: make pin SWITCH=
@@ -38,7 +38,7 @@ jobs:
         with:
           ocaml-compiler: "5.5"
           opam-repositories: |
-            hypha: https://github.com/hyphatech/opam-repository.git
+            open-opam: https://github.com/open-opam/opam-repository.git
             default: https://opam.ocaml.org
       - run: make pin SWITCH=
       - run: opam install . --deps-only --with-test -y
