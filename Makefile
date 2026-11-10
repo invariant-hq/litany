@@ -2,7 +2,7 @@ SWITCH ?= hypha-litany
 OPAM = opam exec --switch=$(SWITCH) --
 
 .DEFAULT_GOAL := help
-.PHONY: help setup pin build test bench coverage mutate lint fmt docs docs-serve
+.PHONY: help setup pin build test bench coverage mutate lint fmt docs docs-serve release
 
 DOCS_PORT ?= 4321
 
@@ -88,3 +88,7 @@ docs: docs/node_modules ## build the documentation site
 # build, and a page served as it changes loads its styles after its text.
 docs-serve: docs ## serve the built documentation site
 	cd docs && bun --bun astro preview --open --port $(DOCS_PORT)
+
+release: ## release VERSION with open-opam: push, wait for CI, tag and release
+	@test -n "$(VERSION)" || { echo "Give the version: make release VERSION=1.2.3" >&2; exit 2; }
+	open-opam release $(VERSION)
