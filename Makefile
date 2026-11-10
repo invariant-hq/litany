@@ -11,9 +11,19 @@ help: ## list targets
 	  | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-10s %s\n", $$1, $$2}'
 
 # dune at the release litany's tests are written for.
+# A switch is this repository's when its variable repository names this
+# repository's git directory, which setup sets as it makes it: a switch of the
+# same name made for anything else is refused, never used.
 setup: ## create the switch and install dependencies
 	@command -v bun >/dev/null 2>&1 || echo "The documentation site needs Bun 1.3 or later."
-	@opam switch list --short | grep -qx $(SWITCH) || opam switch create $(SWITCH) --empty -y
+	@repository=$$(git rev-parse --path-format=absolute --git-common-dir); \
+	if opam switch list --short | grep -qx '$(SWITCH)'; then \
+	  made_for=$$(opam var --switch='$(SWITCH)' repository 2>/dev/null); \
+	  [ -n "$$repository" ] && [ "$$made_for" = "$$repository" ] || { echo "The switch $(SWITCH) is not this repository's. Remove it, or name another with SWITCH=<name>." >&2; exit 2; }; \
+	else \
+	  opam switch create '$(SWITCH)' --empty --no-switch -y >/dev/null && \
+	  opam var --switch='$(SWITCH)' "repository=$$repository" >/dev/null; \
+	fi
 	opam repo add open-opam https://github.com/open-opam/opam-repository.git --switch=$(SWITCH) --rank=1
 	$(MAKE) pin
 	opam install . --switch=$(SWITCH) --deps-only --with-test --with-doc -y

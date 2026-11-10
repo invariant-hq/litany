@@ -14,7 +14,7 @@ needs no other step:
       open-opam: https://github.com/open-opam/opam-repository.git
       default: https://opam.ocaml.org
 - run: opam install . --deps-only -y
-- run: opam install litany -y
+- run: opam install hypha-litany -y
 - run: opam exec -- litany check
 ```
 

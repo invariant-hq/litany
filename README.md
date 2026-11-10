@@ -25,7 +25,7 @@ Hypha's fork of [invariant-hq/litany](https://github.com/invariant-hq/litany).
 
 ```sh
 opam repo add open-opam https://github.com/open-opam/opam-repository.git
-opam install litany
+opam install hypha-litany
 ```
 
 Install it in the switch of the project it lints, on OCaml 5.5.

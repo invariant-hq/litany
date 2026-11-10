@@ -1,6 +1,6 @@
 (lang dune 3.23)
 
-(name litany)
+(name hypha-litany)
 
 (generate_opam_files true)
 
@@ -27,7 +27,7 @@
 
 
 (package
- (name litany)
+ (name hypha-litany)
  (synopsis "The linter for modern OCaml")
  (description
  "Litany examines OCaml sources and reports style and correctness issues, so they can be faced and fixed rather than silenced.")

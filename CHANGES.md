@@ -1,6 +1,9 @@
 ## 1.2.1 (2026-11-10)
 
-- litany is published to open-opam, `opam repo add open-opam
+- The package is now `hypha-litany`, so it can be published beside
+  upstream's `litany`: install it with `opam install hypha-litany`. The command
+  is still `litany`, and nothing it does changes.
+- hypha-litany is published to open-opam, `opam repo add open-opam
   https://github.com/open-opam/opam-repository.git`, and no longer to Hypha's
   opam repository.
 
