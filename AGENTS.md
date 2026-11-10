@@ -20,6 +20,7 @@ make coverage  # the tests' coverage, held to its floor; CI runs it
 make mutate    # the mutants no test kills, to weigh
 make bench     # the timing gate, on a quiet machine
 make fmt       # format in place
+make release VERSION=1.2.3  # once CHANGES.md names it: tag and release with open-opam
 make docs      # the documentation site, into _build/docs; make docs-serve
 ```
 
@@ -74,8 +75,5 @@ Hypha's rules, each with its reason here, and nowhere else:
 
 ## Releases
 
-As Hypha's `LIBRARY.md` says: the version in the git tag alone,
-`CHANGES.md`'s `## Unreleased` renamed to it, `make release VERSION=…`
-making the GitHub release with open-opam, and `open-opam publish` sending
-it to open-opam.
+As Hypha's `LIBRARY.md` says, made with `make release VERSION=…`.
 Hypha's first release is 1.1.0, after upstream's 1.0.0.
