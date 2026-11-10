@@ -1,3 +1,9 @@
+## 1.2.2 (2026-11-10)
+
+- `litany --version` says 1.2.2. 1.2.1's archive named itself
+  `1.2.0-4-gbfbf6f6`, the commit after 1.2.0, so 1.2.1 is not on open-opam,
+  and 1.2.2 is hypha-litany's first release there.
+
 ## 1.2.1 (2026-11-10)
 
 - The package is now `hypha-litany`, so it can be published beside
